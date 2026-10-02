@@ -28,7 +28,7 @@
   function defaultSettings() {
     return {
       master: 0.8, music: 0.55, sfx: 0.85, sensitivity: 1, screenShake: true,
-      particles: 'high', fps: false, lang: 'fa'
+      particles: 'high', fps: false, lang: 'fa', postfx: true
     };
   }
 
@@ -90,6 +90,7 @@
       out.settings.particles = PARTICLE_LEVELS.indexOf(s.particles) >= 0 ? s.particles : 'high';
       out.settings.fps = typeof s.fps === 'boolean' ? s.fps : false;
       out.settings.lang = (s.lang === 'fa' || s.lang === 'en') ? s.lang : out.settings.lang;
+      out.settings.postfx = typeof s.postfx === 'boolean' ? s.postfx : true;
     }
     if (raw.stats && typeof raw.stats === 'object') {
       out.stats.kills = Math.floor(num(raw.stats.kills, 0, 0, 1e9));
