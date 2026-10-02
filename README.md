@@ -6,7 +6,7 @@
 
 **یک شوتر تاکتیکی از بالا، در تاریکی مطلق. فقط HTML5 Canvas و جاوااسکریپت خالص. بدون نیاز به build یا وابستگی.**
 
-![HTML5](https://img.shields.io/badge/HTML5-Canvas-orange) ![JS](https://img.shields.io/badge/JavaScript-Vanilla-yellow) ![i18n](https://img.shields.io/badge/lang-فارسی%20%7C%20English-19c3dd) ![deps](https://img.shields.io/badge/dependencies-0-3ddc84)
+![HTML5](https://img.shields.io/badge/HTML5-Canvas-orange) ![JS](https://img.shields.io/badge/JavaScript-Vanilla-yellow) ![i18n](https://img.shields.io/badge/lang-فارسی%20%7C%20English-19c3dd) ![deps](https://img.shields.io/badge/dependencies-0-3ddc84) ![input](https://img.shields.io/badge/input-KB%2BM%20%7C%20Gamepad%20%7C%20Touch-ff8a1a) ![coop](https://img.shields.io/badge/local%20co--op-2P-b07cff)
 
 [English](#english) · [فارسی](#فارسی)
 
@@ -23,7 +23,8 @@
 - **Smart enemies**: patrols, noise investigation, flanking, grenadiers, breachers.
 - **Progression**: XP, credits, weapon unlocks, 7 upgrade tracks, S–D mission ratings.
 - **Bilingual UI**: Persian (RTL, Persian digits) and English, with Persian enemy voice lines.
-- **Local profiles (new in v5)**: several players can keep separate progress on one PC.
+- **Local profiles (v5)**: several players can keep separate progress on one PC.
+- **Play anywhere (new in v6)**: full gamepad support, touch controls for phones and tablets, and **2-player local co-op** with three dedicated operations.
 
 ### Quick start
 ```bash
@@ -32,21 +33,59 @@ cd blackout-game
 # open index.html directly, or serve it:
 python3 -m http.server 8080   # then visit http://localhost:8080
 ```
+On a phone, serve it on your LAN (`python3 -m http.server 8080 --bind 0.0.0.0`), open `http://<your-pc-ip>:8080` and hold the device in landscape.
 
 ### Controls
+
+**Keyboard + mouse**
+
 | Action | Key |
 |---|---|
 | Move | `W A S D` / arrows |
 | Aim / Fire | Mouse / Left click |
 | Dodge roll | `Space` |
 | Reload | `R` |
-| Interact / Hack / Plant | `E` (hold) |
+| Interact / Hack / Plant / Revive | `E` (hold) |
 | Sprint | `Shift` |
 | Swap weapon | `1` `2` / mouse wheel |
 | Pause | `Esc` |
 
+**Gamepad** (standard mapping: Xbox, PlayStation and most USB pads)
+
+| Action | Button |
+|---|---|
+| Move / Aim | Left stick / Right stick (soft aim assist) |
+| Fire | `RT` / `R2` |
+| Sprint | `LT` / `L2` or click `L3` |
+| Dodge roll | `A` / `✕` |
+| Reload | `B` / `◯` |
+| Interact / Hack / Plant / Revive | `X` / `□` (hold) |
+| Next / previous weapon | `Y` or `RB` / `LB` |
+| Weapon slots 1–4 | D-pad |
+| Intel panel | `View` / `Share` (hold) |
+| Pause | `Start` / `Options` |
+
+Menus are fully navigable with the D-pad or left stick (`A` select, `B` back). Vibration kicks in on hits and heavy weapons.
+
+**Touch** (Settings → TOUCH CONTROLS: `AUTO` / `OFF` / `EASY` / `PRO`)
+- **EASY**: left thumb is a floating move stick; aim-assist locks onto the nearest visible hostile and fires automatically. Tap or hold the right side to fire manually.
+- **PRO**: twin-stick. Right thumb is a floating aim stick, push past half-way to fire. Light aim assist only.
+- Both modes have DODGE / RELOAD / USE (hold) / SWAP buttons, tap a HUD weapon slot to equip it, and push the move stick to the edge to sprint. `AUTO` turns touch on for touch screens.
+
+### Local co-op
+Pick **CO-OP** from the main menu. Two operators share one screen:
+- **P1** plays on keyboard + mouse (or the first gamepad if two are connected); **P2** needs a gamepad.
+- Each operator has their own flashlight, HUD panel and reticle. The camera frames both and zooms out as you split up, with a soft leash so nobody walks off-screen.
+- Enemies pick the closest or most visible operator; everything (doors, pickups, terminals, hazards, explosions) works for both.
+- Go down and your partner can **revive** you by holding USE next to you. The op only fails if you both go down, and extraction needs every standing operator in the zone.
+- Three dedicated operations, unlocked in order: **TWIN SIGNAL**, **SCORCHED PAIR** and **DEAD MAN'S SWITCH**. Enemies and the boss get extra HP to match the extra gun.
+- Want the regular campaign with a friend? Turn on **Settings → CAMPAIGN IN CO-OP** and connect a gamepad.
+
+### Settings
+Audio (master / music / SFX), mouse sensitivity, screen shake, particles, post-FX, enemy voices, blood, fullscreen, FPS counter, language, touch mode, gamepad aim assist, gamepad vibration, campaign co-op and a live gamepad counter. Settings are saved per profile.
+
 ### Local profiles
-Click the profile chip in the main-menu footer to create, rename, switch or delete profiles. Each profile has its own XP, credits, unlocks, loadout, ratings and settings, stored in `localStorage`. Existing saves become the first profile automatically.
+Click the profile chip in the main-menu footer to create, rename, switch or delete profiles. Each profile has its own XP, credits, unlocks, loadout, ratings, co-op progress and settings, stored in `localStorage`. Existing saves become the first profile automatically.
 
 ### Project structure
 ```
@@ -56,15 +95,21 @@ js/core            utils, i18n, save, input, audio, camera, collision
 js/gameplay        player, enemies, ai, boss, weapons, projectiles, hazards, pickups, objectives
 js/world           level generation, missions, renderer, postfx
 js/expansions      arsenal, campaign, v4-* packs (monkey-patch the core)
+js/v6-core.js      shared virtual-input layer, aim assist, v6 settings
+js/v6-gamepad.js   gamepads: P1 / P2 roles, menu navigation, vibration
+js/v6-touch.js     phone + tablet controls (EASY / PRO)
+js/v6-coop.js      local co-op: P2, revive, shared camera, co-op operations
 js/profiles.js     v5 local multi-profile manager
 js/main.js         bootstrap
 ```
-All modules attach to the global `BO` namespace and expansion packs extend the core by wrapping prototype methods, so new features can be added as drop-in scripts before `main.js`.
+All modules attach to the global `BO` namespace and expansion packs extend the core by wrapping prototype methods, so new features can be added as drop-in scripts before `main.js`. The v6 packs must load in order (`v6-core` → `v6-gamepad` → `v6-touch` → `v6-coop`), after the v4 packs.
 
 ### Roadmap
-- Touch controls for phones (Easy mode with aim-assist, Pro twin-stick mode)
-- Local co-op (keyboard + gamepad) with dedicated co-op missions
-- Gamepad support
+- [x] Touch controls for phones (Easy mode with aim-assist, Pro twin-stick mode)
+- [x] Local co-op (keyboard + gamepad) with dedicated co-op missions
+- [x] Gamepad support
+
+All planned features have shipped in v6. Ideas and PRs welcome.
 
 ---
 
@@ -79,7 +124,8 @@ All modules attach to the global `BO` namespace and expansion packs extend the c
 - **دشمنان باهوش**: گشت‌زنی، بررسی صدا، دور زدن، نارنجک‌انداز و نفوذی.
 - **پیشرفت**: تجربه، اعتبار، باز کردن سلاح‌ها، ۷ مسیر ارتقا و رتبه‌بندی S تا D.
 - **رابط دوزبانه**: فارسی (راست‌به‌چپ با اعداد فارسی) و انگلیسی، همراه با صدای فارسی دشمن‌ها.
-- **پروفایل‌های محلی (جدید در v5)**: چند نفر می‌توانند روی یک کامپیوتر پیشرفت جداگانه داشته باشند.
+- **پروفایل‌های محلی (v5)**: چند نفر می‌توانند روی یک کامپیوتر پیشرفت جداگانه داشته باشند.
+- **همه‌جا بازی کن (جدید در v6)**: پشتیبانی کامل از دسته بازی، کنترل لمسی برای موبایل و تبلت، و **بازی دونفره محلی** با سه مأموریت مخصوص.
 
 ### شروع سریع
 ```bash
@@ -87,26 +133,65 @@ git clone https://github.com/Arvinb1386/blackout-game.git
 cd blackout-game
 python3 -m http.server 8080
 ```
-سپس آدرس `http://localhost:8080` را باز کن، یا مستقیم فایل `index.html` را اجرا کن.
+سپس آدرس `http://localhost:8080` را باز کن، یا مستقیم فایل `index.html` را اجرا کن. برای موبایل، سرور را روی شبکه محلی اجرا کن (`--bind 0.0.0.0`)، آدرس `http://<آی‌پی-کامپیوتر>:8080` را باز کن و گوشی را افقی بگیر.
 
 ### کنترل‌ها
+
+**کیبورد و موس**
+
 | عمل | کلید |
 |---|---|
 | حرکت | `W A S D` یا جهت‌نماها |
 | نشانه‌گیری / شلیک | موس / کلیک چپ |
 | غلت زدن | `Space` |
 | خشاب‌گذاری | `R` |
-| تعامل / هک / کار گذاشتن بمب | نگه داشتن `E` |
+| تعامل / هک / کار گذاشتن بمب / بلند کردن هم‌تیمی | نگه داشتن `E` |
 | دویدن | `Shift` |
 | تعویض سلاح | `1` `2` یا چرخ موس |
 | توقف | `Esc` |
 
+**دسته بازی** (نگاشت استاندارد: ایکس‌باکس، پلی‌استیشن و بیشتر دسته‌های USB)
+
+| عمل | دکمه |
+|---|---|
+| حرکت / نشانه‌گیری | آنالوگ چپ / آنالوگ راست (با کمک‌نشانه‌گیری ملایم) |
+| شلیک | `RT` / `R2` |
+| دویدن | `LT` / `L2` یا فشردن `L3` |
+| غلت زدن | `A` / `✕` |
+| خشاب‌گذاری | `B` / `◯` |
+| تعامل / هک / بمب / بلند کردن هم‌تیمی | نگه داشتن `X` / `□` |
+| سلاح بعدی / قبلی | `Y` یا `RB` / `LB` |
+| خانه‌های سلاح ۱ تا ۴ | D-pad |
+| پنل اطلاعات | نگه داشتن `View` / `Share` |
+| توقف | `Start` / `Options` |
+
+منوها هم با D-pad یا آنالوگ چپ کار می‌کنند (`A` انتخاب، `B` برگشت). هنگام آسیب دیدن و شلیک با سلاح‌های سنگین، دسته می‌لرزد.
+
+**لمسی** (تنظیمات ← کنترل لمسی: خودکار / خاموش / آسان / حرفه‌ای)
+- **آسان**: انگشت چپ آنالوگ شناور حرکت است؛ کمک‌نشانه‌گیری روی نزدیک‌ترین دشمن قفل می‌کند و خودکار شلیک می‌کند. برای شلیک دستی سمت راست صفحه را لمس کن یا نگه دار.
+- **حرفه‌ای**: دو آنالوگ. انگشت راست آنالوگ شناور نشانه‌گیری است و با بیش از نیمه کشیدن شلیک می‌کند. فقط کمک‌نشانه‌گیری سبک.
+- در هر دو حالت دکمه‌های غلت / خشاب / تعامل (نگه داشتن) / سلاح وجود دارد، با لمس خانه سلاح در HUD آن را برمی‌داری و با کشیدن آنالوگ حرکت تا لبه می‌دوی. حالت خودکار روی صفحه‌های لمسی روشن می‌شود.
+
+### بازی دونفره محلی
+از منوی اصلی **دونفره** را انتخاب کن. دو مأمور روی یک صفحه بازی می‌کنند:
+- **بازیکن ۱** با کیبورد و موس (یا دسته اول اگر دو دسته وصل باشد) و **بازیکن ۲** با دسته بازی.
+- هر مأمور چراغ‌قوه، پنل HUD و نشانگر خودش را دارد. دوربین هر دو را در کادر نگه می‌دارد و وقتی از هم دور می‌شوید عقب می‌کشد؛ یک افسار نرم هم نمی‌گذارد کسی از صفحه بیرون برود.
+- دشمن‌ها نزدیک‌ترین یا دیده‌شده‌ترین مأمور را هدف می‌گیرند و درها، آیتم‌ها، ترمینال‌ها، خطرها و انفجارها برای هر دو کار می‌کنند.
+- اگر زمین بخوری، هم‌تیمی‌ات با نگه داشتن دکمه تعامل کنارت بلندت می‌کند. مأموریت فقط وقتی شکست می‌خورد که هر دو زمین بخورید و برای خروج، همه مأمورهای سرپا باید در نقطه خروج باشند.
+- سه مأموریت مخصوص که به ترتیب باز می‌شوند: **سیگنال دوقلو**، **جفت سوخته** و **کلید مرگ**. جان دشمن‌ها و باس متناسب با تفنگ اضافه بیشتر شده است.
+- می‌خواهی کمپین اصلی را با دوستت بازی کنی؟ **تنظیمات ← کمپین به‌صورت دونفره** را روشن کن و یک دسته وصل کن.
+
+### تنظیمات
+صدا (کلی / موسیقی / افکت‌ها)، حساسیت موس، لرزش صفحه، ذرات، افکت‌های تصویری، صدای دشمن‌ها، خون، تمام‌صفحه، شمارنده FPS، زبان، حالت لمسی، کمک‌نشانه‌گیری دسته، لرزش دسته، کمپین دونفره و شمارنده زنده دسته‌ها. تنظیمات برای هر پروفایل جدا ذخیره می‌شود.
+
 ### پروفایل‌های محلی
-روی نشان پروفایل در پایین منوی اصلی کلیک کن تا پروفایل بسازی، نامش را عوض کنی، بین پروفایل‌ها جابه‌جا شوی یا حذفش کنی. هر پروفایل تجربه، اعتبار، سلاح‌ها، تجهیزات، رتبه‌ها و تنظیمات خودش را در `localStorage` نگه می‌دارد. ذخیره‌های قبلی خودکار پروفایل اول می‌شوند.
+روی نشان پروفایل در پایین منوی اصلی کلیک کن تا پروفایل بسازی، نامش را عوض کنی، بین پروفایل‌ها جابه‌جا شوی یا حذفش کنی. هر پروفایل تجربه، اعتبار، سلاح‌ها، تجهیزات، رتبه‌ها، پیشرفت دونفره و تنظیمات خودش را در `localStorage` نگه می‌دارد. ذخیره‌های قبلی خودکار پروفایل اول می‌شوند.
 
 ### نقشه راه
-- کنترل لمسی برای موبایل (حالت آسان با کمک‌نشانه‌گیری، حالت حرفه‌ای دو آنالوگ)
-- بازی دونفره محلی (کیبورد + دسته) با مأموریت‌های مخصوص
-- پشتیبانی از دسته بازی
+- [x] کنترل لمسی برای موبایل (حالت آسان با کمک‌نشانه‌گیری، حالت حرفه‌ای دو آنالوگ)
+- [x] بازی دونفره محلی (کیبورد + دسته) با مأموریت‌های مخصوص
+- [x] پشتیبانی از دسته بازی
+
+همه موارد نقشه راه در v6 منتشر شدند. ایده‌ها و PRها خوش‌آمدند.
 
 </div>
