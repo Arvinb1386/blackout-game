@@ -15,5 +15,12 @@ Progress is saved in localStorage.
 
 Expansion code lives in separate modules that plug into the original systems: `js/i18n-extra.js`, `js/arsenal.js`, `js/campaign.js`, `js/postfx.js`.
 
+## Overhaul (v3)
+- **Sound** (`js/audio-plus.js`): new mixer with convolution reverb, bus saturation + EQ and a tighter limiter. Distance now muffles and wets sounds instead of just turning them down. Every gun (all 16 + enemy + boss) is rebuilt from 5 layers (transient, crack, body, sub, brown-noise tail) with per-shot variation, plus mechanical actions (clacks, pump, bolt). New: footsteps, bullet whiz-bys from enemy fire, brass tinkle, ricochets, armour hit thuds, suit power-down deaths, multi-layer explosions with debris rattle, pneumatic doors, low-HP muffle.
+- **Effects** (`js/fx-plus.js`): star-flare muzzle flashes with side vents, glowing streak sparks, flickering embers, volumetric smoke puffs, fireballs that cool from white to deep red, electric arcs on hits and deaths, double-stroke shockwaves, lit debris chips, cracked bullet holes, streaked scorch marks that keep smouldering through the dark, red damage flash.
+- **Characters** (`js/characters-plus.js`): fully articulated operator (plate carrier, mag pouches, pauldrons, helmet with NVG mount, radio pack + antenna, weapon light, physics scarf, glowing visor/LED) and redesigned enemies: armoured Grunt, twin-blade Rusher with energy trail, Heavy with spinning six-barrel rotary + ammo belt, cloaked Sniper with scope glint. Two-bone arms grip the weapon, legs stride with speed, corpses sprawl with a dying visor flicker.
+
+All v3 modules monkey-patch the originals at load time; delete the three script tags in `index.html` to get v2 back.
+
 Structure: css/ (style + embedded fonts), js/ (one module per system), assets/fonts (source font files, already embedded in css/fonts.css).
-`blackout-single.html` is the original v1 bundle and does **not** include the v2 expansion. Play `index.html` for the new content.
+`blackout-single.html` is the original v1 bundle and does **not** include the v2 expansion or the v3 overhaul. Play `index.html` for the new content.
