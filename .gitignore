@@ -1,0 +1,30 @@
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editors
+.vscode/
+.idea/
+*.swp
+*~
+
+# Node / tooling (if added later)
+node_modules/
+npm-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+package-lock.json.bak
+
+# Build / test output
+dist/
+build/
+coverage/
+test-results/
+playwright-report/
+.cache/
+
+# Local env
+.env
+.env.*
+*.log

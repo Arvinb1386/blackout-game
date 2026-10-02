@@ -6,7 +6,6 @@
  * ========================================================================= */
 'use strict';
 (function (BO) {
-  const SAVE_KEY = 'blackout.save.v1';
   const EXTRA_TOGGLES = ['voice', 'blood'];
 
   const S = BO.SaveSystem;
@@ -14,8 +13,10 @@
     const origLoad = S.load;
     S.load = function () {
       const data = origLoad.apply(this, arguments);
+      // v5: read from the active profile key instead of a hard-coded one.
+      const key = this.key || 'blackout.save.v1';
       let raw = null;
-      try { raw = JSON.parse(window.localStorage.getItem(SAVE_KEY) || 'null'); } catch (e) { raw = null; }
+      try { raw = JSON.parse((this.storage ? this.storage.get(key) : window.localStorage.getItem(key)) || 'null'); } catch (e) { raw = null; }
       const rs = raw && raw.settings && typeof raw.settings === 'object' ? raw.settings : {};
       EXTRA_TOGGLES.forEach(k => { data.settings[k] = typeof rs[k] === 'boolean' ? rs[k] : true; });
       return data;
@@ -25,7 +26,6 @@
   const settings = () => (BO.SaveSystem && BO.SaveSystem.data && BO.SaveSystem.data.settings) || {};
 
   BO.V4 = {
-    /** Toggle settings default to ON when missing. */
     setting(key) { return settings()[key] !== false; },
     settings
   };

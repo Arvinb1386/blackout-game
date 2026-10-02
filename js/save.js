@@ -2,15 +2,18 @@
  * BLACKOUT :: save.js
  * localStorage persistence with strict sanitisation. Any malformed field is
  * replaced by its default so a corrupted save can never crash the game.
+ *
+ * v5: the storage key is dynamic so several local profiles (accounts) can
+ * share one browser. The first profile keeps the legacy key so existing saves
+ * migrate transparently. See js/profiles.js.
  * ========================================================================= */
 'use strict';
 (function (BO) {
-  const SAVE_KEY = 'blackout.save.v1';
+  const LEGACY_KEY = 'blackout.save.v1';
   const VERSION = 1;
   const UPGRADE_IDS = ['maxHp', 'armor', 'speed', 'reload', 'damage', 'accuracy', 'magazine'];
   const PARTICLE_LEVELS = ['low', 'medium', 'high'];
 
-  /** In-memory fallback for sandboxed contexts where localStorage throws. */
   const memoryStore = Object.create(null);
   const storage = {
     get(key) {
@@ -49,7 +52,6 @@
 
   const num = (v, fallback, min, max) => (BO.U.isFiniteNumber(v) ? BO.U.clamp(v, min, max) : fallback);
 
-  /** Validates every field of an untrusted object against the schema. */
   function sanitize(raw) {
     const d = defaults();
     if (!raw || typeof raw !== 'object') return d;
@@ -103,14 +105,29 @@
   const SaveSystem = {
     data: defaults(),
     wasCorrupted: false,
+    /** Active storage key (switched by the profile manager). */
+    key: LEGACY_KEY,
+    LEGACY_KEY,
+    storage,
+    setKey(key) { this.key = (typeof key === 'string' && key) ? key : LEGACY_KEY; },
+    /** Reads + sanitises any profile save without activating it. */
+    peek(key) {
+      const raw = storage.get(key || this.key);
+      if (!raw) return defaults();
+      try { return sanitize(JSON.parse(raw)); } catch (err) { return defaults(); }
+    },
+    write(key, data) {
+      try { storage.set(key, JSON.stringify(data)); } catch (err) { BO.U.reportError('save', err); }
+    },
     load() {
-      const raw = storage.get(SAVE_KEY);
+      this.wasCorrupted = false;
+      const raw = storage.get(this.key);
       if (!raw) { this.data = defaults(); return this.data; }
       try {
         this.data = sanitize(JSON.parse(raw));
       } catch (err) {
         this.wasCorrupted = true;
-        storage.set(SAVE_KEY + '.corrupt', raw);
+        storage.set(this.key + '.corrupt', raw);
         this.data = defaults();
         this.save();
       }
@@ -118,12 +135,12 @@
     },
     save() {
       try {
-        storage.set(SAVE_KEY, JSON.stringify(this.data));
+        storage.set(this.key, JSON.stringify(this.data));
       } catch (err) { BO.U.reportError('save', err); }
     },
     reset() {
       const keepSettings = this.data.settings;
-      storage.remove(SAVE_KEY);
+      storage.remove(this.key);
       this.data = defaults();
       this.data.settings = keepSettings;
       this.save();
