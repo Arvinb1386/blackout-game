@@ -18,8 +18,8 @@
 
 ### Highlights
 - **Darkness is the mechanic**: a flashlight cone and ray-cast lighting decide what you can see, and what can see you.
-- **Full campaign** with stealth, hacking, demolition, survival waves and a two-phase boss.
-- **28 weapons**: pistols to railguns, an arc caster that chains lightning, a flamethrower that sets rooms alight.
+- **Full campaign & v7 operations**: 24 missions across diverse environments with stealth, hacking, demolition, dynamic weather and hazards.
+- **36 weapons**: pistols to railguns, compound bow, smart SMG, cluster launcher, cryo rifle, flamethrower.
 - **Smart enemies**: patrols, noise investigation, flanking, grenadiers, breachers.
 - **Progression**: XP, credits, weapon unlocks, 7 upgrade tracks, S–D mission ratings.
 - **Bilingual UI**: Persian (RTL, Persian digits) and English, with Persian enemy voice lines.
@@ -101,6 +101,9 @@ js/core            utils, i18n, save, input, audio, camera, collision
 js/gameplay        player, enemies, ai, boss, weapons, projectiles, hazards, pickups, objectives
 js/world           level generation, missions, renderer, postfx
 js/expansions      arsenal, campaign, v4-* packs (monkey-patch the core)
+js/v7-world.js     v7 environment tech: 7 hazard variants, 10 weathers, floor decor
+js/v7-arsenal.js   v7 arsenal: 8 new weapons & cryo chill slow mechanics
+js/v7-campaign.js  v7 campaign: 10 new themed operations (m15-m24) & finale
 js/v6-core.js      shared virtual-input layer, aim assist, v6 settings
 js/v6-gamepad.js   gamepads: P1 / P2 roles, menu navigation, vibration
 js/v6-touch.js     phone + tablet controls (EASY / PRO)
@@ -111,7 +114,7 @@ js/main.js         bootstrap
 server.js          Node.js static server + WebSocket relay
 controller.html    web-based mobile touch controller for P2
 ```
-All modules attach to the global `BO` namespace and expansion packs extend the core by wrapping prototype methods, so new features can be added as drop-in scripts before `main.js`. The v6 packs must load in order (`v6-core` → `v6-gamepad` → `v6-touch` → `v6-coop` → `v6-remote`), after the v4 packs.
+All modules attach to the global `BO` namespace and expansion packs extend the core by wrapping prototype methods, so new features can be added as drop-in scripts before `main.js`. The v6 packs must load in order (`v6-core` → `v6-gamepad` → `v6-touch` → `v6-coop` → `v6-remote`), after the v4 and v7 packs.
 
 ### Roadmap
 - [x] Touch controls for phones (Easy mode with aim-assist, Pro twin-stick mode)
@@ -128,8 +131,8 @@ All planned features have shipped in v6. Ideas and PRs welcome.
 
 ### ویژگی‌ها
 - **تاریکی خودِ گیم‌پلی است**: نور چراغ‌قوه و نورپردازی پرتویی تعیین می‌کند چه چیزی را می‌بینی و چه کسی تو را می‌بیند.
-- **کمپین کامل** با مخفی‌کاری، هک، تخریب، موج‌های بقا و یک باس دو مرحله‌ای.
-- **۲۸ سلاح**: از کلت تا ریل‌گان، تفنگ آذرخش و شعله‌افکن دوزخ.
+- **کمپین کامل و مأموریت‌های v7**: ۲۴ مأموریت در محیط‌ها و شرایط آب‌وهوایی گوناگون با مخفی‌کاری، هک، خطرات محیطی و باس‌ها.
+- **۳۶ سلاح**: از کلت و کمان تاکتیکی تا ریل‌گان، تفنگ هوشمند، پرتاب‌کننده خوشه‌ای و تفنگ انجمادی.
 - **دشمنان باهوش**: گشت‌زنی، بررسی صدا، دور زدن، نارنجک‌انداز و نفوذی.
 - **پیشرفت**: تجربه، اعتبار، باز کردن سلاح‌ها، ۷ مسیر ارتقا و رتبه‌بندی S تا D.
 - **رابط دوزبانه**: فارسی (راست‌به‌چپ با اعداد فارسی) و انگلیسی، همراه با صدای فارسی دشمن‌ها.
