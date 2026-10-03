@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#07080d">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>BLACKOUT Controller</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      width: 100%; height: 100%; overflow: hidden;
+      background: #07080d; color: #eef0f6;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      touch-action: none; user-select: none; -webkit-user-select: none;
+      -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent;
+    }
+
+    #connect-screen {
+      position: fixed; inset: 0; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 18px;
+      background: #07080d; z-index: 100;
+    }
+    #connect-screen.hidden { display: none; }
+    #connect-screen h1 {
+      font: 900 42px 'Segoe UI', system-ui, sans-serif;
+      letter-spacing: .12em; color: #ff8a1a;
+    }
+    #connect-screen h1 span { color: #eef0f6; }
+    .status-dot {
+      width: 12px; height: 12px; border-radius: 50%;
+      background: #ff3355; display: inline-block;
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+    .status-dot.on { background: #22c55e; animation: none; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: .3; } }
+    #connect-status { font-size: 15px; color: #9aa0b4; display: flex; align-items: center; gap: 8px; }
+    .connect-sub { font-size: 12px; color: #555b6e; margin-top: 4px; }
+
+    #controller { position: fixed; inset: 0; display: none; }
+    #controller.show { display: block; }
+
+    .ctrl-header {
+      position: absolute; top: 8px; left: 0; right: 0;
+      display: flex; align-items: center; justify-content: center;
+      gap: 8px; z-index: 10; pointer-events: none;
+    }
+    .hdr-dot { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; }
+    .hdr-dot.off { background: #ff3355; }
+    .hdr-title { font: 700 11px 'Segoe UI', system-ui, sans-serif; letter-spacing: .15em; color: #555b6e; }
+
+    .zone { position: absolute; top: 0; bottom: 0; }
+    .zone-left { left: 0; width: 42%; }
+    .zone-right { right: 0; width: 58%; }
+
+    .stick-base {
+      position: absolute; width: 130px; height: 130px;
+      margin: -65px 0 0 -65px; border-radius: 50%;
+      border: 2px solid rgba(238,240,246,.15);
+      background: rgba(238,240,246,.03);
+      opacity: 0; transition: opacity .1s;
+      pointer-events: none;
+    }
+    .stick-base.on { opacity: 1; }
+    .stick-thumb {
+      position: absolute; left: 50%; top: 50%;
+      width: 54px; height: 54px; margin: -27px 0 0 -27px;
+      border-radius: 50%; background: rgba(255,138,26,.55);
+      will-change: transform;
+    }
+    .sprint-ring {
+      position: absolute; inset: -5px; border-radius: 50%;
+      border: 2.5px solid transparent; transition: border-color .1s;
+    }
+    .stick-base.sprinting .sprint-ring { border-color: rgba(255,138,26,.7); }
+
+    .aim-reticle {
+      position: absolute; width: 44px; height: 44px;
+      margin: -22px 0 0 -22px; border-radius: 50%;
+      border: 2px solid rgba(25,195,221,.45);
+      opacity: 0; pointer-events: none;
+      will-change: transform, left, top;
+    }
+    .aim-reticle.on { opacity: 1; }
+    .aim-reticle::before {
+      content: ''; position: absolute; left: 50%; top: 50%;
+      width: 8px; height: 8px; margin: -4px 0 0 -4px;
+      border-radius: 50%; background: rgba(25,195,221,.7);
+    }
+    .aim-line {
+      position: absolute; height: 1px;
+      background: rgba(25,195,221,.18);
+      transform-origin: 0 50%; pointer-events: none;
+      opacity: 0;
+    }
+    .aim-line.on { opacity: 1; }
+
+    .aim-label {
+      position: absolute; right: 16px; top: 50%;
+      transform: translateY(-50%);
+      font: 600 10px 'Segoe UI', system-ui, sans-serif;
+      letter-spacing: .1em; color: rgba(25,195,221,.2);
+      writing-mode: vertical-rl; pointer-events: none;
+    }
+
+    /* ---- Action buttons in top right ---- */
+    .action-bar {
+      position: absolute; right: 16px; top: 10px;
+      display: flex; gap: 10px; align-items: center; z-index: 20;
+    }
+
+    .ctrl-btn {
+      display: flex; align-items: center; justify-content: center;
+      border: 2px solid; background: rgba(8,9,18,.6);
+      color: #eef0f6; font: 700 11px 'Segoe UI', system-ui, sans-serif;
+      letter-spacing: .05em;
+      transition: background .1s, transform .1s, box-shadow .1s;
+      cursor: pointer;
+    }
+    .ctrl-btn:active, .ctrl-btn.on { transform: scale(.93); }
+
+    .reload-btn {
+      width: 52px; height: 48px; border-radius: 24px;
+      border-color: rgba(255,138,26,.5);
+      color: #ff8a1a; font-size: 13px;
+    }
+    .reload-btn.on {
+      background: rgba(255,138,26,.4);
+      color: #fff;
+    }
+
+    .revive-btn {
+      min-width: 100px; height: 48px; padding: 0 14px; border-radius: 24px;
+      border-color: rgba(34,197,94,.5);
+      background: rgba(34,197,94,.12);
+      color: #22c55e;
+      display: flex; gap: 6px; align-items: center; justify-content: center;
+    }
+    .revive-btn .revive-icon { font-size: 15px; font-weight: 900; }
+    .revive-btn .revive-txt { font-size: 11px; letter-spacing: .08em; }
+    .revive-btn:active, .revive-btn.holding {
+      background: rgba(34,197,94,.55);
+      color: #fff; transform: scale(.93);
+      box-shadow: 0 0 16px rgba(34,197,94,.6);
+    }
+    .revive-btn.partner-down {
+      border-color: #ff3355;
+      background: rgba(255,51,85,.2);
+      color: #ff3355;
+      animation: alert-pulse 1s infinite alternate;
+    }
+    .revive-btn.partner-down.holding {
+      border-color: #22c55e;
+      background: rgba(34,197,94,.6);
+      color: #fff;
+      animation: none;
+    }
+    @keyframes alert-pulse {
+      0% { box-shadow: 0 0 4px rgba(255,51,85,.3); transform: scale(1); }
+      100% { box-shadow: 0 0 18px rgba(255,51,85,.85); transform: scale(1.04); }
+    }
+
+    /* ---- Weapon Slots ---- */
+    .weapon-slots {
+      position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);
+      display: flex; gap: 6px; z-index: 10;
+    }
+    .w-slot {
+      width: 44px; height: 34px; border-radius: 6px;
+      border: 1.5px solid rgba(255,138,26,.3); background: rgba(8,9,18,.55);
+      color: #777d8e; font: 700 13px 'Segoe UI', system-ui, sans-serif;
+      display: flex; align-items: center; justify-content: center;
+      transition: background .08s, color .08s;
+    }
+    .w-slot.on { background: rgba(255,138,26,.45); color: #eef0f6; }
+
+    .p2-badge {
+      position: absolute; left: 16px; top: 10px;
+      font: 700 13px 'Segoe UI', system-ui, sans-serif;
+      letter-spacing: .1em; color: #19c3dd; pointer-events: none;
+    }
+
+    .divider {
+      position: absolute; left: 42%; top: 12%; bottom: 12%;
+      width: 1px; background: rgba(238,240,246,.05); pointer-events: none;
+    }
+
+    #rotate-msg {
+      position: fixed; inset: 0; display: none;
+      align-items: center; justify-content: center;
+      background: rgba(5,6,12,.95); color: #eef0f6;
+      font: 700 18px 'Segoe UI', system-ui, sans-serif;
+      text-align: center; padding: 24px; z-index: 200;
+      flex-direction: column; gap: 8px;
+    }
+    @media (orientation: portrait) { #rotate-msg { display: flex; } }
+  </style>
+</head>
+<body>
+  <div id="rotate-msg">📱 گوشی را افقی بگیر<br><span style="font-size:13px;color:#9aa0b4;">Rotate to landscape</span></div>
+
+  <div id="connect-screen">
+    <h1><span>BLACK</span>OUT</h1>
+    <div id="connect-status">
+      <span class="status-dot" id="status-dot"></span>
+      <span id="status-text">در حال اتصال...</span>
+    </div>
+    <div class="connect-sub">بازیکن ۲ — دسته ریموت</div>
+  </div>
+
+  <div id="controller">
+    <div class="ctrl-header">
+      <span class="hdr-dot" id="hdr-dot"></span>
+      <span class="hdr-title">P2 — REMOTE</span>
+    </div>
+    <div class="p2-badge">P2</div>
+
+    <div class="action-bar">
+      <!-- Dedicated Hold-to-Revive button -->
+      <button class="ctrl-btn revive-btn" id="btn-revive">
+        <span class="revive-icon">✚</span>
+        <span class="revive-txt">REVIVE / احیا</span>
+      </button>
+
+      <!-- Reload button -->
+      <button class="ctrl-btn reload-btn" id="btn-reload">R</button>
+    </div>
+
+    <!-- Movement joystick zone -->
+    <div class="zone zone-left" id="zone-left">
+      <div class="stick-base" id="stick-move">
+        <div class="sprint-ring"></div>
+        <div class="stick-thumb"></div>
+      </div>
+    </div>
+
+    <!-- Smooth aim zone -->
+    <div class="zone zone-right" id="zone-right">
+      <div class="aim-line" id="aim-line"></div>
+      <div class="aim-reticle" id="aim-ret"></div>
+      <span class="aim-label">AIM / نشانه</span>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="weapon-slots" id="weapon-slots">
+      <button class="w-slot" data-slot="0">1</button>
+      <button class="w-slot" data-slot="1">2</button>
+      <button class="w-slot" data-slot="2">3</button>
+      <button class="w-slot" data-slot="4">4</button>
+      <button class="w-slot" data-slot="5">5</button>
+    </div>
+  </div>
+
+  <script>
+  (function () {
+    'use strict';
+
+    var STICK_R       = 55;
+    var SPRINT_THRESH = 0.92;
+
+    var $ = function (s) { return document.getElementById(s); };
+    var connectScreen = $('connect-screen');
+    var controller    = $('controller');
+    var statusDot     = $('status-dot');
+    var statusText    = $('status-text');
+    var hdrDot        = $('hdr-dot');
+    var moveBase      = $('stick-move');
+    var aimRet        = $('aim-ret');
+    var aimLine       = $('aim-line');
+    var zoneLeft      = $('zone-left');
+    var zoneRight     = $('zone-right');
+    var btnReload     = $('btn-reload');
+    var btnRevive     = $('btn-revive');
+
+    var state = { mx: 0, my: 0, ax: 0, ay: 0, r: false, sp: false, u: false, sw: 0, sl: -1 };
+    var targetAx = 0, targetAy = 0;
+    var moveTouch = null;
+    var aimTouch  = null;
+    var reviveTouchId = null;
+    var dirty     = true;
+    var dirtyCount = 60;
+
+    /* =========================== WebSocket ============================= */
+    var ws = null, wsOk = false;
+
+    function wsConnect() {
+      try {
+        var proto = location.protocol === 'https:' ? 'wss' : 'ws';
+        ws = new WebSocket(proto + '://' + location.host + '/?role=controller');
+      } catch (e) { setTimeout(wsConnect, 1500); return; }
+
+      ws.onopen = function () {
+        wsOk = true; dirty = true; dirtyCount = 60;
+        statusDot.classList.add('on');
+        statusText.textContent = 'متصل شد!';
+        hdrDot.classList.remove('off');
+        setTimeout(function () {
+          connectScreen.classList.add('hidden');
+          controller.classList.add('show');
+          tryFS();
+        }, 400);
+      };
+
+      ws.onmessage = function (ev) {
+        try {
+          var d = JSON.parse(ev.data);
+          if (d.t === 'haptic' && navigator.vibrate) {
+            navigator.vibrate(d.strong ? [d.ms || 80] : [30]);
+          } else if (d.t === 'partner_downed') {
+            btnRevive.classList.toggle('partner-down', !!d.downed);
+            if (d.downed && navigator.vibrate) navigator.vibrate([120, 60, 120]);
+          }
+        } catch (e) {}
+      };
+
+      ws.onclose = function () {
+        wsOk = false; ws = null;
+        statusDot.classList.remove('on'); hdrDot.classList.add('off');
+        if (controller.classList.contains('show')) {
+          statusText.textContent = 'قطع شد...';
+          connectScreen.classList.remove('hidden');
+          controller.classList.remove('show');
+        } else statusText.textContent = 'در حال اتصال...';
+        setTimeout(wsConnect, 1500);
+      };
+
+      ws.onerror = function () { try { ws.close(); } catch(e){} };
+    }
+    wsConnect();
+
+    function tryFS() {
+      var el = document.documentElement;
+      if (el.requestFullscreen) el.requestFullscreen().catch(function(){});
+      else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+      if (screen.orientation && screen.orientation.lock)
+        screen.orientation.lock('landscape').catch(function(){});
+    }
+
+    /* ========================= Stick math ============================== */
+    function stickVec(s) {
+      if (!s) return { x: 0, y: 0, len: 0 };
+      var dx = s.x - s.ox, dy = s.y - s.oy;
+      var len = Math.sqrt(dx * dx + dy * dy);
+      if (len < 4) return { x: 0, y: 0, len: 0 };
+      var c = Math.min(len, STICK_R);
+      return { x: (dx / len) * (c / STICK_R), y: (dy / len) * (c / STICK_R), len: c / STICK_R };
+    }
+
+    function placeStick(el, s, fx, fy) {
+      if (s) {
+        el.classList.add('on');
+        el.style.left = s.ox + 'px'; el.style.top = s.oy + 'px';
+        var dx = s.x - s.ox, dy = s.y - s.oy, len = Math.sqrt(dx*dx+dy*dy);
+        if (len > STICK_R) { dx = dx/len*STICK_R; dy = dy/len*STICK_R; }
+        el.querySelector('.stick-thumb').style.transform = 'translate('+dx+'px,'+dy+'px)';
+      } else {
+        el.classList.remove('on');
+        el.style.left = fx+'px'; el.style.top = fy+'px';
+        el.querySelector('.stick-thumb').style.transform = '';
+      }
+    }
+
+    function aimVec() {
+      if (!aimTouch) return { x: 0, y: 0, len: 0 };
+      var dx = aimTouch.x - aimTouch.ox, dy = aimTouch.y - aimTouch.oy;
+      var len = Math.sqrt(dx * dx + dy * dy);
+      if (len < 6) return { x: 0, y: 0, len: 0 };
+      var k = Math.min(1, len / 65);
+      return { x: dx / len * k, y: dy / len * k, len: k };
+    }
+
+    /* ========================= Touch: sticks =========================== */
+    zoneLeft.addEventListener('touchstart', function (e) {
+      e.preventDefault();
+      for (var i = 0; i < e.changedTouches.length; i++) {
+        var t = e.changedTouches[i];
+        if (!moveTouch) {
+          moveTouch = { id: t.identifier, ox: t.clientX, oy: t.clientY, x: t.clientX, y: t.clientY };
+          dirty = true;
+        }
+      }
+    }, { passive: false });
+
+    zoneRight.addEventListener('touchstart', function (e) {
+      e.preventDefault();
+      for (var i = 0; i < e.changedTouches.length; i++) {
+        var t = e.changedTouches[i];
+        if (t.target && t.target.closest && (t.target.closest('.ctrl-btn') || t.target.closest('.w-slot'))) continue;
+        if (!aimTouch) {
+          aimTouch = { id: t.identifier, ox: t.clientX, oy: t.clientY, x: t.clientX, y: t.clientY };
+          dirty = true;
+        }
+      }
+    }, { passive: false });
+
+    document.addEventListener('touchmove', function (e) {
+      e.preventDefault();
+      for (var i = 0; i < e.changedTouches.length; i++) {
+        var t = e.changedTouches[i];
+        if (moveTouch && moveTouch.id === t.identifier) { moveTouch.x = t.clientX; moveTouch.y = t.clientY; dirty = true; }
+        if (aimTouch  && aimTouch.id  === t.identifier) { aimTouch.x  = t.clientX; aimTouch.y  = t.clientY; dirty = true; }
+      }
+    }, { passive: false });
+
+    function onEnd(e) {
+      for (var i = 0; i < e.changedTouches.length; i++) {
+        var t = e.changedTouches[i];
+        if (moveTouch && moveTouch.id === t.identifier) { moveTouch = null; dirty = true; }
+        if (aimTouch  && aimTouch.id  === t.identifier) { aimTouch  = null; dirty = true; }
+        if (reviveTouchId === t.identifier) {
+          reviveTouchId = null;
+          state.u = false;
+          dirty = true;
+          btnRevive.classList.remove('holding');
+        }
+      }
+    }
+    document.addEventListener('touchend', onEnd, { passive: false });
+    document.addEventListener('touchcancel', onEnd, { passive: false });
+
+    /* ========================= Action buttons ========================== */
+    // Reload
+    btnReload.addEventListener('touchstart', function (e) {
+      e.preventDefault(); e.stopPropagation();
+      state.r = true; dirty = true;
+      btnReload.classList.add('on');
+      if (navigator.vibrate) navigator.vibrate(25);
+      setTimeout(function(){ btnReload.classList.remove('on'); }, 150);
+    }, { passive: false });
+
+    // Revive (hold-to-revive)
+    btnRevive.addEventListener('touchstart', function (e) {
+      e.preventDefault(); e.stopPropagation();
+      var t = e.changedTouches[0];
+      reviveTouchId = t.identifier;
+      state.u = true;
+      dirty = true;
+      btnRevive.classList.add('holding');
+      if (navigator.vibrate) navigator.vibrate(35);
+    }, { passive: false });
+
+    btnRevive.addEventListener('mousedown', function (e) {
+      e.preventDefault();
+      state.u = true; dirty = true;
+      btnRevive.classList.add('holding');
+    });
+    window.addEventListener('mouseup', function () {
+      if (state.u && reviveTouchId === null) {
+        state.u = false; dirty = true;
+        btnRevive.classList.remove('holding');
+      }
+    });
+
+    // Weapon slots
+    document.addEventListener('touchstart', function (e) {
+      for (var i = 0; i < e.changedTouches.length; i++) {
+        var t = e.changedTouches[i];
+        if (!t.target || !t.target.closest) continue;
+        var slot = t.target.closest('.w-slot');
+        if (slot) {
+          e.preventDefault();
+          state.sl = parseInt(slot.dataset.slot, 10);
+          dirty = true;
+          slot.classList.add('on');
+          if (navigator.vibrate) navigator.vibrate(20);
+          setTimeout(function(s){ s.classList.remove('on'); }.bind(null, slot), 150);
+        }
+      }
+    }, { passive: false });
+
+    /* ========================= Main Loop ============================== */
+    function frame() {
+      var mv = stickVec(moveTouch);
+      var av = aimVec();
+
+      state.mx = mv.x; state.my = mv.y;
+      state.sp = mv.len > SPRINT_THRESH;
+
+      // Filter noise/jitter on aim
+      if (aimTouch && av.len > 0) {
+        targetAx = av.x;
+        targetAy = av.y;
+      } else {
+        targetAx = 0;
+        targetAy = 0;
+      }
+      state.ax += (targetAx - state.ax) * 0.45;
+      state.ay += (targetAy - state.ay) * 0.45;
+
+      // Visual: move stick
+      placeStick(moveBase, moveTouch, 110, window.innerHeight / 2);
+      moveBase.classList.toggle('sprinting', state.sp);
+
+      // Visual: aim reticle
+      if (aimTouch && (Math.abs(state.ax) > 0.05 || Math.abs(state.ay) > 0.05)) {
+        aimRet.classList.add('on');
+        aimRet.style.left = aimTouch.x + 'px';
+        aimRet.style.top  = aimTouch.y + 'px';
+        var dx = aimTouch.x - aimTouch.ox, dy = aimTouch.y - aimTouch.oy;
+        var len = Math.sqrt(dx*dx+dy*dy);
+        aimLine.classList.add('on');
+        aimLine.style.left = aimTouch.ox + 'px';
+        aimLine.style.top  = aimTouch.oy + 'px';
+        aimLine.style.width = len + 'px';
+        aimLine.style.transform = 'rotate(' + Math.atan2(dy, dx) + 'rad)';
+      } else {
+        aimRet.classList.remove('on');
+        aimLine.classList.remove('on');
+      }
+
+      // Send to game
+      if (wsOk && ws && ws.readyState === 1) {
+        if (dirty || dirtyCount > 0 || mv.len > 0 || av.len > 0 || state.u) {
+          var msg = { t: 'inp',
+            mx: round2(state.mx), my: round2(state.my),
+            ax: round2(state.ax), ay: round2(state.ay)
+          };
+          if (state.r)       { msg.r  = 1; state.r = false; }
+          if (state.sp)        msg.sp = 1;
+          if (state.u)         msg.u  = 1;
+          if (state.sw)      { msg.sw = state.sw; state.sw = 0; }
+          if (state.sl >= 0) { msg.sl = state.sl; state.sl = -1; }
+          ws.send(JSON.stringify(msg));
+          dirty = false;
+          if (dirtyCount > 0) dirtyCount--;
+        }
+      }
+
+      requestAnimationFrame(frame);
+    }
+
+    function round2(v) { return Math.round(v * 100) / 100; }
+
+    requestAnimationFrame(frame);
+
+    /* ========================= Prevent defaults ======================== */
+    document.addEventListener('gesturestart', function(e){e.preventDefault();}, {passive:false});
+    document.addEventListener('gesturechange', function(e){e.preventDefault();}, {passive:false});
+    document.addEventListener('contextmenu', function(e){e.preventDefault();});
+    var lastTap = 0;
+    document.addEventListener('touchend', function(e) {
+      var now = Date.now(); if (now - lastTap < 300) e.preventDefault(); lastTap = now;
+    }, {passive:false});
+  })();
+  </script>
+</body>
+</html>

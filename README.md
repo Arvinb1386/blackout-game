@@ -30,10 +30,16 @@
 ```bash
 git clone https://github.com/Arvinb1386/blackout-game.git
 cd blackout-game
-# open index.html directly, or serve it:
+
+# Option A: Pure static (solo, touch or gamepad co-op)
 python3 -m http.server 8080   # then visit http://localhost:8080
+
+# Option B: Node server with mobile remote controller support (WebSocket)
+npm install && npm start
+# PC Game:        http://localhost:8080
+# P2 Controller:  http://<your-pc-ip>:8080/controller.html
 ```
-On a phone, serve it on your LAN (`python3 -m http.server 8080 --bind 0.0.0.0`), open `http://<your-pc-ip>:8080` and hold the device in landscape.
+On a phone, serve it on your LAN (`--bind 0.0.0.0` or `npm start`), open the game URL in landscape, or open `/controller.html` to turn the phone into a dedicated Player 2 wireless controller!
 
 ### Controls
 
@@ -74,12 +80,12 @@ Menus are fully navigable with the D-pad or left stick (`A` select, `B` back). V
 
 ### Local co-op
 Pick **CO-OP** from the main menu. Two operators share one screen:
-- **P1** plays on keyboard + mouse (or the first gamepad if two are connected); **P2** needs a gamepad.
+- **P1** plays on keyboard + mouse (or the first gamepad if two are connected); **P2** can use a gamepad or connect a smartphone as a wireless controller via WebSocket (`/controller.html`).
 - Each operator has their own flashlight, HUD panel and reticle. The camera frames both and zooms out as you split up, with a soft leash so nobody walks off-screen.
 - Enemies pick the closest or most visible operator; everything (doors, pickups, terminals, hazards, explosions) works for both.
 - Go down and your partner can **revive** you by holding USE next to you. The op only fails if you both go down, and extraction needs every standing operator in the zone.
 - Three dedicated operations, unlocked in order: **TWIN SIGNAL**, **SCORCHED PAIR** and **DEAD MAN'S SWITCH**. Enemies and the boss get extra HP to match the extra gun.
-- Want the regular campaign with a friend? Turn on **Settings → CAMPAIGN IN CO-OP** and connect a gamepad.
+- Want the regular campaign with a friend? Turn on **Settings → CAMPAIGN IN CO-OP** and connect a gamepad or phone controller.
 
 ### Settings
 Audio (master / music / SFX), mouse sensitivity, screen shake, particles, post-FX, enemy voices, blood, fullscreen, FPS counter, language, touch mode, gamepad aim assist, gamepad vibration, campaign co-op and a live gamepad counter. Settings are saved per profile.
@@ -99,10 +105,13 @@ js/v6-core.js      shared virtual-input layer, aim assist, v6 settings
 js/v6-gamepad.js   gamepads: P1 / P2 roles, menu navigation, vibration
 js/v6-touch.js     phone + tablet controls (EASY / PRO)
 js/v6-coop.js      local co-op: P2, revive, shared camera, co-op operations
+js/v6-remote.js    remote controller: WebSocket driver for Player 2
 js/profiles.js     v5 local multi-profile manager
 js/main.js         bootstrap
+server.js          Node.js static server + WebSocket relay
+controller.html    web-based mobile touch controller for P2
 ```
-All modules attach to the global `BO` namespace and expansion packs extend the core by wrapping prototype methods, so new features can be added as drop-in scripts before `main.js`. The v6 packs must load in order (`v6-core` → `v6-gamepad` → `v6-touch` → `v6-coop`), after the v4 packs.
+All modules attach to the global `BO` namespace and expansion packs extend the core by wrapping prototype methods, so new features can be added as drop-in scripts before `main.js`. The v6 packs must load in order (`v6-core` → `v6-gamepad` → `v6-touch` → `v6-coop` → `v6-remote`), after the v4 packs.
 
 ### Roadmap
 - [x] Touch controls for phones (Easy mode with aim-assist, Pro twin-stick mode)
@@ -131,9 +140,16 @@ All planned features have shipped in v6. Ideas and PRs welcome.
 ```bash
 git clone https://github.com/Arvinb1386/blackout-game.git
 cd blackout-game
-python3 -m http.server 8080
+
+# روش ۱: اجرای ساده ایستا (تک‌نفره، لمسی یا دسته)
+python3 -m http.server 8080   # سپس باز کردن http://localhost:8080
+
+# روش ۲: سرور نودجی‌اس با پشتیبانی از دسته مجازی موبایل (WebSocket)
+npm install && npm start
+# بازی روی کامپیوتر:    http://localhost:8080
+# دسته موبایل بازیکن ۲: http://<آی‌پی-کامپیوتر>:8080/controller.html
 ```
-سپس آدرس `http://localhost:8080` را باز کن، یا مستقیم فایل `index.html` را اجرا کن. برای موبایل، سرور را روی شبکه محلی اجرا کن (`--bind 0.0.0.0`)، آدرس `http://<آی‌پی-کامپیوتر>:8080` را باز کن و گوشی را افقی بگیر.
+سپس آدرس `http://localhost:8080` را باز کن، یا مستقیم فایل `index.html` را اجرا کن. برای استفاده از گوشی به عنوان دسته بی‌سیم بازیکن ۲، در مرورگر گوشی آدرس `/controller.html` را باز کن.
 
 ### کنترل‌ها
 
@@ -174,12 +190,12 @@ python3 -m http.server 8080
 
 ### بازی دونفره محلی
 از منوی اصلی **دونفره** را انتخاب کن. دو مأمور روی یک صفحه بازی می‌کنند:
-- **بازیکن ۱** با کیبورد و موس (یا دسته اول اگر دو دسته وصل باشد) و **بازیکن ۲** با دسته بازی.
+- **بازیکن ۱** با کیبورد و موس (یا دسته اول اگر دو دسته وصل باشد) و **بازیکن ۲** با دسته بازی فیزیکی یا گوشی موبایل به عنوان دسته ریموت بی‌سیم (`/controller.html`).
 - هر مأمور چراغ‌قوه، پنل HUD و نشانگر خودش را دارد. دوربین هر دو را در کادر نگه می‌دارد و وقتی از هم دور می‌شوید عقب می‌کشد؛ یک افسار نرم هم نمی‌گذارد کسی از صفحه بیرون برود.
 - دشمن‌ها نزدیک‌ترین یا دیده‌شده‌ترین مأمور را هدف می‌گیرند و درها، آیتم‌ها، ترمینال‌ها، خطرها و انفجارها برای هر دو کار می‌کنند.
 - اگر زمین بخوری، هم‌تیمی‌ات با نگه داشتن دکمه تعامل کنارت بلندت می‌کند. مأموریت فقط وقتی شکست می‌خورد که هر دو زمین بخورید و برای خروج، همه مأمورهای سرپا باید در نقطه خروج باشند.
 - سه مأموریت مخصوص که به ترتیب باز می‌شوند: **سیگنال دوقلو**، **جفت سوخته** و **کلید مرگ**. جان دشمن‌ها و باس متناسب با تفنگ اضافه بیشتر شده است.
-- می‌خواهی کمپین اصلی را با دوستت بازی کنی؟ **تنظیمات ← کمپین به‌صورت دونفره** را روشن کن و یک دسته وصل کن.
+- می‌خواهی کمپین اصلی را با دوستت بازی کنی؟ **تنظیمات ← کمپین به‌صورت دونفره** را روشن کن و یک دسته یا کنترلر ریموت وصل کن.
 
 ### تنظیمات
 صدا (کلی / موسیقی / افکت‌ها)، حساسیت موس، لرزش صفحه، ذرات، افکت‌های تصویری، صدای دشمن‌ها، خون، تمام‌صفحه، شمارنده FPS، زبان، حالت لمسی، کمک‌نشانه‌گیری دسته، لرزش دسته، کمپین دونفره و شمارنده زنده دسته‌ها. تنظیمات برای هر پروفایل جدا ذخیره می‌شود.
