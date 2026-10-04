@@ -8,9 +8,11 @@
  *    half-blind while the room is dark: short sight range, wild aim.
  *    Flip it again to restore power.
  *  - Some rooms get an ALARM PANEL. A hostile that spots you may sprint to the
- *    nearest panel instead of fighting. If it finishes the hold, the facility
- *    alarm sounds: red emergency lights override every blackout, all nearby
- *    hostiles converge on you and reinforcements arrive. Kill the runner
+ *    nearest panel instead of fighting. If it finishes the hold, the alarm
+ *    sounds for that SECTOR only: the panel's room plus every room within
+ *    CONF.zoneRange of it. Red emergency lights override blackouts inside the
+ *    zone, hostiles inside the zone converge on you and reinforcements arrive
+ *    near the panel. The rest of the facility is not notified. Kill the runner
  *    first, or hold USE at any panel to silence the alarm early.
  *
  * Drop-in pack: wraps prototypes like the other expansion packs.
@@ -34,7 +36,10 @@
     darkSightFiring: 0.6,      // x view range right after you fire (muzzle flash)
     darkSpread: 2.2,           // aim spread multiplier when firing from the dark
     runChance: 0.6, runRange: 1100, runHold: 1.3, runGiveUp: 12,
-    alarmTime: 35, alarmRadius: 1800, reinforcements: 2, maxReinforcements: 4, silenceTime: 1.5
+    alarmTime: 35,
+    zoneRange: 620,            // rooms whose edge is this close to the panel join the alarm zone
+    reinforceRange: 1500,      // reinforcements only spawn this close to the tripped panel
+    reinforcements: 2, maxReinforcements: 4, silenceTime: 1.5
   };
   const NO_RUN = { heavy: 1, rusher: 1 }; // heavies are too slow, rushers just charge
 
@@ -47,14 +52,36 @@
     if (!m.inBounds(tx, ty)) return -1;
     return m.roomId[m.idx(tx, ty)];
   }
-  /** A room is "dark" when its breaker is off and the alarm is not overriding it. */
-  function dark(g, room) { const s = st(g); return !!s && room >= 0 && !!s.off[room] && s.alarm <= 0; }
+  /** True while the alarm is up and this room is inside the alarm zone. */
+  function zoned(s, room) { return !!s && s.alarm > 0 && room >= 0 && !!s.zone[room]; }
+  /** A room is "dark" when its breaker is off and the zone's emergency lights are not overriding it. */
+  function dark(g, room) { const s = st(g); return !!s && room >= 0 && !!s.off[room] && !zoned(s, room); }
   /** Pushes breaker/alarm state into level.roomLit, which drives exposure + enemy visibility. */
   function applyLit(g) {
     const s = st(g), lit = g.level && g.level.roomLit;
     if (!s || !lit) return;
-    for (let i = 0; i < lit.length; i++) lit[i] = s.alarm > 0 ? 1 : (s.off[i] ? 0 : s.base[i]);
+    for (let i = 0; i < lit.length; i++) lit[i] = zoned(s, i) ? 1 : (s.off[i] ? 0 : s.base[i]);
   }
+  /** True when a point is inside the active alarm zone (corridors count when close to the panel). */
+  function inZone(g, x, y) {
+    const s = st(g);
+    if (!s || s.alarm <= 0 || !s.zonePanel) return false;
+    const room = roomAt(g, x, y);
+    if (room >= 0) return !!s.zone[room];
+    return U.dist(x, y, s.zonePanel.ax, s.zonePanel.ay) <= CONF.zoneRange;
+  }
+  /** The panel's own room plus every room whose edge is within CONF.zoneRange of the panel. */
+  function buildZone(g, panel) {
+    const s = st(g);
+    s.zone.fill(0);
+    s.zonePanel = panel;
+    g.level.rooms.forEach(r => {
+      if (r.tag === 'arena') return;
+      const nx = U.clamp(panel.ax, r.x * TILE, (r.x + r.w) * TILE), ny = U.clamp(panel.ay, r.y * TILE, (r.y + r.h) * TILE);
+      if (r.index === panel.room || U.dist(panel.ax, panel.ay, nx, ny) <= CONF.zoneRange) s.zone[r.index] = 1;
+    });
+  }
+  function clearZone(s) { s.zone.fill(0); s.zonePanel = null; }
   function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); const t = a[i]; a[i] = a[j]; a[j] = t; } return a; }
   function bark(e, key, prio) {
     const V = BO.Voice;
@@ -122,6 +149,7 @@
     const lv = g.level, map = g.map;
     const s = g.v10 = {
       off: new Uint8Array(lv.rooms.length), base: Uint8Array.from(lv.roomLit),
+      zone: new Uint8Array(lv.rooms.length), zonePanel: null,
       breakers: [], panels: [], alarm: 0, alarms: 0, siren: 0, runner: null, near: []
     };
     const taken = new Set();
@@ -135,7 +163,7 @@
     // Tag lamps + trim strips with their room so a breaker can switch them off.
     lv.lamps.forEach(lp => { lp.v10room = lp.door ? -1 : roomAt(g, lp.x, lp.y); });
     (lv.strips || []).forEach(sp => { sp.v10room = roomAt(g, (sp.x0 + sp.x1) / 2, sp.y0); });
-    // Red emergency lamps, dormant until the alarm trips.
+    // Red emergency lamps, dormant until the alarm trips in their zone.
     lv.rooms.forEach(r => {
       if (r.tag === 'arena') return;
       lv.lamps.push({
@@ -164,7 +192,7 @@
     g.particles.sparks(b.x, b.y, Math.atan2(-b.ny, -b.nx), 10, '#ffd27a', 360);
     if (g.ai) g.ai.onNoise(b.x, b.y, CONF.flipNoise, true);
     if (on) { g.addLight(b.ax, b.ay, 260, '#ffe2a8', 0.25, 0.8); g.ui.notify(BO.t('pw.restored'), '#ffd34d', 1.6); return; }
-    if (s.alarm > 0) { g.ui.notify(BO.t('pw.overridden'), '#ff2d55', 2); return; }
+    if (zoned(s, b.room)) { g.ui.notify(BO.t('pw.overridden'), '#ff2d55', 2); return; }
     blind(g, b.room);
     g.ui.notify(BO.t('pw.cut'), '#7fe3ff', 1.8);
   }
@@ -234,12 +262,14 @@
     s.alarm = CONF.alarmTime; s.alarms++; s.siren = 0;
     s.panels.forEach(q => { q.silence = 0; });
     panel.flash = 1;
+    buildZone(g, panel);
     applyLit(g);
+    // Only hostiles inside the alarm zone get the call; everyone else keeps doing what they were doing.
     const p = g.player, ai = g.ai;
     g.enemies.forEach(e => {
-      if (e.dead || e.isBoss) return;
+      if (e.dead || e.isBoss || !inZone(g, e.x, e.y)) return;
       e.v10daze = 0;
-      if (!p || U.dist(e.x, e.y, p.x, p.y) > CONF.alarmRadius) return;
+      if (!p) return;
       e.lastKnownX = p.x; e.lastKnownY = p.y; e.lastSeenAt = ai ? ai.time - 0.5 : 0;
       e.awareness = 1;
       if (!e.engaged) e.setState(S.CHASE);
@@ -257,17 +287,29 @@
     if (!p || (g.boss && !g.boss.dead && g.boss.mode && g.boss.mode !== 'dormant')) return;
     const n = Math.min(CONF.maxReinforcements, CONF.reinforcements + s.alarms - 1);
     const pts = (g.level.spawnPoints || [])
-      .filter(q => U.dist(q.x, q.y, p.x, p.y) > 520)
+      .filter(q => U.dist(q.x, q.y, p.x, p.y) > 520 && U.dist(q.x, q.y, panel.x, panel.y) <= CONF.reinforceRange)
       .sort((a, b) => U.dist2(a.x, a.y, panel.x, panel.y) - U.dist2(b.x, b.y, panel.x, panel.y));
+    // You're inside the zone: they come for you. Otherwise they sweep the alarm sector.
+    const sweep = !inZone(g, p.x, p.y);
     let made = 0;
     for (let i = 0; i < pts.length && made < n; i++) {
-      if (g.spawnEnemy(U.chance(0.25) ? 'rusher' : 'grunt', pts[i].x, pts[i].y, { wave: true })) made++;
+      const e = g.spawnEnemy(U.chance(0.25) ? 'rusher' : 'grunt', pts[i].x, pts[i].y, { wave: true });
+      if (!e) continue;
+      made++;
+      if (sweep) {
+        e.lastKnownX = panel.ax; e.lastKnownY = panel.ay;
+        e.awareness = 0.7;
+        e.setState(S.INVESTIGATE);
+        e.moveTargetX = panel.ax + U.randSpread() * 90; e.moveTargetY = panel.ay + U.randSpread() * 90;
+        e.hasMoveTarget = true;
+      }
     }
   }
 
   function silence(g, panel) {
     const s = st(g);
     s.alarm = 0;
+    clearZone(s);
     s.panels.forEach(q => { q.silence = 0; });
     panel.flash = 1;
     applyLit(g);
@@ -377,9 +419,9 @@
     }
     if (s.alarm > 0) {
       s.alarm -= dt; s.siren -= dt;
-      g.lastCombatAt = g.time;
+      if (V8.players(g).some(p => p && !p.dead && inZone(g, p.x, p.y))) g.lastCombatAt = g.time;
       if (s.siren <= 0) { s.siren = 1.05; sfx(g, 'siren'); }
-      if (s.alarm <= 0) { s.alarm = 0; applyLit(g); g.ui.notify(BO.t('pw.alarmEnd'), '#ffd34d', 2); }
+      if (s.alarm <= 0) { s.alarm = 0; clearZone(s); applyLit(g); g.ui.notify(BO.t('pw.alarmEnd'), '#ffd34d', 2); }
     }
     s.near.length = 0;
     if (!V8.playing(g)) return;
@@ -399,12 +441,12 @@
   };
 
   /* ----------------------------- Rendering ----------------------------- */
-  // Breakers switch off their room's lamps; emergency lamps only glow during the alarm.
+  // Breakers switch off their room's lamps; emergency lamps only glow inside the alarm zone.
   const oldLamp = R._lampIntensity;
   R._lampIntensity = function (lp, time) {
     if (lp.v10room === undefined) return oldLamp.apply(this, arguments);
     const s = st(BO.game);
-    if (lp.v10e) return s && s.alarm > 0 ? U.clamp(0.5 + Math.sin(time * 5 + lp.phase) * 0.35, 0, 1) : 0;
+    if (lp.v10e) return zoned(s, lp.v10room) ? U.clamp(0.5 + Math.sin(time * 5 + lp.phase) * 0.35, 0, 1) : 0;
     if (s && lp.v10room >= 0 && s.off[lp.v10room]) return 0;
     return oldLamp.apply(this, arguments);
   };
@@ -470,10 +512,10 @@
       ctx.drawImage(BO.softSprite(s.off[b.room] ? '#ff3355' : '#3ddc84'), b.x - r, b.y - r, r * 2, r * 2);
     });
     s.panels.forEach(q => {
-      const hot = s.alarm > 0 || q.runHold > 0, r = hot ? 26 : 9;
+      const live = zoned(s, q.room), hot = live || q.runHold > 0, r = hot ? 26 : 9;
       ctx.globalAlpha = hot ? (Math.floor(t * 6) % 2 ? 1 : 0.35) : 0.35 + Math.sin(t * 2 + q.ax) * 0.1;
       ctx.drawImage(BO.softSprite('#ff2d55'), q.x - r, q.y - r, r * 2, r * 2);
-      if (s.alarm > 0) {
+      if (live) {
         // Rotating beacon.
         ctx.save();
         ctx.translate(q.x, q.y); ctx.rotate(t * 5);
@@ -511,10 +553,14 @@
     const s = st(g);
     if (!s || s.alarm <= 0) return;
     const w = g.renderer.w, h = g.renderer.h, k = 0.5 + Math.sin(t * 6) * 0.5;
-    const grd = ctx.createRadialGradient(w / 2, h / 2, Math.min(w, h) * 0.35, w / 2, h / 2, Math.max(w, h) * 0.75);
-    grd.addColorStop(0, 'rgba(255,30,60,0)');
-    grd.addColorStop(1, 'rgba(255,30,60,' + (0.1 + 0.08 * k).toFixed(3) + ')');
-    ctx.fillStyle = grd; ctx.fillRect(0, 0, w, h);
+    const p = g.player;
+    if (p && inZone(g, p.x, p.y)) {
+      // Red vignette only while you're standing inside the alarm zone.
+      const grd = ctx.createRadialGradient(w / 2, h / 2, Math.min(w, h) * 0.35, w / 2, h / 2, Math.max(w, h) * 0.75);
+      grd.addColorStop(0, 'rgba(255,30,60,0)');
+      grd.addColorStop(1, 'rgba(255,30,60,' + (0.1 + 0.08 * k).toFixed(3) + ')');
+      ctx.fillStyle = grd; ctx.fillRect(0, 0, w, h);
+    }
     const bw = 340, x = w / 2 - bw / 2, y = 70;
     ctx.fillStyle = 'rgba(8,9,18,0.78)'; ctx.fillRect(x, y, bw, 34);
     ctx.fillStyle = '#ff2d55'; ctx.fillRect(x, y, bw * U.clamp(s.alarm / CONF.alarmTime, 0, 1), 3);
@@ -533,7 +579,7 @@
     'pw.cut': 'POWER CUT // HOSTILES BLINDED', 'pw.restored': 'POWER RESTORED',
     'pw.overridden': 'EMERGENCY LIGHTS OVERRIDE THE BLACKOUT',
     'pw.runner': 'HOSTILE RUNNING FOR THE ALARM. STOP THEM!', 'pw.runnerTag': 'ALARM!',
-    'pw.alarm': 'ALARM TRIGGERED', 'pw.alarmSub': 'EMERGENCY LIGHTS ON // REINFORCEMENTS INBOUND',
+    'pw.alarm': 'ALARM TRIGGERED', 'pw.alarmSub': 'SECTOR LOCKDOWN // NEARBY HOSTILES ALERTED',
     'pw.alarmHud': 'ALARM // {n}s · HOLD [E] AT A PANEL TO SILENCE', 'pw.alarmEnd': 'ALARM RESET', 'pw.silenced': 'ALARM SILENCED',
     'pw.promptOff': '[E] CUT POWER', 'pw.promptOn': '[E] RESTORE POWER', 'pw.promptSilence': 'HOLD [E] SILENCE ALARM'
   });
@@ -542,10 +588,10 @@
     'pw.cut': 'برق قطع شد // دشمن‌ها کور شدند', 'pw.restored': 'برق وصل شد',
     'pw.overridden': 'چراغ‌های اضطراری تاریکی را خنثی کردند',
     'pw.runner': 'یک دشمن به سمت آژیر می‌دود. جلویش را بگیر!', 'pw.runnerTag': 'آژیر!',
-    'pw.alarm': 'آژیر به صدا درآمد', 'pw.alarmSub': 'چراغ‌های اضطراری روشن شد // نیروی کمکی در راه است',
+    'pw.alarm': 'آژیر به صدا درآمد', 'pw.alarmSub': 'قرنطینه بخش // دشمن‌های همین محدوده باخبر شدند',
     'pw.alarmHud': 'آژیر // {n} ثانیه · [E] را کنار پنل نگه دار تا خاموش شود', 'pw.alarmEnd': 'آژیر خاموش شد', 'pw.silenced': 'آژیر را خاموش کردی',
     'pw.promptOff': '[E] قطع برق', 'pw.promptOn': '[E] وصل برق', 'pw.promptSilence': '[E] را نگه دار: خاموش کردن آژیر'
   });
 
-  BO.V10 = { CONF, state: st, dark, setPower, triggerAlarm, silence };
+  BO.V10 = { CONF, state: st, dark, setPower, triggerAlarm, silence, inZone };
 })(window.BO);
