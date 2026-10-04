@@ -18,6 +18,7 @@
 
 ### Highlights
 - **Darkness is the mechanic**: a flashlight cone and ray-cast lighting decide what you can see, and what can see you.
+- **Power grid (new in v10)**: flip a room's circuit breaker to black it out and blind everyone inside. Get spotted and a hostile may sprint for the alarm: red emergency lights, the whole floor converges, reinforcements arrive.
 - **Full campaign & v7 operations**: 24 missions across diverse environments with stealth, hacking, demolition, dynamic weather and hazards.
 - **36 weapons**: pistols to railguns, compound bow, smart SMG, cluster launcher, cryo rifle, flamethrower.
 - **Smart enemies**: patrols, noise investigation, flanking, grenadiers, breachers.
@@ -52,6 +53,7 @@ On a phone, serve it on your LAN (`--bind 0.0.0.0` or `npm start`), open the gam
 | Dodge roll | `Space` |
 | Reload | `R` |
 | Interact / Hack / Plant / Revive | `E` (hold) |
+| Flip breaker / Silence alarm | `E` (tap) / `E` (hold) |
 | Sprint | `Shift` |
 | Swap weapon | `1` `2` / mouse wheel |
 | Pause | `Esc` |
@@ -77,6 +79,11 @@ Menus are fully navigable with the D-pad or left stick (`A` select, `B` back). V
 - **EASY**: left thumb is a floating move stick; aim-assist locks onto the nearest visible hostile and fires automatically. Tap or hold the right side to fire manually.
 - **PRO**: twin-stick. Right thumb is a floating aim stick, push past half-way to fire. Light aim assist only.
 - Both modes have DODGE / RELOAD / USE (hold) / SWAP buttons, tap a HUD weapon slot to equip it, and push the move stick to the edge to sprint. `AUTO` turns touch on for touch screens.
+
+### Power grid
+- **Circuit breakers**: some rooms have a yellow breaker box on the wall (green LED = power on). Stand next to it and tap **USE** to cut the room's lights. Every hostile inside is blinded and disoriented for a few seconds (they stumble, stop shooting and lose track of you), and while the room stays dark they only see you up close and their aim from the dark is wild. Tap USE again to restore power.
+- **Alarm panels**: some rooms have a red alarm panel. When a hostile spots you it may sprint for the nearest panel instead of fighting (watch for the red `ALARM!` tag). Kill it or black out its room before it finishes, or the alarm trips: red emergency lights override every blackout, all nearby hostiles converge on your position and reinforcements arrive. Hold **USE** at any panel to silence it early.
+- Tuning and implementation notes: [`docs/v10-power-grid-notes.md`](docs/v10-power-grid-notes.md).
 
 ### Local co-op
 Pick **CO-OP** from the main menu. Two operators share one screen:
@@ -109,19 +116,21 @@ js/v6-gamepad.js   gamepads: P1 / P2 roles, menu navigation, vibration
 js/v6-touch.js     phone + tablet controls (EASY / PRO)
 js/v6-coop.js      local co-op: P2, revive, shared camera, co-op operations
 js/v6-remote.js    remote controller: WebSocket driver for Player 2
+js/v10-power.js    v10 power grid: breakers, blackout blindness, alarm runners, emergency lights
 js/profiles.js     v5 local multi-profile manager
 js/main.js         bootstrap
 server.js          Node.js static server + WebSocket relay
 controller.html    web-based mobile touch controller for P2
 ```
-All modules attach to the global `BO` namespace and expansion packs extend the core by wrapping prototype methods, so new features can be added as drop-in scripts before `main.js`. The v6 packs must load in order (`v6-core` → `v6-gamepad` → `v6-touch` → `v6-coop` → `v6-remote`), after the v4 and v7 packs.
+All modules attach to the global `BO` namespace and expansion packs extend the core by wrapping prototype methods, so new features can be added as drop-in scripts before `main.js`. The v6 packs must load in order (`v6-core` → `v6-gamepad` → `v6-touch` → `v6-coop` → `v6-remote`), after the v4 and v7 packs. `v10-power.js` loads after `v8-blackout.js` and `v9-skills.js` (it uses the v8 render layers).
 
 ### Roadmap
 - [x] Touch controls for phones (Easy mode with aim-assist, Pro twin-stick mode)
 - [x] Local co-op (keyboard + gamepad) with dedicated co-op missions
 - [x] Gamepad support
+- [x] Power grid: circuit breakers, alarm panels and emergency lights (v10)
 
-All planned features have shipped in v6. Ideas and PRs welcome.
+Ideas and PRs welcome.
 
 ---
 
@@ -131,6 +140,7 @@ All planned features have shipped in v6. Ideas and PRs welcome.
 
 ### ویژگی‌ها
 - **تاریکی خودِ گیم‌پلی است**: نور چراغ‌قوه و نورپردازی پرتویی تعیین می‌کند چه چیزی را می‌بینی و چه کسی تو را می‌بیند.
+- **شبکه برق (جدید در v10)**: کلید برق یک اتاق را بزن تا تاریک شود و همه دشمن‌های داخلش کور شوند. اگر دیده شوی، ممکن است یک دشمن به سمت آژیر بدود: چراغ‌های قرمز اضطراری، هجوم همه دشمن‌ها و رسیدن نیروی کمکی.
 - **کمپین کامل و مأموریت‌های v7**: ۲۴ مأموریت در محیط‌ها و شرایط آب‌وهوایی گوناگون با مخفی‌کاری، هک، خطرات محیطی و باس‌ها.
 - **۳۶ سلاح**: از کلت و کمان تاکتیکی تا ریل‌گان، تفنگ هوشمند، پرتاب‌کننده خوشه‌ای و تفنگ انجمادی.
 - **دشمنان باهوش**: گشت‌زنی، بررسی صدا، دور زدن، نارنجک‌انداز و نفوذی.
@@ -165,6 +175,7 @@ npm install && npm start
 | غلت زدن | `Space` |
 | خشاب‌گذاری | `R` |
 | تعامل / هک / کار گذاشتن بمب / بلند کردن هم‌تیمی | نگه داشتن `E` |
+| کلید برق / خاموش کردن آژیر | زدن `E` / نگه داشتن `E` |
 | دویدن | `Shift` |
 | تعویض سلاح | `1` `2` یا چرخ موس |
 | توقف | `Esc` |
@@ -191,6 +202,10 @@ npm install && npm start
 - **حرفه‌ای**: دو آنالوگ. انگشت راست آنالوگ شناور نشانه‌گیری است و با بیش از نیمه کشیدن شلیک می‌کند. فقط کمک‌نشانه‌گیری سبک.
 - در هر دو حالت دکمه‌های غلت / خشاب / تعامل (نگه داشتن) / سلاح وجود دارد، با لمس خانه سلاح در HUD آن را برمی‌داری و با کشیدن آنالوگ حرکت تا لبه می‌دوی. حالت خودکار روی صفحه‌های لمسی روشن می‌شود.
 
+### شبکه برق
+- **کلید برق**: بعضی اتاق‌ها یک جعبه کلید زرد روی دیوار دارند (چراغ سبز یعنی برق وصل است). کنارش بایست و دکمه تعامل را بزن تا برق اتاق قطع شود. همه دشمن‌های داخل اتاق چند ثانیه کور و گیج می‌شوند (تلوتلو می‌خورند، شلیک نمی‌کنند و ردت را گم می‌کنند) و تا وقتی اتاق تاریک است فقط از نزدیک تو را می‌بینند و شلیکشان در تاریکی بی‌دقت است. دوباره بزن تا برق وصل شود.
+- **پنل آژیر**: بعضی اتاق‌ها یک پنل آژیر قرمز دارند. وقتی دشمنی تو را ببیند، ممکن است به جای جنگیدن به سمت نزدیک‌ترین پنل بدود (دنبال برچسب قرمز «آژیر!» باش). قبل از رسیدنش او را بکش یا برق اتاقش را قطع کن، وگرنه آژیر به صدا درمی‌آید: چراغ‌های قرمز اضطراری همه تاریکی‌ها را خنثی می‌کنند، دشمن‌های اطراف به سمتت هجوم می‌آورند و نیروی کمکی می‌رسد. برای خاموش کردن زودتر آژیر، دکمه تعامل را کنار یکی از پنل‌ها نگه دار.
+
 ### بازی دونفره محلی
 از منوی اصلی **دونفره** را انتخاب کن. دو مأمور روی یک صفحه بازی می‌کنند:
 - **بازیکن ۱** با کیبورد و موس (یا دسته اول اگر دو دسته وصل باشد) و **بازیکن ۲** با دسته بازی فیزیکی یا گوشی موبایل به عنوان دسته ریموت بی‌سیم (`/controller.html`).
@@ -210,7 +225,8 @@ npm install && npm start
 - [x] کنترل لمسی برای موبایل (حالت آسان با کمک‌نشانه‌گیری، حالت حرفه‌ای دو آنالوگ)
 - [x] بازی دونفره محلی (کیبورد + دسته) با مأموریت‌های مخصوص
 - [x] پشتیبانی از دسته بازی
+- [x] شبکه برق: کلید برق، پنل آژیر و چراغ‌های اضطراری (v10)
 
-همه موارد نقشه راه در v6 منتشر شدند. ایده‌ها و PRها خوش‌آمدند.
+ایده‌ها و PRها خوش‌آمدند.
 
 </div>
