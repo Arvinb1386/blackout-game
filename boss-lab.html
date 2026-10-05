@@ -659,17 +659,13 @@
   <script src="js/v7-world.js"></script>
   <script src="js/v7-arsenal.js"></script>
   <script src="js/v7-campaign.js"></script>
-  <script src="js/v6-core.js"></script>
-  <script src="js/v6-gamepad.js"></script>
-  <script src="js/v6-touch.js"></script>
-  <script src="js/v6-coop.js"></script>
-  <script src="js/v6-remote.js"></script>
   <script src="js/v8-blackout.js"></script>
   <script>(function(){const f=Element.prototype.insertBefore;Element.prototype.insertBefore=function(n,r){if(r&&r.parentNode!==this&&n?.dataset?.action==='v9skills')return r.parentNode.insertBefore(n,r);return f.call(this,n,r)}})();</script>
   <script src="js/v9-skills.js"></script>
   <script src="js/v10-power.js"></script>
   <script src="js/v11-tactics.js"></script>
   <script src="js/v12-enhanced-bosses.js"></script>
+  <script src="js/lab-bosses.js"></script>
   <script src="js/profiles.js"></script>
 
 <script>
@@ -1599,7 +1595,20 @@
     g.state = BO.Game.STATE.PLAYING;
     if (g.ui) g.ui.intro = null;
 
-    if (prefs.variant === 'classic' && BO.BossBase) {
+    // 'classic' keeps the original BO.BossBase body. Every other variant is
+    // served by js/lab-bosses.js, which supplies the per-tier bodies/abilities.
+    const LB = BO.LabBosses;
+    if (LB && prefs.variant !== 'classic') {
+      const made = LB.create(prefs.variant, g.level.bossSpawn.x, g.level.bossSpawn.y, g.level.arena);
+      if (made) {
+        const idx = g.enemies.indexOf(g.boss);
+        if (idx >= 0) g.enemies.splice(idx, 1);
+        g.boss = made;
+        g.enemies.push(g.boss);
+        LB.flags.freezeBoss = !!prefs.freezeBoss;
+        LB.flags.dummy = !!prefs.dummy;
+      }
+    } else if (prefs.variant === 'classic' && BO.BossBase) {
       const idx = g.enemies.indexOf(g.boss);
       if (idx >= 0) g.enemies.splice(idx, 1);
       g.boss = new BO.BossBase(g.level.bossSpawn.x, g.level.bossSpawn.y, g.level.arena, false);
