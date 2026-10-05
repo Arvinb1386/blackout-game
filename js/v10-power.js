@@ -2,11 +2,12 @@
  * BLACKOUT :: v10-power.js
  * Power grid expansion: wall-mounted circuit breakers and alarm panels.
  *
- *  - Some rooms get a CIRCUIT BREAKER. Flip it with USE ([E] / X) to kill the
- *    room's lights. Every hostile inside is blinded and disoriented for a few
- *    seconds (stumbling, no shooting, loses track of you), then stays
+ *  - EVERY room gets a CIRCUIT BREAKER (v13). Flip it with USE ([E] / X) to
+ *    kill the room's lights. Every hostile inside is blinded and disoriented
+ *    for a few seconds (stumbling, no shooting, loses track of you), then stays
  *    half-blind while the room is dark: short sight range, wild aim.
- *    Flip it again to restore power.
+ *    Flip it again to restore power. Rooms that start without power now have a
+ *    breaker too: flip it ON to light the room up.
  *  - Some rooms get an ALARM PANEL. A hostile that spots you may sprint to the
  *    nearest panel instead of fighting. If it finishes the hold, the alarm
  *    sounds for that SECTOR only: the panel's room plus every room within
@@ -23,11 +24,15 @@
   const U = BO.U, CFG = BO.CONFIG, V8 = BO.V8;
   if (!U || !CFG || !BO.Game || !BO.AISystem || !BO.Renderer || !V8) return;
   const TILE = CFG.TILE, T = BO.TILE_TYPE, S = BO.ENEMY_STATE;
+  // v13 fix: maybeRun() used an undeclared `C`, which threw a ReferenceError on
+  // every spot and silently disabled alarm runners.
+  const C = BO.Collision;
   const G = BO.Game.prototype, AI = BO.AISystem.prototype, R = BO.Renderer.prototype;
 
   /* ------------------------------ Tuning ------------------------------ */
   const CONF = {
-    breakerChance: 0.5, minBreakers: 2, maxBreakers: 6,   // per level
+    breakerEveryRoom: true,    // v13: one breaker per room (start, extraction and arena included)
+    breakerChance: 0.5, minBreakers: 2, maxBreakers: 6,   // only used when breakerEveryRoom is false
     alarmChance: 0.35, minAlarms: 1, maxAlarms: 4,
     useRange: 62, flipCooldown: 0.8, flipNoise: 200,
     daze: [3.5, 5.5],          // seconds of disorientation right after the cut
@@ -110,26 +115,34 @@
   }
 
   /* ----------------------------- Level setup ---------------------------- */
-  /** Floor tiles hugging a wall, where a fixture can be mounted. */
-  function wallSlots(map, r, taken) {
+  /**
+   * Floor tiles hugging a wall, where a fixture can be mounted.
+   * `relaxed` is the v13 fallback for cramped rooms: it accepts the room's
+   * corner tiles, ignores the 3x3 spacing reservation and the free-tile-behind
+   * check, so every room can still get its breaker.
+   */
+  function wallSlots(map, r, taken, relaxed) {
     const out = [];
-    const ok = (tx, ty) => map.inBounds(tx, ty) && map.tile(tx, ty) === T.FLOOR && !map.propAt(tx, ty) && !taken.has(map.idx(tx, ty));
+    const ok = (tx, ty) => map.inBounds(tx, ty) && map.tile(tx, ty) === T.FLOOR && !map.propAt(tx, ty) && (relaxed || !taken.has(map.idx(tx, ty)));
+    const inner = (tx, ty) => relaxed ? (map.inBounds(tx, ty) && map.tile(tx, ty) !== T.SOLID) : ok(tx, ty);
     const wall = (tx, ty) => map.inBounds(tx, ty) && map.tile(tx, ty) === T.SOLID;
-    for (let x = r.x + 1; x < r.x + r.w - 1; x++) {
+    const x0 = relaxed ? r.x : r.x + 1, x1 = relaxed ? r.x + r.w : r.x + r.w - 1;
+    const y0 = relaxed ? r.y : r.y + 1, y1 = relaxed ? r.y + r.h : r.y + r.h - 1;
+    for (let x = x0; x < x1; x++) {
       const b = r.y + r.h - 1;
-      if (ok(x, r.y) && wall(x, r.y - 1) && ok(x, r.y + 1)) out.push({ tx: x, ty: r.y, nx: 0, ny: -1 });
-      if (ok(x, b) && wall(x, b + 1) && ok(x, b - 1)) out.push({ tx: x, ty: b, nx: 0, ny: 1 });
+      if (ok(x, r.y) && wall(x, r.y - 1) && inner(x, r.y + 1)) out.push({ tx: x, ty: r.y, nx: 0, ny: -1 });
+      if (ok(x, b) && wall(x, b + 1) && inner(x, b - 1)) out.push({ tx: x, ty: b, nx: 0, ny: 1 });
     }
-    for (let y = r.y + 1; y < r.y + r.h - 1; y++) {
+    for (let y = y0; y < y1; y++) {
       const e = r.x + r.w - 1;
-      if (ok(r.x, y) && wall(r.x - 1, y) && ok(r.x + 1, y)) out.push({ tx: r.x, ty: y, nx: -1, ny: 0 });
-      if (ok(e, y) && wall(e + 1, y) && ok(e - 1, y)) out.push({ tx: e, ty: y, nx: 1, ny: 0 });
+      if (ok(r.x, y) && wall(r.x - 1, y) && inner(r.x + 1, y)) out.push({ tx: r.x, ty: y, nx: -1, ny: 0 });
+      if (ok(e, y) && wall(e + 1, y) && inner(e - 1, y)) out.push({ tx: e, ty: y, nx: 1, ny: 0 });
     }
     return out;
   }
 
-  function mount(map, r, kind, list, taken) {
-    const slots = wallSlots(map, r, taken);
+  function mount(map, r, kind, list, taken, relaxed) {
+    const slots = wallSlots(map, r, taken, relaxed);
     if (!slots.length) return false;
     const q = slots[Math.floor(Math.random() * slots.length)];
     for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (map.inBounds(q.tx + dx, q.ty + dy)) taken.add(map.idx(q.tx + dx, q.ty + dy));
@@ -144,6 +157,29 @@
     return true;
   }
 
+  /**
+   * v13: a room that was generated without power gets dormant ceiling lamps
+   * and starts with its breaker OFF. Flipping it ON lights the room; its faint
+   * emergency strobe only runs while the power is out.
+   */
+  function wireDarkRoom(g, s, r) {
+    const lv = g.level;
+    s.base[r.index] = 1;
+    s.off[r.index] = 1;
+    lv.lamps.forEach(lp => { if (lp.v10room === r.index && lp.pulse && !lp.v10e) lp.v10inv = true; });
+    const cols = (lv.theme && lv.theme.lamps && lv.theme.lamps.length) ? lv.theme.lamps : ['#ffe2a8'];
+    const count = r.w * r.h > 90 ? 2 : 1;
+    for (let k = 0; k < count; k++) {
+      const lx = count === 1 ? r.cx : (k === 0 ? r.x + r.w * 0.28 : r.x + r.w * 0.72);
+      lv.lamps.push({
+        x: lx * TILE + TILE / 2, y: r.cy * TILE + TILE / 2,
+        radius: U.clamp(Math.max(r.w, r.h) * TILE * (count === 1 ? 0.62 : 0.48), 210, 460),
+        color: cols[Math.floor(Math.random() * cols.length)], flicker: Math.random() < 0.3 ? U.rand(0.5, 1) : 0,
+        pulse: false, intensity: U.rand(0.75, 0.95), phase: Math.random() * 10, v10room: r.index, v13lamp: true
+      });
+    }
+  }
+
   let hinted = false;
   function setup(g) {
     const lv = g.level, map = g.map;
@@ -153,16 +189,27 @@
       breakers: [], panels: [], alarm: 0, alarms: 0, siren: 0, runner: null, near: []
     };
     const taken = new Set();
-    const rooms = shuffle(lv.rooms.filter(r => r.tag === 'room'));
-    rooms.forEach((r, i) => {
-      if (s.breakers.length < CONF.maxBreakers && (i < CONF.minBreakers || Math.random() < CONF.breakerChance)) mount(map, r, 'breaker', s.breakers, taken);
-    });
-    shuffle(rooms).forEach((r, i) => {
+    if (CONF.breakerEveryRoom) {
+      // Every room, whatever its tag, gets exactly one breaker. Strict slots
+      // first; cramped rooms fall back to the relaxed slot search.
+      shuffle(lv.rooms.slice()).forEach(r => {
+        if (!mount(map, r, 'breaker', s.breakers, taken)) mount(map, r, 'breaker', s.breakers, taken, true);
+      });
+    } else {
+      shuffle(lv.rooms.filter(r => r.tag === 'room')).forEach((r, i) => {
+        if (s.breakers.length < CONF.maxBreakers && (i < CONF.minBreakers || Math.random() < CONF.breakerChance)) mount(map, r, 'breaker', s.breakers, taken);
+      });
+    }
+    shuffle(lv.rooms.filter(r => r.tag === 'room')).forEach((r, i) => {
       if (s.panels.length < CONF.maxAlarms && (i < CONF.minAlarms || Math.random() < CONF.alarmChance)) mount(map, r, 'alarm', s.panels, taken);
     });
     // Tag lamps + trim strips with their room so a breaker can switch them off.
     lv.lamps.forEach(lp => { lp.v10room = lp.door ? -1 : roomAt(g, lp.x, lp.y); });
     (lv.strips || []).forEach(sp => { sp.v10room = roomAt(g, (sp.x0 + sp.x1) / 2, sp.y0); });
+    // Unpowered rooms: breaker starts OFF and can bring the lights up.
+    const wired = new Uint8Array(lv.rooms.length);
+    s.breakers.forEach(b => { wired[b.room] = 1; });
+    lv.rooms.forEach(r => { if (!s.base[r.index] && wired[r.index]) wireDarkRoom(g, s, r); });
     // Red emergency lamps, dormant until the alarm trips in their zone.
     lv.rooms.forEach(r => {
       if (r.tag === 'arena') return;
@@ -171,6 +218,7 @@
         color: '#ff2d55', flicker: 0, pulse: true, intensity: 0.75, phase: Math.random() * 6, v10e: true, v10room: r.index
       });
     });
+    applyLit(g);
     if (s.breakers.length && !hinted) { hinted = true; g.ui.schedule(7, () => g.ui.notify(BO.t('pw.hint'), '#ffd34d', 4.5)); }
   }
 
@@ -226,7 +274,7 @@
       const d = U.dist(e.x, e.y, pl.x, pl.y);
       const viewRange = (e.def && e.def.view) || 500;
       if (d > viewRange) return false;
-      if (!C.lineOfSight(g.map, e.x, e.y, pl.x, pl.y, BO.COLLIDE.SIGHT)) return false;
+      if (C && C.lineOfSight && !C.lineOfSight(g.map, e.x, e.y, pl.x, pl.y, BO.COLLIDE.SIGHT)) return false;
       const a = Math.atan2(pl.y - e.y, pl.x - e.x);
       const fov = (e.def && e.def.fov) || 1.8;
       if (Math.abs(U.angleDiff(e.angle, a)) > fov / 2) return false;
@@ -471,6 +519,8 @@
     if (lp.v10room === undefined) return oldLamp.apply(this, arguments);
     const s = st(BO.game);
     if (lp.v10e) return zoned(s, lp.v10room) ? U.clamp(0.5 + Math.sin(time * 5 + lp.phase) * 0.35, 0, 1) : 0;
+    // v13: the emergency strobe of an unpowered room only runs while its power is out.
+    if (lp.v10inv) return (s && lp.v10room >= 0 && s.off[lp.v10room]) ? oldLamp.apply(this, arguments) : 0;
     if (s && lp.v10room >= 0 && s.off[lp.v10room]) return 0;
     return oldLamp.apply(this, arguments);
   };
@@ -599,7 +649,7 @@
   });
 
   BO.I18N.extend('en', {
-    'pw.hint': 'TIP: USE A BREAKER [E] TO BLACK OUT A ROOM. STOP ANY HOSTILE RUNNING FOR AN ALARM.',
+    'pw.hint': 'TIP: EVERY ROOM HAS A BREAKER. PRESS [E] TO CUT OR RESTORE ITS POWER. STOP ANY HOSTILE RUNNING FOR AN ALARM.',
     'pw.cut': 'POWER CUT // HOSTILES BLINDED', 'pw.restored': 'POWER RESTORED',
     'pw.overridden': 'EMERGENCY LIGHTS OVERRIDE THE BLACKOUT',
     'pw.runner': 'HOSTILE RUNNING FOR THE ALARM. STOP THEM!', 'pw.runnerTag': 'ALARM!',
@@ -608,7 +658,7 @@
     'pw.promptOff': '[E] CUT POWER', 'pw.promptOn': '[E] RESTORE POWER', 'pw.promptSilence': 'HOLD [E] SILENCE ALARM'
   });
   BO.I18N.extend('fa', {
-    'pw.hint': 'نکته: با [E] کلید برق را بزن تا اتاق تاریک شود. جلوی دشمنی که سمت آژیر می‌دود را بگیر.',
+    'pw.hint': 'نکته: هر اتاق یک کلید برق دارد. با [E] برق اتاق را قطع یا وصل کن. جلوی دشمنی که سمت آژیر می‌دود را بگیر.',
     'pw.cut': 'برق قطع شد // دشمن‌ها کور شدند', 'pw.restored': 'برق وصل شد',
     'pw.overridden': 'چراغ‌های اضطراری تاریکی را خنثی کردند',
     'pw.runner': 'یک دشمن به سمت آژیر می‌دود. جلویش را بگیر!', 'pw.runnerTag': 'آژیر!',
@@ -617,5 +667,5 @@
     'pw.promptOff': '[E] قطع برق', 'pw.promptOn': '[E] وصل برق', 'pw.promptSilence': '[E] را نگه دار: خاموش کردن آژیر'
   });
 
-  BO.V10 = { CONF, state: st, dark, setPower, triggerAlarm, silence, inZone };
+  BO.V10 = { CONF, state: st, dark, setPower, triggerAlarm, silence, inZone, roomAt };
 })(window.BO);

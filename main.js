@@ -5,6 +5,12 @@ const fs = require('fs');
 const { autoUpdater } = require('electron-updater');
 const { startServer, server } = require('./server');
 
+// Linux Wayland/Hyprland compatibility: use in-process GPU to retain full hardware
+// acceleration without out-of-process Vulkan swapchain failure.
+if (process.platform === 'linux') {
+  app.commandLine.appendSwitch('in-process-gpu');
+}
+
 // Prevent multiple instances
 const gotLock = app.requestSingleInstanceLock();
 if (!gotLock) {

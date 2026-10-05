@@ -1263,12 +1263,12 @@
     m18: { tier: 7, look: 'forge', title: 'FORGE TITAN', epithet: 'Molten Colossus', fa: 'تایتان کوره: پشت سرش گدازه جا می‌مونه، بمب ماگما پرت می‌کنه که به اخگر تبدیل میشه.', r: 46,
            pal: { glow: '#ff6a1a', orb: '#ff7a2a' },
            sigs: ['eruption'], pools: [null, ['eruption', 'fan', 'mines'], ['eruption', 'charge', 'mines', 'mortar'], ['eruption', 'charge', 'nova', 'mines', 'summon']] },
-    m23: { tier: 8, look: 'wraith', title: 'OSSUARY WRAITH', epithet: 'Bone Choir', fa: 'شبح استخوان‌دان: کلون‌های شبحی می‌سازه که دورت می‌چرخن و شلیک می‌کنن + ارواح تعقیب‌کننده.', r: 38,
-           pal: { glow: '#5dffa0', orb: '#9dffb0' },
-           sigs: ['phantoms', 'souls'], pools: [null, ['souls', 'blink', 'fan'], ['phantoms', 'souls', 'blink', 'spiral'], ['phantoms', 'souls', 'blink', 'cross', 'snipe']] },
-    c3:  { tier: 9, look: 'binary', title: 'TWIN-CORE WARDEN', epithet: 'Binary Star', fa: 'ستاره دوتایی: دو هسته دور هم می‌چرخن، شلاق برقی بینشون کل آرنا رو جارو می‌کنه.', r: 40,
+    c3:  { tier: 8, look: 'binary', title: 'TWIN-CORE WARDEN', epithet: 'Binary Star', fa: 'ستاره دوتایی: دو هسته دور هم می‌چرخن، شلاق برقی بینشون کل آرنا رو جارو می‌کنه.', r: 40,
            pal: { glow: '#7fe3ff', orb: '#ff6b81' },
            sigs: ['lash', 'polarity'], pools: [null, ['polarity', 'cross', 'lash'], ['lash', 'polarity', 'cross', 'mortar'], ['lash', 'polarity', 'nova', 'charge', 'summon']] },
+    m23: { tier: 9, look: 'wraith', title: 'OSSUARY WRAITH', epithet: 'Bone Choir', fa: 'شبح استخوان‌دان: کلون‌های شبحی می‌سازه که دورت می‌چرخن و شلیک می‌کنن + ارواح تعقیب‌کننده.', r: 38,
+           pal: { glow: '#5dffa0', orb: '#9dffb0' },
+           sigs: ['phantoms', 'souls'], pools: [null, ['souls', 'blink', 'fan'], ['phantoms', 'souls', 'blink', 'spiral'], ['phantoms', 'souls', 'blink', 'cross', 'snipe']] },
     m24: { tier: 10, look: 'tempest', title: 'TEMPEST WARDEN MK-II', epithet: 'Storm Sovereign', fa: 'فرمانروای طوفان: صاعقه‌ی دائمی، گردبادهای شکارچی و رعد زنجیره‌ای. سخت‌ترین باس.', r: 44,
            pal: { glow: '#7fd4ff', orb: '#bfefff' },
            sigs: ['chain', 'tornado'], pools: [null, ['chain', 'fan', 'snipe', 'spiral'], ['chain', 'tornado', 'cross', 'blink', 'mines'], ['chain', 'tornado', 'nova', 'blink', 'spiral', 'summon']] }
@@ -1293,7 +1293,10 @@
   class LabBoss extends Parent {
     constructor(x, y, arena, mk2, key) {
       super(x, y, arena, mk2);
-      const id = key || this.v11id || 'm3';
+      const g = BO.game;
+      const mId = (g && g.mission && g.mission.id) || this.v11id;
+      let id = key || (mId === 'm19' ? 'c3' : mId) || 'm3';
+      if (id === 'm19') id = 'c3';
       const def = ROSTER[id] || ROSTER.m3;
       this.isLabBoss = true;
       this.lab = def;
@@ -1307,6 +1310,7 @@
         this.v11.hp = this.labS.hp;
         this.v11.pools = def.pools.map(p => (p ? p.slice() : p));
         this.v11.tier = def.tier;
+        this.v11.name = def.look;
       }
       this.maxHp = Math.round(6500 * this.labS.hp);
       this.hp = this.maxHp;
@@ -1444,20 +1448,47 @@
 
   /** Builds the lab boss for a roster key (or null for unknown keys). */
   LB.create = function (key, x, y, arena) {
-    if (!ROSTER[key]) return null;
-    return new LabBoss(x, y, arena, key === 'm24', key);
+    const k = key === 'm19' ? 'c3' : key;
+    if (!ROSTER[k]) return null;
+    return new LabBoss(x, y, arena, k === 'm24', k);
   };
   LB.LabBoss = LabBoss;
+  BO.Boss = LabBoss;
   LB.describe = function (key) {
-    const d = ROSTER[key];
+    const k = key === 'm19' ? 'c3' : key;
+    const d = ROSTER[k];
     if (!d) return null;
     const s = tierScale(d.tier);
-    return { key, tier: d.tier, title: d.title, epithet: d.epithet, fa: d.fa, color: d.pal.glow, hp: Math.round(6500 * s.hp), scale: s,
+    return { key: k, tier: d.tier, title: d.title, epithet: d.epithet, fa: d.fa, color: d.pal.glow, hp: Math.round(6500 * s.hp), scale: s,
       signatures: d.sigs.map(n => ({ name: n, label: SIG[n].label, color: SIG[n].color })) };
   };
 
   if (BO.I18N && BO.I18N.extend) {
-    BO.I18N.extend('en', { 'lab.boss.tier': 'TIER' });
-    BO.I18N.extend('fa', { 'lab.boss.tier': 'رده' });
+    BO.I18N.extend('en', {
+      'lab.boss.tier': 'TIER',
+      'boss.v11.sentinel': 'THE WARDEN // SENTINEL EYE',
+      'boss.v11.ram': 'IRON WARDEN // RAM',
+      'boss.v11.crawler': 'SIEGE WARDEN // CRAWLER',
+      'boss.v11.horizon': 'VORTEX WARDEN // EVENT HORIZON',
+      'boss.v11.stalker': 'HUNTER WARDEN // STALKER',
+      'boss.v11.sovereign': 'WARDEN PRIME // SOVEREIGN',
+      'boss.v11.forge': 'FORGE TITAN',
+      'boss.v11.binary': 'TWIN-CORE WARDEN // BINARY STAR',
+      'boss.v11.wraith': 'OSSUARY WRAITH',
+      'boss.v11.tempest': 'TEMPEST WARDEN MK-II'
+    });
+    BO.I18N.extend('fa', {
+      'lab.boss.tier': 'رده',
+      'boss.v11.sentinel': 'چشم نگهبان',
+      'boss.v11.ram': 'قوچ آهنین',
+      'boss.v11.crawler': 'نگهبان محاصره',
+      'boss.v11.horizon': 'نگهبان افق رویداد',
+      'boss.v11.stalker': 'نگهبان شکارچی',
+      'boss.v11.sovereign': 'فرمانروا',
+      'boss.v11.forge': 'تایتان کوره',
+      'boss.v11.binary': 'ستاره دوتایی',
+      'boss.v11.wraith': 'شبح استخوان‌دان',
+      'boss.v11.tempest': 'فرمانروای طوفان نسخه ۲'
+    });
   }
 })(window.BO);

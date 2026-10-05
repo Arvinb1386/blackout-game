@@ -15,12 +15,22 @@
     return Promise.race([Promise.all(loads).catch(() => null), new Promise(r => setTimeout(r, timeoutMs))]);
   }
 
+  function lockKeyboard() {
+    if (navigator.keyboard && typeof navigator.keyboard.lock === 'function') {
+      navigator.keyboard.lock(['Escape']).catch(() => {});
+    }
+  }
+
   function requestFullscreen() {
     const el = document.documentElement;
     if (!el || !el.requestFullscreen) return;
     const go = () => {
       const p = el.requestFullscreen({ navigationUI: 'hide' });
-      if (p && p.catch) p.catch(() => { try { el.requestFullscreen(); } catch (_) {} });
+      if (p && p.then) {
+        p.then(lockKeyboard).catch(() => { try { el.requestFullscreen(); lockKeyboard(); } catch (_) {} });
+      } else {
+        lockKeyboard();
+      }
     };
     // Fire immediately (works when the browser allows it), and otherwise retry
     // on the first real user gesture.
@@ -56,10 +66,26 @@
     document.body.classList.add('ready');
 
     let resizeQueued = false;
+    const updateFullscreenClass = () => {
+      const isFs = !!(
+        document.fullscreenElement ||
+        document.webkitFullscreenElement ||
+        (window.matchMedia && window.matchMedia('(display-mode: fullscreen)').matches) ||
+        (window.screen && (window.innerWidth >= window.screen.width - 4 && window.innerHeight >= window.screen.height - 4))
+      );
+      document.documentElement.classList.toggle('fullscreen', isFs);
+      if (document.body) document.body.classList.toggle('fullscreen', isFs);
+    };
+    updateFullscreenClass();
+
     const queueResize = () => {
       if (resizeQueued) return;
       resizeQueued = true;
-      requestAnimationFrame(() => { resizeQueued = false; game.onResize(); });
+      requestAnimationFrame(() => {
+        resizeQueued = false;
+        updateFullscreenClass();
+        game.onResize();
+      });
     };
     window.addEventListener('resize', queueResize);
     // Entering/leaving fullscreen and browser UI changes alter the viewport
@@ -68,11 +94,18 @@
       window.visualViewport.addEventListener('resize', queueResize);
       window.visualViewport.addEventListener('scroll', queueResize);
     }
-    document.addEventListener('fullscreenchange', queueResize);
-    if (window.screen && screen.orientation) screen.orientation.addEventListener('change', queueResize);
     document.addEventListener('fullscreenchange', () => {
+      updateFullscreenClass();
+      queueResize();
+      lockKeyboard();
       if (ui.current === 'settings') ui.renderSettings();
     });
+    document.addEventListener('webkitfullscreenchange', () => {
+      updateFullscreenClass();
+      queueResize();
+      lockKeyboard();
+    });
+    if (window.screen && screen.orientation) screen.orientation.addEventListener('change', queueResize);
 
     const unlockAudio = () => { game.audio.unlock(); };
     window.addEventListener('pointerdown', unlockAudio);
@@ -89,6 +122,10 @@
     BO.events.on('input:key', (code) => {
       if (code !== 'Escape') return;
       const S = BO.Game.STATE;
+      if (game.state === S.PLAYING) {
+        game.pause();
+        return;
+      }
       if (game.state === S.PAUSED) {
         if (ui.current === 'settings') ui.showPause();
         else game.resume();

@@ -164,7 +164,7 @@ assert('edit: non-numeric rejected, default kept', BO.WEAPONS.shotgun.fireRate =
 assert('edit: negative mag clamped to 1', BO.WEAPONS.lmg.mag === 1, BO.WEAPONS.lmg.mag);
 assert('edit: errors surfaced', BO.WeaponConfig.CONFIG.errors.length >= 2, BO.WeaponConfig.CONFIG.errors.join(' | '));
 assert('edit: upgradeFactors 20% applied live',
-  Math.abs(BO.Weapons.computeStats(BO.WEAPONS.ar, { damage: 5 }).damage - 50) < 1e-9,
+  Math.abs(BO.Weapons.computeStats(BO.WEAPONS.ar, { damage: 5 }).damage - (BO.WEAPONS.ar.damage * 2)) < 1e-9,
   BO.Weapons.computeStats(BO.WEAPONS.ar, { damage: 5 }).damage);
 assert('edit: WeaponInstance reads edited stats', new BO.WeaponInstance(BO.WEAPONS.pistol, {}).stats.damage === 999);
 assert('edit: displayStats works on edited def', BO.Weapons.displayStats(BO.WEAPONS.pistol, {}).damage > 0);

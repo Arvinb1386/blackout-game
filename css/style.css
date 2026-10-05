@@ -289,6 +289,88 @@ html[lang="fa"] .big-title { font-family: var(--fa); font-size: clamp(40px, 5vw,
   .next-op { padding-top: 12px; }
 }
 
+/* ------------------------ Fullscreen Menu Polish ------------------------ */
+:fullscreen .menu-col,
+:-webkit-full-screen .menu-col,
+html.fullscreen .menu-col,
+body.fullscreen .menu-col {
+  padding-top: 3.5vh;
+  padding-bottom: 24px;
+}
+
+:fullscreen .title-block,
+:-webkit-full-screen .title-block,
+html.fullscreen .title-block,
+body.fullscreen .title-block {
+  margin-bottom: 2.2vh;
+}
+
+:fullscreen .menu-nav,
+:-webkit-full-screen .menu-nav,
+html.fullscreen .menu-nav,
+body.fullscreen .menu-nav {
+  gap: 1px;
+}
+
+:fullscreen .menu-nav .nav,
+:-webkit-full-screen .menu-nav .nav,
+html.fullscreen .menu-nav .nav,
+body.fullscreen .menu-nav .nav {
+  font-size: 22px;
+  padding: 6px 16px;
+}
+
+:fullscreen html[lang="fa"] .menu-nav .nav,
+:-webkit-full-screen html[lang="fa"] .menu-nav .nav,
+html[lang="fa"].fullscreen .menu-nav .nav,
+html[lang="fa"] body.fullscreen .menu-nav .nav {
+  font-size: 19px;
+  padding: 5px 16px;
+}
+
+:fullscreen .menu-nav .nav.primary-nav,
+:-webkit-full-screen .menu-nav .nav.primary-nav,
+html.fullscreen .menu-nav .nav.primary-nav,
+body.fullscreen .menu-nav .nav.primary-nav {
+  font-size: 32px;
+  padding: 8px 16px;
+}
+
+:fullscreen html[lang="fa"] .menu-nav .nav.primary-nav,
+:-webkit-full-screen html[lang="fa"] .menu-nav .nav.primary-nav,
+html[lang="fa"].fullscreen .menu-nav .nav.primary-nav,
+html[lang="fa"] body.fullscreen .menu-nav .nav.primary-nav {
+  font-size: 25px;
+  padding: 6px 16px;
+}
+
+:fullscreen .next-op,
+:-webkit-full-screen .next-op,
+html.fullscreen .next-op,
+body.fullscreen .next-op {
+  padding-top: 12px;
+}
+
+:fullscreen .profile,
+:-webkit-full-screen .profile,
+html.fullscreen .profile,
+body.fullscreen .profile {
+  margin-top: 10px;
+  padding-top: 12px;
+}
+
+@media (display-mode: fullscreen) {
+  .menu-col { padding-top: 3.5vh; padding-bottom: 24px; }
+  .title-block { margin-bottom: 2.2vh; }
+  .menu-nav { gap: 1px; }
+  .menu-nav .nav { font-size: 22px; padding: 6px 16px; }
+  html[lang="fa"] .menu-nav .nav { font-size: 19px; padding: 5px 16px; }
+  .menu-nav .nav.primary-nav { font-size: 32px; padding: 8px 16px; }
+  html[lang="fa"] .menu-nav .nav.primary-nav { font-size: 25px; padding: 6px 16px; }
+  .next-op { padding-top: 12px; }
+  .profile { margin-top: 10px; padding-top: 12px; }
+}
+
 /* ---------------------------- Update Modal ---------------------------- */
 .update-box {
   width: min(500px, 92vw);

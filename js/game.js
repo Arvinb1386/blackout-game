@@ -350,6 +350,7 @@
     _updateVisibility() {
       const p = this.player, map = this.map;
       const half = CFG.FLASHLIGHT_FOV / 2 + 0.05;
+      const projs = this.projectiles && this.projectiles.pool && this.projectiles.pool.items;
       for (let i = 0; i < this.enemies.length; i++) {
         const e = this.enemies[i];
         if (e.dead) continue;
@@ -358,7 +359,20 @@
         if (d > 1250) { e.visible = false; continue; }
         const inCone = d < CFG.FLASHLIGHT_RANGE && Math.abs(U.angleDiff(p.angle, Math.atan2(e.y - p.y, e.x - p.x))) < half;
         const room = map.roomId[map.idx(Math.floor(e.x / TILE), Math.floor(e.y / TILE))];
-        const lit = inCone || d < CFG.AMBIENT_LIGHT_RADIUS + e.r || e.muzzle > 0 || (room >= 0 && this.level.roomLit[room]) || e.engaged;
+
+        let inBulletLight = false;
+        if (projs) {
+          for (let j = 0; j < projs.length; j++) {
+            const pr = projs[j];
+            if (!pr.active || pr.owner !== 0) continue;
+            if (U.dist(pr.x, pr.y, e.x, e.y) < 30 + e.r) {
+              inBulletLight = true;
+              break;
+            }
+          }
+        }
+
+        const lit = inCone || d < CFG.AMBIENT_LIGHT_RADIUS + e.r || e.muzzle > 0 || (room >= 0 && this.level.roomLit[room]) || e.engaged || inBulletLight;
         e.visible = lit && BO.Collision.lineOfSight(map, p.x, p.y, e.x, e.y, BO.COLLIDE.SIGHT);
       }
     }

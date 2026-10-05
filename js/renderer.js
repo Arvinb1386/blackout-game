@@ -448,6 +448,35 @@
         l.globalAlpha = U.clamp(lt.life / lt.max, 0, 1) * lt.intensity;
         l.drawImage(S, lt.x - lt.radius, lt.y - lt.radius, lt.radius * 2, lt.radius * 2);
       }
+      // Projectiles subtle lighting: when in the dark, bullets cast a small subtle light
+      const projs = game.projectiles && game.projectiles.pool && game.projectiles.pool.items;
+      if (projs) {
+        for (let i = 0; i < projs.length; i++) {
+          const pr = projs[i];
+          if (!pr.active || pr.owner !== 0) continue;
+          if (pr.x < rect.x0 - 80 || pr.x > rect.x1 + 80 || pr.y < rect.y0 - 80 || pr.y > rect.y1 + 80) continue;
+
+          let r = 26;
+          let alpha = 0.45;
+          if (pr.kind === 1 || pr.kind === 2) {
+            r = 38;
+            alpha = 0.6;
+          } else if (pr.kind === 3 || pr.width >= 3 || pr.explosive > 0) {
+            r = 34;
+            alpha = 0.5;
+          }
+
+          l.globalAlpha = alpha;
+          l.drawImage(S, pr.x - r, pr.y - r, r * 2, r * 2);
+
+          const tail = Math.min(pr.traveled, pr.speed * 0.025);
+          if (tail > 16) {
+            const tr = r * 0.65;
+            l.globalAlpha = alpha * 0.4;
+            l.drawImage(S, (pr.x - pr.dirX * (tail * 0.5)) - tr, (pr.y - pr.dirY * (tail * 0.5)) - tr, tr * 2, tr * 2);
+          }
+        }
+      }
       if (game.extractionOpen) {
         const ex = game.level.extraction;
         l.globalAlpha = 0.6 + Math.sin(time * 3) * 0.15;

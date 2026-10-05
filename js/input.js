@@ -6,7 +6,7 @@
  * ========================================================================= */
 'use strict';
 (function (BO) {
-  const GAME_KEYS = ['Tab', 'Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'];
+  const GAME_KEYS = ['Escape', 'Tab', 'Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'];
 
   class InputManager {
     constructor(canvas) {
@@ -28,7 +28,9 @@
 
     _bind() {
       window.addEventListener('keydown', (e) => {
-        if (this.captureGameKeys && GAME_KEYS.indexOf(e.code) >= 0) e.preventDefault();
+        if ((this.captureGameKeys || (document.fullscreenElement && e.code === 'Escape')) && GAME_KEYS.indexOf(e.code) >= 0) {
+          e.preventDefault();
+        }
         if (!this.keys.has(e.code)) this.pressed.add(e.code);
         this.keys.add(e.code);
         BO.events.emit('input:key', e.code);

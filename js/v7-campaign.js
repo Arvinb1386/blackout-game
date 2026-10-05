@@ -70,8 +70,8 @@
       enemies: { count: 32, types: { grunt: 0.26, sniper: 0.16, shield: 0.14, drone: 0.16, rusher: 0.14, breacher: 0.14 } },
       diff: { hp: 2.6, damage: 1.85, accuracy: 1.36 },
       pickups: { health: 13, ammo: 14, armor: 8, credits: 13, power: 7 }, weaponPickups: ['railgun', 'seeker', 'whisper'],
-      objectives: [{ type: 'collect', count: 3 }, { type: 'activate', count: 2 }, { type: 'destroy', target: 'core', count: 2 }, { type: 'extract' }],
-      intel: 3, terminals: 2, cores: 2, rewards: { credits: 7200, xp: 6600 }, parTime: 1080
+      objectives: [{ type: 'collect', count: 3 }, { type: 'activate', count: 2 }, { type: 'destroy', target: 'core', count: 2 }, { type: 'boss' }, { type: 'extract' }],
+      intel: 3, terminals: 2, cores: 2, boss: { mk2: false }, rewards: { credits: 7200, xp: 6600 }, parTime: 1080
     },
     {
       id: 'm20', nameKey: 'm20.name', descKey: 'm20.desc', difficulty: 'extreme', theme: 'fallout', seed: 2020,
@@ -141,7 +141,7 @@
     'm16.name': 'GREEN HELL', 'm16.desc': 'A jungle research station has gone dark under the canopy. Clear every hostile, then torch their bio-caches. The bog water eats boots.',
     'm17.name': 'ABYSSAL LAB', 'm17.desc': 'A pressure lab four hundred metres under the sea. Reroute three pumps and hold out while the hull groans and the drones swarm.',
     'm18.name': 'MAGMA FORGE', 'm18.desc': 'They forge new Warden shells inside a living volcano. Crack the three furnace cores and melt whatever crawls out.',
-    'm19.name': 'ORBITAL DECAY', 'm19.desc': 'The relay satellite is falling. Recover the flight data, seize the controls and blow its cores before it burns up with you on board.',
+    'm19.name': 'ORBITAL DECAY', 'm19.desc': 'The relay satellite is falling. Recover the flight data, seize the controls and eliminate the Twin-Core Warden before it burns up in orbit.',
     'm20.name': 'RED ZONE', 'm20.desc': 'An irradiated ghost city that nobody was supposed to enter again. Find the black boxes and leave nothing standing. Do not linger in the green.',
     'm21.name': 'NEON SHRINE', 'm21.desc': 'A mountain shrine wired with neon and old seals. Light three lantern relays and survive the night as they come up the steps.',
     'm22.name': 'UNDERCITY', 'm22.desc': 'The grid\'s couriers move through the sewers. Burn five supply caches, grab their routes and get out before the tide comes in.',
@@ -154,7 +154,7 @@
     'm16.name': 'دوزخ سبز', 'm16.desc': 'یک ایستگاه تحقیقاتی زیر سایه جنگل خاموش شده. همه دشمن‌ها را پاک کن و انبارهای زیستی‌شان را بسوزان. آب مرداب چکمه را می‌خورد.',
     'm17.name': 'آزمایشگاه ژرفا', 'm17.desc': 'آزمایشگاهی چهارصد متر زیر دریا. سه پمپ را دوباره راه بینداز و تا وقتی بدنه ناله می‌کند و پهپادها هجوم می‌آورند، دوام بیاور.',
     'm18.name': 'کوره گدازه', 'm18.desc': 'آن‌ها پوسته‌های تازه نگهبان را درون یک آتشفشان زنده می‌سازند. سه هسته کوره را بشکن و هر چه بیرون خزید را ذوب کن.',
-    'm19.name': 'سقوط مداری', 'm19.desc': 'ماهواره رله در حال سقوط است. داده‌های پرواز را بردار، کنترل را بگیر و هسته‌هایش را منفجر کن پیش از آن‌که با تو در جو بسوزد.',
+    'm19.name': 'سقوط مداری', 'm19.desc': 'ماهواره رله در حال سقوط است. داده‌های پرواز را بردار، پایانه‌ها را بگیر و نگهبان دوهسته را پیش از سوختن در مدار نابود کن.',
     'm20.name': 'منطقه سرخ', 'm20.desc': 'شهر ارواحِ آلوده به تشعشع که قرار نبود کسی دوباره واردش شود. جعبه‌سیاه‌ها را پیدا کن و هیچ چیز را سرپا نگذار. در سبزی‌ها معطل نکن.',
     'm21.name': 'معبد نئون', 'm21.desc': 'معبدی کوهستانی پر از نئون و طلسم‌های کهنه. سه رله فانوس را روشن کن و تا صبح، وقتی از پله‌ها بالا می‌آیند، زنده بمان.',
     'm22.name': 'شهر زیرین', 'm22.desc': 'پیک‌های شبکه از راه فاضلاب جابه‌جا می‌شوند. پنج انبار تدارکات را بسوزان، مسیرهایشان را بردار و پیش از بالا آمدن آب بیرون بزن.',

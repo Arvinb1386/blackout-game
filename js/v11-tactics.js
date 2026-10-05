@@ -219,6 +219,8 @@
            minions: ['grunt', 'rusher', 'shield'], summon: { perCast: 2, total: 6 },
            pools: [null, ['fan', 'stream', 'snipe', 'spiral'], ['mortar', 'cross', 'charge', 'blink', 'mines'], ['nova', 'spiral', 'charge', 'blink', 'snipe', 'summon']] },
     c3:  { name: 'twin', hp: 1.3, fields: 3, minions: ['grunt', 'rusher'],
+           pools: [null, ['fan', 'cross'], ['cross', 'mortar', 'stream'], ['cross', 'nova', 'charge', 'summon']] },
+    m19: { name: 'twin', hp: 1.35, fields: 3, minions: ['grunt', 'rusher', 'drone'],
            pools: [null, ['fan', 'cross'], ['cross', 'mortar', 'stream'], ['cross', 'nova', 'charge', 'summon']] }
   };
 

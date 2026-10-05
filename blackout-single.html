@@ -293,6 +293,88 @@ html[lang="fa"] .big-title { font-family: var(--fa); font-size: clamp(40px, 5vw,
   .next-op { padding-top: 12px; }
 }
 
+/* ------------------------ Fullscreen Menu Polish ------------------------ */
+:fullscreen .menu-col,
+:-webkit-full-screen .menu-col,
+html.fullscreen .menu-col,
+body.fullscreen .menu-col {
+  padding-top: 3.5vh;
+  padding-bottom: 24px;
+}
+
+:fullscreen .title-block,
+:-webkit-full-screen .title-block,
+html.fullscreen .title-block,
+body.fullscreen .title-block {
+  margin-bottom: 2.2vh;
+}
+
+:fullscreen .menu-nav,
+:-webkit-full-screen .menu-nav,
+html.fullscreen .menu-nav,
+body.fullscreen .menu-nav {
+  gap: 1px;
+}
+
+:fullscreen .menu-nav .nav,
+:-webkit-full-screen .menu-nav .nav,
+html.fullscreen .menu-nav .nav,
+body.fullscreen .menu-nav .nav {
+  font-size: 22px;
+  padding: 6px 16px;
+}
+
+:fullscreen html[lang="fa"] .menu-nav .nav,
+:-webkit-full-screen html[lang="fa"] .menu-nav .nav,
+html[lang="fa"].fullscreen .menu-nav .nav,
+html[lang="fa"] body.fullscreen .menu-nav .nav {
+  font-size: 19px;
+  padding: 5px 16px;
+}
+
+:fullscreen .menu-nav .nav.primary-nav,
+:-webkit-full-screen .menu-nav .nav.primary-nav,
+html.fullscreen .menu-nav .nav.primary-nav,
+body.fullscreen .menu-nav .nav.primary-nav {
+  font-size: 32px;
+  padding: 8px 16px;
+}
+
+:fullscreen html[lang="fa"] .menu-nav .nav.primary-nav,
+:-webkit-full-screen html[lang="fa"] .menu-nav .nav.primary-nav,
+html[lang="fa"].fullscreen .menu-nav .nav.primary-nav,
+html[lang="fa"] body.fullscreen .menu-nav .nav.primary-nav {
+  font-size: 25px;
+  padding: 6px 16px;
+}
+
+:fullscreen .next-op,
+:-webkit-full-screen .next-op,
+html.fullscreen .next-op,
+body.fullscreen .next-op {
+  padding-top: 12px;
+}
+
+:fullscreen .profile,
+:-webkit-full-screen .profile,
+html.fullscreen .profile,
+body.fullscreen .profile {
+  margin-top: 10px;
+  padding-top: 12px;
+}
+
+@media (display-mode: fullscreen) {
+  .menu-col { padding-top: 3.5vh; padding-bottom: 24px; }
+  .title-block { margin-bottom: 2.2vh; }
+  .menu-nav { gap: 1px; }
+  .menu-nav .nav { font-size: 22px; padding: 6px 16px; }
+  html[lang="fa"] .menu-nav .nav { font-size: 19px; padding: 5px 16px; }
+  .menu-nav .nav.primary-nav { font-size: 32px; padding: 8px 16px; }
+  html[lang="fa"] .menu-nav .nav.primary-nav { font-size: 25px; padding: 6px 16px; }
+  .next-op { padding-top: 12px; }
+  .profile { margin-top: 10px; padding-top: 12px; }
+}
+
 </style>
 </head>
 <body>
@@ -1502,7 +1584,7 @@ window.BO = window.BO || {};
  * ========================================================================= */
 'use strict';
 (function (BO) {
-  const GAME_KEYS = ['Tab', 'Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'];
+  const GAME_KEYS = ['Escape', 'Tab', 'Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'];
 
   class InputManager {
     constructor(canvas) {
@@ -1524,7 +1606,9 @@ window.BO = window.BO || {};
 
     _bind() {
       window.addEventListener('keydown', (e) => {
-        if (this.captureGameKeys && GAME_KEYS.indexOf(e.code) >= 0) e.preventDefault();
+        if ((this.captureGameKeys || (document.fullscreenElement && e.code === 'Escape')) && GAME_KEYS.indexOf(e.code) >= 0) {
+          e.preventDefault();
+        }
         if (!this.keys.has(e.code)) this.pressed.add(e.code);
         this.keys.add(e.code);
         BO.events.emit('input:key', e.code);
@@ -6041,6 +6125,35 @@ window.BO = window.BO || {};
         l.globalAlpha = U.clamp(lt.life / lt.max, 0, 1) * lt.intensity;
         l.drawImage(S, lt.x - lt.radius, lt.y - lt.radius, lt.radius * 2, lt.radius * 2);
       }
+      // Projectiles subtle lighting: when in the dark, bullets cast a small subtle light
+      const projs = game.projectiles && game.projectiles.pool && game.projectiles.pool.items;
+      if (projs) {
+        for (let i = 0; i < projs.length; i++) {
+          const pr = projs[i];
+          if (!pr.active || pr.owner !== 0) continue;
+          if (pr.x < rect.x0 - 80 || pr.x > rect.x1 + 80 || pr.y < rect.y0 - 80 || pr.y > rect.y1 + 80) continue;
+
+          let r = 26;
+          let alpha = 0.45;
+          if (pr.kind === 1 || pr.kind === 2) {
+            r = 38;
+            alpha = 0.6;
+          } else if (pr.kind === 3 || pr.width >= 3 || pr.explosive > 0) {
+            r = 34;
+            alpha = 0.5;
+          }
+
+          l.globalAlpha = alpha;
+          l.drawImage(S, pr.x - r, pr.y - r, r * 2, r * 2);
+
+          const tail = Math.min(pr.traveled, pr.speed * 0.025);
+          if (tail > 16) {
+            const tr = r * 0.65;
+            l.globalAlpha = alpha * 0.4;
+            l.drawImage(S, (pr.x - pr.dirX * (tail * 0.5)) - tr, (pr.y - pr.dirY * (tail * 0.5)) - tr, tr * 2, tr * 2);
+          }
+        }
+      }
       if (game.extractionOpen) {
         const ex = game.level.extraction;
         l.globalAlpha = 0.6 + Math.sin(time * 3) * 0.15;
@@ -7417,6 +7530,7 @@ window.BO = window.BO || {};
     _updateVisibility() {
       const p = this.player, map = this.map;
       const half = CFG.FLASHLIGHT_FOV / 2 + 0.05;
+      const projs = this.projectiles && this.projectiles.pool && this.projectiles.pool.items;
       for (let i = 0; i < this.enemies.length; i++) {
         const e = this.enemies[i];
         if (e.dead) continue;
@@ -7425,7 +7539,20 @@ window.BO = window.BO || {};
         if (d > 1250) { e.visible = false; continue; }
         const inCone = d < CFG.FLASHLIGHT_RANGE && Math.abs(U.angleDiff(p.angle, Math.atan2(e.y - p.y, e.x - p.x))) < half;
         const room = map.roomId[map.idx(Math.floor(e.x / TILE), Math.floor(e.y / TILE))];
-        const lit = inCone || d < CFG.AMBIENT_LIGHT_RADIUS + e.r || e.muzzle > 0 || (room >= 0 && this.level.roomLit[room]) || e.engaged;
+
+        let inBulletLight = false;
+        if (projs) {
+          for (let j = 0; j < projs.length; j++) {
+            const pr = projs[j];
+            if (!pr.active || pr.owner !== 0) continue;
+            if (U.dist(pr.x, pr.y, e.x, e.y) < 30 + e.r) {
+              inBulletLight = true;
+              break;
+            }
+          }
+        }
+
+        const lit = inCone || d < CFG.AMBIENT_LIGHT_RADIUS + e.r || e.muzzle > 0 || (room >= 0 && this.level.roomLit[room]) || e.engaged || inBulletLight;
         e.visible = lit && BO.Collision.lineOfSight(map, p.x, p.y, e.x, e.y, BO.COLLIDE.SIGHT);
       }
     }
@@ -8036,6 +8163,10 @@ window.BO = window.BO || {};
     BO.events.on('input:key', (code) => {
       if (code !== 'Escape') return;
       const S = BO.Game.STATE;
+      if (game.state === S.PLAYING) {
+        game.pause();
+        return;
+      }
       if (game.state === S.PAUSED) {
         if (ui.current === 'settings') ui.showPause();
         else game.resume();

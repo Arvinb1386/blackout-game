@@ -7,7 +7,7 @@
  * ========================================================================= */
 'use strict';
 (function (BO) {
-  const APP_VERSION = '1.0.0';
+  const APP_VERSION = (typeof window !== 'undefined' && window.electronUpdater && window.electronUpdater.appVersion) || '1.1.0';
   const GITHUB_REPO = 'Arvinb1386/blackout-game';
   const RELEASES_API = 'https://api.github.com/repos/' + GITHUB_REPO + '/releases/latest';
   const RELEASES_URL = 'https://github.com/' + GITHUB_REPO + '/releases';

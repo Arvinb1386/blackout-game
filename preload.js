@@ -1,9 +1,12 @@
 'use strict';
 const { contextBridge, ipcRenderer } = require('electron');
 
+const pkg = require('./package.json');
+
 // Expose safe, isolated update methods to the renderer process
 contextBridge.exposeInMainWorld('electronUpdater', {
   isElectron: true,
+  appVersion: pkg.version,
   checkForUpdates: () => ipcRenderer.invoke('check-update'),
   downloadUpdate: () => ipcRenderer.invoke('download-update'),
   installUpdate: () => ipcRenderer.invoke('install-update'),
