@@ -71,6 +71,7 @@
       "js/**/*",
       "index.html",
       "controller.html",
+      "boss-lab.html",
       "blackout-single.html",
       "main.js",
       "preload.js",
