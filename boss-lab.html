@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>BLACKOUT: Boss Laboratory</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --c-dark: #0f0f14;
+      --c-fg: #eef0f6;
+      --c-fg-dim: #9a9caa;
+      --c-accent: #ff6b35;
+      --c-accent-2: #00d4ff;
+      --c-accent-3: #ff2d55;
+      --c-bg-panel: rgba(15, 15, 20, 0.95);
+      --c-border: rgba(238, 240, 246, 0.1);
+      --radius: 12px;
+      --shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    }
+    html, body { height: 100%; }
+    body {
+      font: 12px 'Chakra Petch', 'Courier New', monospace;
+      color: var(--c-fg);
+      background: var(--c-dark);
+      line-height: 1.4;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    #game { flex: 1; display: block; }
+    .lab-panel {
+      position: fixed;
+      right: 0; top: 0; bottom: 0;
+      width: 420px;
+      background: var(--c-bg-panel);
+      border-left: 1px solid var(--c-border);
+      display: flex;
+      flex-direction: column;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s;
+      z-index: 10000;
+    }
+    .lab-panel.open {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .lab-head {
+      padding: 12px;
+      border-bottom: 1px solid var(--c-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .lab-head h2 {
+      font: 600 13px 'Chakra Petch', sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--c-accent);
+    }
+    .lab-head button {
+      background: none;
+      border: none;
+      color: var(--c-fg-dim);
+      cursor: pointer;
+      font: inherit;
+      padding: 4px 8px;
+    }
+    .lab-head button:hover { color: var(--c-fg); }
+    .lab-tabs {
+      display: flex;
+      border-bottom: 1px solid var(--c-border);
+      overflow-x: auto;
+    }
+    .lab-tabs button {
+      flex: 0 0 auto;
+      padding: 8px 12px;
+      background: none;
+      border: none;
+      color: var(--c-fg-dim);
+      cursor: pointer;
+      font: 11px 'Chakra Petch', sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-bottom: 2px solid transparent;
+      transition: all 0.2s;
+    }
+    .lab-tabs button:hover { color: var(--c-fg); }
+    .lab-tabs button.active {
+      color: var(--c-accent);
+      border-bottom-color: var(--c-accent);
+    }
+    .lab-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 12px;
+    }
+    .lab-section {
+      display: none;
+    }
+    .lab-section.active { display: block; }
+    .card {
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--c-border);
+      border-radius: var(--radius);
+      padding: 12px;
+      margin-bottom: 12px;
+    }
+    .card h4 {
+      font: 600 11px 'Chakra Petch', sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--c-accent-2);
+      margin-bottom: 8px;
+    }
+    .grid2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .btn {
+      padding: 8px 10px;
+      background: rgba(255, 107, 53, 0.15);
+      border: 1px solid var(--c-accent);
+      color: var(--c-accent);
+      cursor: pointer;
+      font: 11px 'Chakra Petch', sans-serif;
+      text-transform: uppercase;
+      border-radius: 6px;
+      transition: all 0.15s;
+    }
+    .btn:hover {
+      background: rgba(255, 107, 53, 0.25);
+      box-shadow: 0 0 12px rgba(255, 107, 53, 0.3);
+    }
+    .btn.tech {
+      background: rgba(0, 212, 255, 0.15);
+      border-color: var(--c-accent-2);
+      color: var(--c-accent-2);
+    }
+    .btn.tech:hover {
+      background: rgba(0, 212, 255, 0.25);
+      box-shadow: 0 0 12px rgba(0, 212, 255, 0.3);
+    }
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .control-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 8px;
+      align-items: center;
+    }
+    .control-row label {
+      flex: 0 0 100px;
+      font: 10px 'Chakra Petch', sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--c-fg-dim);
+    }
+    .control-row input[type="number"],
+    .control-row input[type="text"],
+    .control-row select {
+      flex: 1;
+      padding: 6px 8px;
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid var(--c-border);
+      color: var(--c-fg);
+      font: 11px 'Chakra Petch', monospace;
+      border-radius: 4px;
+    }
+    .control-row input:focus,
+    .control-row select:focus {
+      outline: none;
+      border-color: var(--c-accent-2);
+      box-shadow: 0 0 8px rgba(0, 212, 255, 0.2);
+    }
+    .toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 0;
+    }
+    .toggle input[type="checkbox"] {
+      accent-color: var(--c-accent);
+      cursor: pointer;
+    }
+    .toggle label {
+      cursor: pointer;
+      flex: 1;
+      user-select: none;
+    }
+    .stat {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 6px 0;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+    }
+    .stat small {
+      font: 10px 'Chakra Petch', sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--c-fg-dim);
+    }
+    .stat b {
+      font: 600 12px 'Courier New', monospace;
+      font-variant-numeric: tabular-nums;
+      color: var(--c-accent-2);
+    }
+    .bars { margin: 8px 0; }
+    .bar {
+      display: grid;
+      grid-template-columns: 60px 1fr 50px;
+      gap: 8px;
+      align-items: center;
+      padding: 6px;
+      margin-bottom: 4px;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 4px;
+    }
+    .bar span:first-child {
+      font: 10px 'Chakra Petch', sans-serif;
+      text-transform: uppercase;
+      color: var(--c-fg-dim);
+    }
+    .bar span:nth-child(2) {
+      position: relative;
+      height: 16px;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .bar i {
+      position: absolute;
+      left: 0; top: 0; height: 100%;
+      background: var(--c);
+      opacity: 0.6;
+    }
+    .bar b {
+      font: 600 11px 'Courier New', monospace;
+      font-variant-numeric: tabular-nums;
+      text-align: right;
+      color: var(--c);
+    }
+    .log {
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--c-border);
+      border-radius: 6px;
+      max-height: 180px;
+      overflow-y: auto;
+      font: 10px 'Courier New', monospace;
+    }
+    .log div {
+      padding: 6px 8px;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .log div:last-child { border-bottom: none; }
+    .log time {
+      color: var(--c-fg-dim);
+      min-width: 30px;
+    }
+    .log em {
+      color: var(--c-accent);
+      min-width: 20px;
+      font-style: normal;
+    }
+    .log span {
+      color: var(--c);
+    }
+    .log .empty {
+      color: var(--c-fg-dim);
+      text-align: center;
+      padding: 20px 8px;
+      justify-content: center;
+    }
+    #spark-container {
+      position: relative;
+      width: 100%;
+      height: 80px;
+      margin: 8px 0;
+    }
+    #spark { width: 100%; height: 100%; display: block; }
+    .lab-foot {
+      padding: 8px 12px;
+      border-top: 1px solid var(--c-border);
+      display: flex;
+      justify-content: space-between;
+      font: 10px 'Courier New', monospace;
+      color: var(--c-fg-dim);
+    }
+    .lab-foot kbd {
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid var(--c-border);
+      border-radius: 3px;
+      padding: 2px 4px;
+      font: inherit;
+    }
+    #lab-toast {
+      position: fixed;
+      bottom: 20px; right: 20px;
+      background: rgba(255, 107, 53, 0.9);
+      color: var(--c-fg);
+      padding: 12px 16px;
+      border-radius: var(--radius);
+      font: 11px 'Chakra Petch', sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      box-shadow: var(--shadow);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s;
+      z-index: 10001;
+    }
+    #lab-toast.show { opacity: 1; }
+    @media (max-width: 900px) {
+      .lab-panel { width: 100%; right: auto; bottom: auto; height: 50vh; }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="game" width="1280" height="720"></canvas>
+
+  <aside class="lab-panel" id="lab-panel">
+    <div class="lab-head">
+      <h2>⚙ Boss Lab</h2>
+      <button id="lab-close" title="Close (backtick)">✕</button>
+    </div>
+
+    <div class="lab-tabs">
+      <button class="tab-btn active" data-tab="boss">Boss</button>
+      <button class="tab-btn" data-tab="patterns">Patterns</button>
+      <button class="tab-btn" data-tab="arena">Arena</button>
+      <button class="tab-btn" data-tab="operator">Operator</button>
+      <button class="tab-btn" data-tab="telemetry">Telemetry</button>
+    </div>
+
+    <div class="lab-content">
+      <div class="lab-section active" data-section="boss">
+        <div class="card">
+          <h4>Variant Selector</h4>
+          <div class="control-row">
+            <label>VARIANT</label>
+            <select id="sel-variant"><option value="">—— Select ——</option></select>
+          </div>
+          <button class="btn" data-act="variant-load" style="width: 100%;">Load Variant</button>
+        </div>
+
+        <div class="card">
+          <h4>Engagement</h4>
+          <div class="grid2">
+            <button class="btn" id="btn-engage" data-act="boss-engage">Engage Boss</button>
+            <button class="btn" data-act="boss-vent">Force Vent</button>
+          </div>
+          <div class="toggle"><input type="checkbox" id="chk-auto-engage"><label for="chk-auto-engage">Auto-engage on load</label></div>
+          <div class="toggle"><input type="checkbox" id="chk-skip-intro"><label for="chk-skip-intro">Skip intro cinematics</label></div>
+        </div>
+
+        <div class="card">
+          <h4>Boss State</h4>
+          <div class="grid2">
+            <button class="btn tech" data-act="boss-stun">Stun (2s)</button>
+            <button class="btn tech" data-act="boss-kill">Terminate</button>
+          </div>
+          <div class="toggle"><input type="checkbox" id="chk-freeze-boss"><label for="chk-freeze-boss">Freeze updates</label></div>
+          <div class="toggle"><input type="checkbox" id="chk-dummy-mode"><label for="chk-dummy-mode">Dummy mode (no attacks)</label></div>
+        </div>
+
+        <div class="card">
+          <h4>Configuration <span id="cfg-tag" style="font: 10px 'Courier New'; color: var(--c-fg-dim);">—</span></h4>
+          <textarea id="cfg-editor" style="width: 100%; height: 120px; padding: 8px; background: rgba(0,0,0,0.4); border: 1px solid var(--c-border); color: var(--c-fg); font-family: 'Courier New', monospace; font-size: 10px; border-radius: 4px; resize: vertical;"></textarea>
+          <button class="btn" data-act="cfg-apply" style="width: 100%; margin-top: 8px;">Apply Config</button>
+        </div>
+
+        <div class="card">
+          <h4>Presets</h4>
+          <div class="control-row">
+            <input type="text" id="preset-name" placeholder="New preset name…">
+            <button class="btn" data-act="preset-save" style="flex: 0 0 80px;">Save</button>
+          </div>
+          <select id="preset-list" style="width: 100%; padding: 6px; background: rgba(0,0,0,0.4); border: 1px solid var(--c-border); color: var(--c-fg); border-radius: 4px; margin-bottom: 8px;">
+            <option>—— Saved Presets ——</option>
+          </select>
+          <div class="grid2">
+            <button class="btn" data-act="preset-load">Load</button>
+            <button class="btn tech" data-act="preset-delete">Delete</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="lab-section" data-section="patterns">
+        <div class="card"><h4>Attack Pool Editor</h4><p style="color: var(--c-fg-dim); font-size: 10px; margin-bottom: 8px;">Weight each attack 0–3 per phase. Higher = more frequent.</p><div id="pool-editor" style="max-height: 300px; overflow-y: auto;"></div></div>
+        <div class="card">
+          <h4>Phase & Cooldowns</h4>
+          <div class="control-row"><label>PHASE</label><select id="sel-phase"><option value="0">Phase 1</option><option value="1">Phase 2</option><option value="2">Phase 3</option></select></div>
+          <div class="control-row"><label>MIN COOLDOWN</label><input type="number" id="inp-cd-min" min="0.1" step="0.1" value="1"></div>
+          <div class="control-row"><label>MAX COOLDOWN</label><input type="number" id="inp-cd-max" min="0.1" step="0.1" value="3"></div>
+          <button class="btn" data-act="cooldown-apply" style="width: 100%;">Apply Cooldowns</button>
+        </div>
+      </div>
+
+      <div class="lab-section" data-section="arena">
+        <div class="card">
+          <h4>Arena Generation</h4>
+          <div class="control-row"><label>SEED</label><input type="number" id="inp-seed" value="31337"></div>
+          <div class="control-row"><label>THEME</label><select id="sel-theme"><option value="blacksite">Blacksite</option><option value="jungle">Jungle</option><option value="labs">Labs</option><option value="urban">Urban</option><option value="industrial">Industrial</option></select></div>
+          <button class="btn" data-act="arena-build" style="width: 100%;">Rebuild Arena</button>
+        </div>
+
+        <div class="card">
+          <h4>Lighting</h4>
+          <div class="control-row"><label>DARKNESS</label><input type="range" id="sld-darkness" min="-1" max="2" step="0.1" value="-1" style="flex: 1;"><span style="color: var(--c-fg-dim); min-width: 30px; text-align: right;" id="darkness-val">Auto</span></div>
+          <div class="control-row"><label>LAMPS</label><input type="range" id="sld-lamps" min="0" max="5" step="1" value="1" style="flex: 1;"><span style="color: var(--c-fg-dim); min-width: 30px; text-align: right;" id="lamps-val">1</span></div>
+          <div class="toggle"><input type="checkbox" id="chk-flashlight" checked><label for="chk-flashlight">Player flashlight</label></div>
+          <div class="control-row"><label>ZOOM</label><input type="range" id="sld-zoom" min="-0.5" max="0.5" step="0.05" value="0" style="flex: 1;"><span style="color: var(--c-fg-dim); min-width: 30px; text-align: right;" id="zoom-val">1.0x</span></div>
+        </div>
+
+        <div class="card">
+          <h4>Graphics</h4>
+          <div class="toggle"><input type="checkbox" id="chk-low-res"><label for="chk-low-res">Low resolution (faster)</label></div>
+          <div class="toggle"><input type="checkbox" id="chk-postfx" checked><label for="chk-postfx">Post-processing</label></div>
+          <div class="control-row"><label>PARTICLE QUALITY</label><select id="sel-particles"><option value="low">Low</option><option value="medium">Medium</option><option value="high" selected>High</option></select></div>
+          <div class="toggle"><input type="checkbox" id="chk-music"><label for="chk-music">Background music</label></div>
+        </div>
+
+        <div class="card">
+          <h4>Debug Overlays</h4>
+          <div class="toggle"><input type="checkbox" id="chk-ov-hit"><label for="chk-ov-hit">Draw hitboxes</label></div>
+          <div class="toggle"><input type="checkbox" id="chk-ov-geo"><label for="chk-ov-geo">Draw geometry</label></div>
+          <div class="toggle"><input type="checkbox" id="chk-ov-intent" checked><label for="chk-ov-intent">Boss intent indicator</label></div>
+        </div>
+      </div>
+
+      <div class="lab-section" data-section="operator">
+        <div class="card">
+          <h4>God Mode & Weapons</h4>
+          <div class="toggle"><input type="checkbox" id="chk-god"><label for="chk-god">Invulnerability</label></div>
+          <div class="toggle"><input type="checkbox" id="chk-inf-ammo" checked><label for="chk-inf-ammo">Infinite ammo</label></div>
+          <div class="toggle"><input type="checkbox" id="chk-auto-revive"><label for="chk-auto-revive">Auto-revive on death</label></div>
+        </div>
+
+        <div class="card">
+          <h4>Player Controls</h4>
+          <div class="grid2">
+            <button class="btn" data-act="player-refill">Refill Ammo</button>
+            <button class="btn" data-act="player-revive">Revive</button>
+          </div>
+          <button class="btn" data-act="player-teleport" style="width: 100%;">Teleport to Center</button>
+        </div>
+
+        <div class="card">
+          <h4>Loadout</h4>
+          <div class="control-row"><label>WEAPON</label><select id="sel-weapon"><option>—— Select Weapon ——</option></select></div>
+          <button class="btn" data-act="weapon-equip" style="width: 100%;">Equip</button>
+        </div>
+
+        <div class="card">
+          <h4>Game Speed</h4>
+          <div class="control-row"><label>SPEED</label><input type="range" id="sld-speed" min="0.1" max="3" step="0.1" value="1" style="flex: 1;"><span style="color: var(--c-fg-dim); min-width: 40px; text-align: right;" id="speed-val">1.0x</span></div>
+          <div class="toggle"><input type="checkbox" id="chk-pointer-lock"><label for="chk-pointer-lock">Pointer lock (hold middle-click)</label></div>
+        </div>
+      </div>
+
+      <div class="lab-section" data-section="telemetry">
+        <div class="card" style="text-align: center;">
+          <div id="spark-container"><canvas id="spark"></canvas></div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+            <div class="stat"><small>FIGHT TIME</small><b id="t-time">—</b></div>
+            <div class="stat"><small>AVG DPS</small><b id="t-dps">—</b></div>
+            <div class="stat"><small>PEAK DPS</small><b id="t-peak">—</b></div>
+            <div class="stat"><small>ETA (to kill)</small><b id="t-eta">—</b></div>
+            <div class="stat"><small>DAMAGE TAKEN</small><b id="t-taken">0</b></div>
+            <div class="stat"><small>HITS (BLOCKED)</small><b id="t-hits">0</b></div>
+            <div class="stat"><small>PHASE SPLITS</small><b id="t-splits">—</b></div>
+            <div class="stat"><small>TIME TO KILL</small><b id="t-ttk">—</b></div>
+          </div>
+        </div>
+        <div class="card"><h4>ATTACK MIX</h4><div class="bars" id="t-mix"><div class="empty">No attacks yet</div></div></div>
+        <div class="card"><h4>EVENT LOG</h4><div class="log" id="t-log"><div class="empty">Engage the boss to start recording</div></div></div>
+        <div class="grid2">
+          <button class="btn" data-act="tele-reset">Reset telemetry</button>
+          <button class="btn tech" data-act="tele-copy">Copy report</button>
+        </div>
+      </div>
+    </div>
+
+    <footer class="lab-foot">
+      <span><kbd>`</kbd> panel <kbd>F2</kbd> pause <kbd>F3</kbd> step <kbd>F4</kbd> respawn</span>
+      <span id="lab-source">—</span>
+    </footer>
+  </aside>
+
+  <div id="lab-toast" style="display: none;"></div>
+
+  <script>
+(function() {'use strict';const LAB_ID='boss-lab',PREF_KEY='blackout.lab.prefs',PRESET_KEY='blackout.lab.presets',LAB_PREFIX='blackout.lab.';const ATTACKS={fan:{c:'#ff2d55',d:'Aimed orb fan, 2–3 volleys'},stream:{c:'#ff6b81',d:'Tracking orb stream in bursts'},mortar:{c:'#ff3355',d:'Strikes on and around the operator'},summon:{c:'#ffd34d',d:'Calls adds (respects summon limits)'},nova:{c:'#ffd0d8',d:'360° ring waves'},charge:{c:'#ff8a1a',d:'Telegraphed dash, stuns itself on impact'},spiral:{c:'#ffb36b',d:'Rotating multi-arm spiral'},cross:{c:'#b07cff',d:'Rotating 4-way cross'},snipe:{c:'#7fe3ff',d:'Laser-sighted high-velocity shots'},mines:{c:'#f0be3d',d:'Ring of delayed strikes'},blink:{c:'#c58bff',d:'Teleport then short fan'}};const DEFAULT_PREFS={open:true,tab:'boss',variant:'m3',theme:'blacksite',seed:31337,autoEngage:true,skipIntro:false,freezeBoss:false,dummy:false,god:false,infAmmo:true,autoRevive:false,pointerLock:false,ovHit:false,ovGeo:false,ovIntent:true,darkness:-1,lamps:1,zoom:0,flashlight:true,lowRes:false,postfx:true,music:false,particles:'high',lang:''};const sandbox=(()=>{const mem=new Map();const P=window.Storage&&Storage.prototype;if(!P)return{mem};const real={get:P.getItem,set:P.setItem,del:P.removeItem,clear:P.clear};let ls=null;try{ls=window.localStorage}catch(e){ls=null}const guarded=(store,key)=>store===ls&&!(typeof key==='string'&&key.indexOf(LAB_PREFIX)===0);P.getItem=function(k){k=String(k);if(guarded(this,k)&&mem.has(k))return mem.get(k);return real.get.call(this,k)};P.setItem=function(k,v){k=String(k);if(guarded(this,k)){mem.set(k,String(v));return}return real.set.call(this,k,v)};P.removeItem=function(k){k=String(k);if(guarded(this,k)){mem.set(k,null);return}return real.del.call(this,k)};P.clear=function(){if(this===ls){console.warn('[BossLab] localStorage.clear() blocked');return}return real.clear.call(this)};return{mem,read(k,f){try{const r=real.get.call(ls,k);return r?JSON.parse(r):f}catch(e){return f}},write(k,v){try{real.set.call(ls,k,JSON.stringify(v))}catch(e){}}}})();const prefs=Object.assign({},DEFAULT_PREFS,sandbox.read(PREF_KEY,{}));let prefTimer=0;function savePrefs(){clearTimeout(prefTimer);prefTimer=setTimeout(()=>sandbox.write(PREF_KEY,prefs),250)}const $=(s,r)=>(r||document).querySelector(s);const $$=(s,r)=>Array.from((r||document).querySelectorAll(s));const textCache=new WeakMap();function setText(el,v){if(!el)return;v=String(v);if(textCache.get(el)!==v){textCache.set(el,v);el.textContent=v}}const clone=o=>JSON.parse(JSON.stringify(o));const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));const fmtTime=s=>{if(!(s>=0))return'—';const m=Math.floor(s/60),r=s-m*60;return m+':'+(r<10?'0':'')+r.toFixed(1)};const fmtNum=n=>Math.round(n).toLocaleString('en-US');let toastTimer=0;function toast(msg){const el=$('#lab-toast');if(!el)return;el.textContent=msg;el.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove('show'),1800)}const Telemetry={HP_N:1800,hpBuf:[],hpCount:0,hpHead:0,fightStart:-1,fightEnd:-1,dealt:0,takenTotal:0,hits:0,blockedHits:0,peak:0,counts:{},log:[],splits:[],ttk:-1,spark:null,dirty:true,lab:null,init(lab){this.lab=lab;this.spark=$('#spark');this.hpBuf=new Array(this.HP_N).fill(1);this.reset()},reset(){this.hpBuf.fill(1);this.hpCount=0;this.hpHead=0;this.fightStart=-1;this.fightEnd=-1;this.dealt=0;this.takenTotal=0;this.hits=0;this.blockedHits=0;this.peak=0;this.counts={};this.log=[];this.splits=[];this.ttk=-1;this.dirty=true},startFight(){this.fightStart=this.lab.game.time;this.fightEnd=-1;this.dealt=0;this.peak=0},endFight(){this.fightEnd=this.lab.game.time},fightTime(now){return this.fightStart>=0?(this.fightEnd>=0?this.fightEnd:now)-this.fightStart:0},avgDps(){const t=this.fightEnd>=0?this.fightEnd-this.fightStart:this.lab.game.time-this.fightStart;return t>0?this.dealt/t:0},trackDamage(dmg){this.dealt+=dmg;const dps=this.dealt/Math.max(0.1,this.lab.game.time-this.fightStart);if(dps>this.peak)this.peak=dps},trackTaken(dmg){this.takenTotal+=dmg;this.hits++},trackBlocked(dmg){this.blockedHits++},trackAttack(name){this.counts[name]=(this.counts[name]||0)+1;this.dirty=true},trackPhase(p){if(this.fightStart>=0){const t=this.lab.game.time-this.fightStart;this.splits.push({phase:p,t});this.dirty=true}},updateHp(b){if(!b||!b.maxHp)return;const frac=b.hp/b.maxHp;if(this.hpCount<this.HP_N){this.hpBuf[this.hpCount]=frac;this.hpCount++}else{this.hpBuf[this.hpHead]=frac;this.hpHead=(this.hpHead+1)%this.HP_N}if(this.ttk<0&&this.fightStart>=0){const now=this.lab.game.time,avg=this.dealt/Math.max(0.1,now-this.fightStart);if(avg>1&&frac>0){this.ttk=this.fightTime(now)+(b.hp/avg)}}this.dirty=true},logEvent(name,phase,color){this.log.push({t:this.fightTime(this.lab.game.time),p:phase,name,color});if(this.log.length>32)this.log.shift();this.dirty=true},update(){const b=this.lab.boss;setText($('#t-time'),this.fightTime(this.lab.game.time));setText($('#t-dps'),Math.round(this.avgDps()));setText($('#t-peak'),this.peak>0?Math.round(this.peak):'—');const avg=this.avgDps();setText($('#t-eta'),b&&!b.dead&&avg>1?fmtTime(b.hp/avg):'—');setText($('#t-taken'),fmtNum(this.takenTotal));setText($('#t-hits'),this.hits+' ('+this.blockedHits+')');setText($('#t-splits'),this.splits.length?this.splits.map(s=>'P'+s.phase+' '+fmtTime(s.t)).join(' · '):'—');setText($('#t-ttk'),this.ttk>=0?fmtTime(this.ttk):'—');this._drawSpark();if(!this.dirty)return;this.dirty=false;const names=Object.keys(this.counts).sort((x,y)=>this.counts[y]-this.counts[x]);const max=names.length?this.counts[names[0]]:1;$('#t-mix').innerHTML=names.length?names.map(n=>'<div class="bar" style="--c:'+((ATTACKS[n]||{}).c||'#888')+'"><span>'+n+'</span><span><i style="width:'+(this.counts[n]/max*100).toFixed(1)+'%"></i></span><b>'+this.counts[n]+'</b></div>').join(''):'<div class="empty">No attacks yet</div>';$('#t-log').innerHTML=this.log.length?this.log.map(e=>'<div><time>'+fmtTime(e.t)+'</time><em>P'+e.p+'</em><span style="--c:'+(e.color||'#eef0f6')+'">'+e.name+'</span></div>').join(''):'<div class="empty">Engage the boss to start recording</div>'},_drawSpark(){const c=this.spark;if(!c||!c.offsetWidth)return;const dpr=Math.min(window.devicePixelRatio||1,2),w=c.offsetWidth,h=c.offsetHeight;if(c.width!==Math.round(w*dpr)){c.width=Math.round(w*dpr);c.height=Math.round(h*dpr)}const ctx=c.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,w,h);ctx.strokeStyle='rgba(255,255,255,.08)';ctx.lineWidth=1;ctx.setLineDash([3,4]);[0.66,0.33].forEach(f=>{const y=6+(1-f)*(h-12);ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke()});ctx.setLineDash([]);const n=this.hpCount;if(n<2){ctx.fillStyle='#5c6175';ctx.font='600 11px "Chakra Petch", sans-serif';ctx.textAlign='center';ctx.fillText('waiting for fight…',w/2,h/2+4);return}const step=w/(this.HP_N-1),start=(this.hpHead-n+this.HP_N)%this.HP_N,x0=w-(n-1)*step;const path=()=>{ctx.beginPath();for(let i=0;i<n;i++){const v=this.hpBuf[(start+i)%this.HP_N];const x=x0+i*step,y=6+(1-v)*(h-12);if(i)ctx.lineTo(x,y);else ctx.moveTo(x,y)}};path();ctx.lineTo(w,h);ctx.lineTo(x0,h);ctx.closePath();const gr=ctx.createLinearGradient(0,0,0,h);gr.addColorStop(0,'rgba(255,45,85,.35)');gr.addColorStop(1,'rgba(255,45,85,0)');ctx.fillStyle=gr;ctx.fill();path();ctx.strokeStyle='#ff5c7a';ctx.lineWidth=1.6;ctx.stroke()},report(){const b=this.lab.boss;return JSON.stringify({boss:b?this.lab.bossName(b):null,variant:this.lab.variantKey,edited:$('#cfg-tag').textContent==='EDITED',seed:prefs.seed,theme:prefs.theme,fightTime:+this.fightTime(this.lab.game.time).toFixed(2),timeToKill:this.ttk>=0?+this.ttk.toFixed(2):null,hpLeft:b?+(b.hp/b.maxHp).toFixed(3):null,damageDealt:Math.round(this.dealt),avgDps:Math.round(this.avgDps()),peakDps:Math.round(this.peak),damageTaken:Math.round(this.takenTotal),hitsTaken:this.hits,hitsBlocked:this.blockedHits,phaseSplits:this.splits,attackMix:this.counts},null,2)}};function boot(){Telemetry.init({game:{time:0},boss:null,variantKey:'',bossName:()=>'boss',els:{cfgTag:$('#cfg-tag')||{}}});toast('Boss Lab initialized')}if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot()})();
+  </script>
+</body>
+</html>
