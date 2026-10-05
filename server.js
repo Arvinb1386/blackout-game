@@ -100,10 +100,8 @@ function startServer(port = PORT, cb) {
     console.log('  ╔═══════════════════════════════════════╗');
     console.log('  ║         🎮  BLACKOUT SERVER            ║');
     console.log('  ╠═══════════════════════════════════════╣');
-    console.log(`  ║  Game:       http://${ip}:${port}`.padEnd(43) + '║');
-    console.log(`  ║  Controller: http://${ip}:${port}/controller.html`.padEnd(43) + '║');
-    console.log('  ╠═══════════════════════════════════════╣');
-    console.log('  ║  Open Controller URL on your phone    ║');
+    console.log(`  ║  Game:  http://${ip}:${port}`.padEnd(43) + '║');
+    console.log(`  ║  Lab:   http://${ip}:${port}/boss-lab.html`.padEnd(43) + '║');
     console.log('  ╚═══════════════════════════════════════╝');
     console.log('');
     if (cb) cb(null, { ip, port });
