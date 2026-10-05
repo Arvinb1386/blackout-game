@@ -7,16 +7,16 @@
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     :root {
-      --c-dark: #0f0f14;
-      --c-fg: #eef0f6;
-      --c-fg-dim: #9a9caa;
+      --c-dark: #0b0c10;
+      --c-fg: #f4f6fb;
+      --c-fg-dim: #b0b5c8;
       --c-accent: #ff6b35;
       --c-accent-2: #00d4ff;
       --c-accent-3: #ff2d55;
-      --c-bg-panel: rgba(15, 15, 20, 0.95);
-      --c-border: rgba(238, 240, 246, 0.1);
+      --c-bg-panel: rgba(15, 17, 24, 0.96);
+      --c-border: rgba(255, 255, 255, 0.16);
       --radius: 12px;
-      --shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+      --shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
     }
     html, body {
       width: 100%;
@@ -108,18 +108,23 @@
     }
     .lab-section.active { display: block; }
     .card {
-      background: rgba(0, 0, 0, 0.3);
-      border: 1px solid var(--c-border);
+      background: rgba(22, 25, 36, 0.88);
+      border: 1px solid rgba(255, 255, 255, 0.14);
       border-radius: var(--radius);
       padding: 12px;
       margin-bottom: 12px;
+      color: var(--c-fg);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
     }
     .card h4 {
-      font: 600 11px 'Chakra Petch', sans-serif;
+      font: 700 11px 'Chakra Petch', sans-serif;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.8px;
       color: var(--c-accent-2);
       margin-bottom: 8px;
+    }
+    .card p {
+      color: #b0b5c8 !important;
     }
     .grid2 {
       display: grid;
@@ -129,27 +134,29 @@
     }
     .btn {
       padding: 8px 10px;
-      background: rgba(255, 107, 53, 0.15);
+      background: rgba(255, 107, 53, 0.18);
       border: 1px solid var(--c-accent);
-      color: var(--c-accent);
+      color: #ff9166;
       cursor: pointer;
-      font: 11px 'Chakra Petch', sans-serif;
+      font: 700 11px 'Chakra Petch', sans-serif;
       text-transform: uppercase;
       border-radius: 6px;
       transition: all 0.15s;
     }
     .btn:hover {
-      background: rgba(255, 107, 53, 0.25);
-      box-shadow: 0 0 12px rgba(255, 107, 53, 0.3);
+      background: rgba(255, 107, 53, 0.32);
+      color: #ffffff;
+      box-shadow: 0 0 12px rgba(255, 107, 53, 0.4);
     }
     .btn.tech {
-      background: rgba(0, 212, 255, 0.15);
+      background: rgba(0, 212, 255, 0.16);
       border-color: var(--c-accent-2);
-      color: var(--c-accent-2);
+      color: #5ce1e6;
     }
     .btn.tech:hover {
-      background: rgba(0, 212, 255, 0.25);
-      box-shadow: 0 0 12px rgba(0, 212, 255, 0.3);
+      background: rgba(0, 212, 255, 0.3);
+      color: #ffffff;
+      box-shadow: 0 0 12px rgba(0, 212, 255, 0.4);
     }
     .btn:disabled {
       opacity: 0.5;
@@ -163,27 +170,52 @@
     }
     .control-row label {
       flex: 0 0 100px;
-      font: 10px 'Chakra Petch', sans-serif;
+      font: 700 11px 'Chakra Petch', sans-serif;
       text-transform: uppercase;
       letter-spacing: 0.5px;
-      color: var(--c-fg-dim);
+      color: #c4c8db !important;
+    }
+    select {
+      background-color: #1a1d2b !important;
+      color: #f4f6fb !important;
+      border: 1px solid rgba(255, 255, 255, 0.22) !important;
+      border-radius: 6px !important;
+      font: 600 11px 'Chakra Petch', monospace !important;
+      cursor: pointer;
+    }
+    select option {
+      background-color: #12141e !important;
+      color: #f4f6fb !important;
+      padding: 6px 10px;
+    }
+    select option:checked,
+    select option:hover {
+      background-color: #ff6b35 !important;
+      color: #ffffff !important;
     }
     .control-row input[type="number"],
     .control-row input[type="text"],
-    .control-row select {
+    .control-row select,
+    textarea {
       flex: 1;
       padding: 6px 8px;
-      background: rgba(0, 0, 0, 0.4);
-      border: 1px solid var(--c-border);
-      color: var(--c-fg);
-      font: 11px 'Chakra Petch', monospace;
+      background-color: #1a1d2b !important;
+      border: 1px solid rgba(255, 255, 255, 0.22) !important;
+      color: #f4f6fb !important;
+      font: 11px 'Chakra Petch', monospace !important;
       border-radius: 4px;
     }
+    input::placeholder,
+    textarea::placeholder {
+      color: #83899f !important;
+      opacity: 1 !important;
+    }
     .control-row input:focus,
-    .control-row select:focus {
+    .control-row select:focus,
+    textarea:focus {
       outline: none;
-      border-color: var(--c-accent-2);
-      box-shadow: 0 0 8px rgba(0, 212, 255, 0.2);
+      border-color: var(--c-accent-2) !important;
+      box-shadow: 0 0 8px rgba(0, 212, 255, 0.3) !important;
     }
     .toggle {
       display: flex;
@@ -199,45 +231,48 @@
       cursor: pointer;
       flex: 1;
       user-select: none;
+      color: #e2e5f2 !important;
+      font: 600 11px 'Chakra Petch', sans-serif;
     }
     .stat {
       display: flex;
       justify-content: space-between;
       align-items: center;
       padding: 6px 0;
-      border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
     }
     .stat small {
-      font: 10px 'Chakra Petch', sans-serif;
+      font: 700 10px 'Chakra Petch', sans-serif;
       text-transform: uppercase;
       letter-spacing: 0.5px;
-      color: var(--c-fg-dim);
+      color: #adb3c7 !important;
     }
     .stat b {
-      font: 600 12px 'Courier New', monospace;
+      font: 700 12px 'Courier New', monospace;
       font-variant-numeric: tabular-nums;
-      color: var(--c-accent-2);
+      color: var(--c-accent-2) !important;
     }
     .bars { margin: 8px 0; }
     .bar {
       display: grid;
-      grid-template-columns: 60px 1fr 50px;
+      grid-template-columns: 80px 1fr 50px;
       gap: 8px;
       align-items: center;
       padding: 6px;
       margin-bottom: 4px;
-      background: rgba(0, 0, 0, 0.2);
+      background: rgba(0, 0, 0, 0.35);
       border-radius: 4px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
     }
     .bar span:first-child {
-      font: 10px 'Chakra Petch', sans-serif;
+      font: 700 11px 'Chakra Petch', sans-serif;
       text-transform: uppercase;
-      color: var(--c-fg-dim);
+      color: #e2e5f2 !important;
     }
     .bar span:nth-child(2) {
       position: relative;
       height: 16px;
-      background: rgba(0, 0, 0, 0.3);
+      background: rgba(0, 0, 0, 0.4);
       border-radius: 2px;
       overflow: hidden;
     }
@@ -245,44 +280,46 @@
       position: absolute;
       left: 0; top: 0; height: 100%;
       background: var(--c);
-      opacity: 0.6;
+      opacity: 0.75;
     }
     .bar b {
-      font: 600 11px 'Courier New', monospace;
+      font: 700 11px 'Courier New', monospace;
       font-variant-numeric: tabular-nums;
       text-align: right;
-      color: var(--c);
+      color: #f4f6fb !important;
     }
     .log {
-      background: rgba(0, 0, 0, 0.3);
-      border: 1px solid var(--c-border);
+      background: rgba(14, 16, 24, 0.9);
+      border: 1px solid rgba(255, 255, 255, 0.15);
       border-radius: 6px;
       max-height: 180px;
       overflow-y: auto;
-      font: 10px 'Courier New', monospace;
+      font: 11px 'Courier New', monospace;
     }
     .log div {
       padding: 6px 8px;
-      border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
       display: flex;
       gap: 8px;
       align-items: center;
+      color: #e2e5f2;
     }
     .log div:last-child { border-bottom: none; }
     .log time {
-      color: var(--c-fg-dim);
-      min-width: 30px;
+      color: #8c93a8;
+      min-width: 32px;
     }
     .log em {
       color: var(--c-accent);
-      min-width: 20px;
+      min-width: 22px;
       font-style: normal;
+      font-weight: 700;
     }
     .log span {
       color: var(--c);
     }
     .log .empty {
-      color: var(--c-fg-dim);
+      color: #8c93a8;
       text-align: center;
       padding: 20px 8px;
       justify-content: center;
@@ -384,7 +421,7 @@
 
         <div class="card">
           <h4>Configuration <span id="cfg-tag" style="font: 10px 'Courier New'; color: var(--c-fg-dim);">—</span></h4>
-          <textarea id="cfg-editor" style="width: 100%; height: 120px; padding: 8px; background: rgba(0,0,0,0.4); border: 1px solid var(--c-border); color: var(--c-fg); font-family: 'Courier New', monospace; font-size: 10px; border-radius: 4px; resize: vertical;"></textarea>
+          <textarea id="cfg-editor" style="width: 100%; height: 120px; padding: 8px; font-family: 'Courier New', monospace; font-size: 10px; border-radius: 4px; resize: vertical;"></textarea>
           <button class="btn" data-act="cfg-apply" style="width: 100%; margin-top: 8px;">Apply Config</button>
         </div>
 
@@ -394,7 +431,7 @@
             <input type="text" id="preset-name" placeholder="New preset name…">
             <button class="btn" data-act="preset-save" style="flex: 0 0 80px;">Save</button>
           </div>
-          <select id="preset-list" style="width: 100%; padding: 6px; background: rgba(0,0,0,0.4); border: 1px solid var(--c-border); color: var(--c-fg); border-radius: 4px; margin-bottom: 8px;">
+          <select id="preset-list" style="width: 100%; padding: 6px; margin-bottom: 8px;">
             <option>—— Saved Presets ——</option>
           </select>
           <div class="grid2">
@@ -459,9 +496,12 @@
           <h4>Player Controls</h4>
           <div class="grid2">
             <button class="btn" data-act="player-refill">Refill Ammo</button>
-            <button class="btn" data-act="player-revive">Revive</button>
+            <button class="btn" data-act="player-reload">Reload (R)</button>
           </div>
-          <button class="btn" data-act="player-teleport" style="width: 100%;">Teleport to Center</button>
+          <div class="grid2">
+            <button class="btn" data-act="player-revive">Revive</button>
+            <button class="btn" data-act="player-teleport">Teleport Center</button>
+          </div>
         </div>
 
         <div class="card">
@@ -1033,10 +1073,10 @@
     const origPlayerUpdate = OrigPlayer.prototype.update;
     OrigPlayer.prototype.update = function (dt, input, g) {
       if (prefs.infAmmo && this.weapon) {
-        this.weapon.ammo = this.weapon.mag;
-        this.weapon.reserve = Math.max(this.weapon.reserve, this.weapon.mag * 5);
-        this.weapon.reloading = false;
-        this.weapon.reloadTimer = 0;
+        const targetReserve = (this.weapon.stats && this.weapon.stats.reserve) ? (this.weapon.stats.reserve * 5) : 500;
+        if (this.weapon.reserve < targetReserve) {
+          this.weapon.reserve = targetReserve;
+        }
       }
       if (prefs.flashlight !== undefined) {
         this.flashlight = prefs.flashlight;
@@ -1314,8 +1354,10 @@
       html += '<div style="margin-bottom:10px;"><b style="color:var(--c-accent-2); font-size:11px;">PHASE ' + phase + '</b><div style="display:flex; flex-wrap:wrap; gap:4px; margin-top:4px;">';
       Object.keys(ATTACKS).forEach(atk => {
         const inPool = pool.includes(atk);
-        html += '<button class="btn" style="font-size:10px; padding:3px 7px; ' +
-          (inPool ? 'background:rgba(255,107,53,0.3); border-color:var(--c-accent); color:var(--c-fg);' : 'opacity:0.4; border-color:var(--c-border);') +
+        html += '<button class="btn" style="font-size:10px; padding:4px 8px; ' +
+          (inPool
+            ? 'background:rgba(255,107,53,0.35); border:1px solid #ff6b35; color:#ffffff; font-weight:700;'
+            : 'background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.22); color:#c4c8dc; opacity:0.85;') +
           '" data-pool-phase="' + phase + '" data-pool-atk="' + atk + '">' + atk.toUpperCase() + '</button>';
       });
       html += '</div></div>';
@@ -1504,6 +1546,21 @@
       }
     }, true);
 
+    canvas.addEventListener('mousedown', () => {
+      if (document.activeElement && document.activeElement !== document.body) {
+        document.activeElement.blur();
+      }
+    });
+    document.addEventListener('click', (e) => {
+      if (e.target && e.target.closest && e.target.closest('.btn, .tab-btn')) {
+        setTimeout(() => {
+          if (document.activeElement && document.activeElement.tagName === 'BUTTON') {
+            document.activeElement.blur();
+          }
+        }, 50);
+      }
+    });
+
     // 14. Audio Unlock on First Gesture
     const unlockAudio = () => {
       try {
@@ -1682,9 +1739,22 @@
       btnRefill.addEventListener('click', () => {
         const p = lab.game ? lab.game.player : null;
         if (p && p.weapon) {
-          p.weapon.ammo = p.weapon.mag;
-          p.weapon.reserve = p.weapon.stats.reserve || 500;
+          p.weapon.mag = p.weapon.stats ? p.weapon.stats.mag : 30;
+          p.weapon.reserve = p.weapon.stats ? (p.weapon.stats.reserve * 5) : 500;
+          p.weapon.reloading = false;
+          p.weapon.reloadTimer = 0;
           toast('Ammo refilled');
+        }
+      });
+    }
+
+    const btnReload = $('[data-act="player-reload"]');
+    if (btnReload) {
+      btnReload.addEventListener('click', () => {
+        const p = lab.game ? lab.game.player : null;
+        if (p && p.weapon) {
+          const started = p.weapon.startReload(lab.game.audio);
+          toast(started ? 'Reloading...' : 'Reload not needed (mag full or already reloading)');
         }
       });
     }
