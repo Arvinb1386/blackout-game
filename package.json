@@ -1,6 +1,6 @@
 {
   "name": "blackout-game",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "BLACKOUT // خاموشی - Tactical top-down shooter in the dark",
   "author": "Arvin",
   "main": "main.js",
@@ -8,10 +8,19 @@
   "scripts": {
     "start": "node server.js",
     "desktop": "electron .",
+    "weapons:extract": "node tools/extract-weapons.js",
+    "weapons:resync": "node tools/extract-weapons.js --js",
+    "weapons:test": "node tools/test-weapon-config.js",
+    "bosses:test": "node tools/test-lab-bosses.js",
+    "render:test": "node tools/test-texture-cache.js",
+    "desktop:test": "node tools/test-desktop-build.js",
+    "render2:test": "node tools/test-floor-and-resolution.js",
+    "test": "npm run weapons:test && npm run bosses:test && npm run render:test && npm run desktop:test && npm run render2:test",
     "dist": "electron-builder --win",
     "dist:nsis": "electron-builder --win nsis",
     "dist:portable": "electron-builder --win portable",
-    "dist:linux": "electron-builder --linux AppImage"
+    "dist:linux": "electron-builder --linux AppImage",
+    "dist:deb": "electron-builder --linux deb"
   },
   "dependencies": {
     "electron-updater": "^6.8.9",
@@ -52,6 +61,44 @@
       ],
       "icon": "assets/icon.ico"
     },
+    "linux": {
+      "target": [
+        {
+          "target": "deb",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "assets",
+      "category": "Game",
+      "synopsis": "BLACKOUT - a top-down tactical shooter played in the dark",
+      "description": "A top-down tactical shooter played in the dark. Pure HTML5 Canvas and vanilla JavaScript. Stealth, breach, extract. Thirty tunable weapons.",
+      "desktop": {
+        "entry": {
+          "Name": "BLACKOUT",
+          "Comment": "Tactical top-down shooter",
+          "Categories": "Game;ActionGame;"
+        }
+      },
+      "maintainer": "Arvin",
+      "vendor": "Blackout",
+      "artifactName": "${productName}-${version}-${arch}.${ext}"
+    },
+    "deb": {
+      "depends": [
+        "libgtk-3-0",
+        "libnotify4",
+        "libnss3",
+        "libxss1",
+        "libxtst6",
+        "xdg-utils",
+        "libatspi2.0-0",
+        "libuuid1",
+        "libsecret-1-0"
+      ],
+      "priority": "optional"
+    },
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
@@ -67,10 +114,10 @@
     "files": [
       "assets/**/*",
       "css/**/*",
+      "data/**/*",
       "docs/**/*",
       "js/**/*",
       "index.html",
-      "controller.html",
       "boss-lab.html",
       "blackout-single.html",
       "main.js",

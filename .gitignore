@@ -23,6 +23,7 @@ coverage/
 test-results/
 playwright-report/
 .cache/
+preview/
 
 # Local env
 .env
