@@ -82,17 +82,21 @@
 
   const WEAPON_ORDER = ['pistol', 'revolver', 'smg', 'ar', 'burst', 'shotgun', 'dmr', 'lmg', 'sniper', 'launcher'];
 
-  const UPGRADE_FACTORS = { damage: 0.08, accuracy: 0.1, magazine: 0.1, reload: 0.08 };
+  // Defaults; data/weapons.json may replace them at boot (js/weapon-config.js),
+  // so they are read lazily instead of captured at load time.
+  const UPGRADE_DEFAULTS = { damage: 0.08, accuracy: 0.1, magazine: 0.1, reload: 0.08 };
+  const upgradeFactors = () => Object.assign({}, UPGRADE_DEFAULTS, BO.WEAPON_UPGRADE_FACTORS || null);
 
   /** Applies persistent upgrades to a definition, producing effective stats. */
   function computeStats(def, upgrades) {
     const up = upgrades || {};
+    const F = upgradeFactors();
     return {
-      damage: def.damage * (1 + UPGRADE_FACTORS.damage * (up.damage || 0)),
-      spread: def.spread * (1 - UPGRADE_FACTORS.accuracy * (up.accuracy || 0)),
-      mag: Math.round(def.mag * (1 + UPGRADE_FACTORS.magazine * (up.magazine || 0))),
-      reload: def.reload * (1 - UPGRADE_FACTORS.reload * (up.reload || 0)),
-      reserve: Math.round(def.reserve * (1 + UPGRADE_FACTORS.magazine * (up.magazine || 0)))
+      damage: def.damage * (1 + F.damage * (up.damage || 0)),
+      spread: def.spread * (1 - F.accuracy * (up.accuracy || 0)),
+      mag: Math.round(def.mag * (1 + F.magazine * (up.magazine || 0))),
+      reload: def.reload * (1 - F.reload * (up.reload || 0)),
+      reserve: Math.round(def.reserve * (1 + F.magazine * (up.magazine || 0)))
     };
   }
 

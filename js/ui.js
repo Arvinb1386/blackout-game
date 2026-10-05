@@ -301,24 +301,42 @@
       c2.clearRect(0, 0, cv.width, cv.height);
       BO.Weapons.drawWeaponIcon(c2, def, cv.width / 2, cv.height / 2 - 6, cv.width * 0.78, ACCENT);
       const raw = st.raw;
+      // The JSON value is the headline. Upgrades are a separate "+n" badge in
+      // the accent colour, so an edited value is never hidden behind a bonus.
+      const numTxt = (n, digits) => I.num(digits ? Number(n).toFixed(digits) : Math.round(n));
+      const bonus = (eff, base, digits, lowerIsBetter) => {
+        const d = eff - base;
+        if (Math.abs(d) < 0.005) return null;
+        const sign = d > 0 ? '+' : '−';
+        return { text: sign + numTxt(Math.abs(d), digits), good: lowerIsBetter ? d < 0 : d > 0 };
+      };
       const rows = [
-        ['stat.damage', st.damage, I.num(Math.round(raw.damage)) + (def.pellets > 1 ? ' × ' + I.num(def.pellets) : '')],
-        ['stat.fireRate', st.fireRate, I.num(def.burst ? (def.fireRate * def.burst).toFixed(1) : def.fireRate) + '/s'],
-        ['stat.accuracy', st.accuracy, I.num(Math.round(st.accuracy)) + '%'],
-        ['stat.magazine', st.magazine, I.num(raw.mag)],
-        ['stat.reload', st.reload, I.num(raw.reload.toFixed(2)) + 's']
+        ['stat.damage', st.damage, numTxt(def.damage) + (def.pellets > 1 ? ' × ' + I.num(def.pellets) : ''),
+          bonus(raw.damage, def.damage)],
+        ['stat.fireRate', st.fireRate, I.num(def.burst ? (def.fireRate * def.burst).toFixed(1) : def.fireRate) + '/s', null],
+        ['stat.accuracy', st.accuracy, I.num(Math.round(st.accuracy)) + '%', null],
+        ['stat.magazine', st.magazine, numTxt(def.mag), bonus(raw.mag, def.mag)],
+        ['stat.reload', st.reload, numTxt(def.reload, 2) + 's', bonus(raw.reload, def.reload, 2, true)]
       ];
       const box = $('#wd-stats');
       box.innerHTML = '';
       rows.forEach(r => {
         const row = document.createElement('div');
         row.className = 'stat';
-        row.innerHTML = '<span class="s-label"></span><span class="s-bar"><i></i></span><span class="s-val"></span>';
+        row.innerHTML = '<span class="s-label"></span><span class="s-bar"><i></i></span>'
+          + '<span class="s-val"></span><span class="s-bonus"></span>';
         $('.s-label', row).textContent = BO.t(r[0]);
         $('i', row).style.width = U.clamp(r[1], 3, 100) + '%';
         $('.s-val', row).textContent = r[2];
+        const b = r[3];
+        const bonusEl = $('.s-bonus', row);
+        if (b) {
+          bonusEl.textContent = b.text;
+          bonusEl.classList.add(b.good ? 'good' : 'bad');
+        }
         box.appendChild(row);
       });
+      this._renderWeaponExtras(def);
       const owned = save.unlockedWeapons.indexOf(id) >= 0;
       const equipped = save.loadout[this.loadoutTab] === id;
       const btn = $('#wd-action');
@@ -332,6 +350,50 @@
         btn.textContent = BO.t('loadout.buy', { cost: I.num(def.price) });
         btn.disabled = save.credits < def.price;
       }
+    }
+
+    /**
+     * Everything in data/weapons.json that the five headline bars don't cover.
+     * Drives straight off the def, so any field edited in the JSON shows up
+     * here without touching this file.
+     */
+    _renderWeaponExtras(def) {
+      const host = $('#wd-extras');
+      if (!host) return;
+      host.innerHTML = '';
+      const fmt = v => {
+        if (typeof v === 'boolean') return v ? BO.t('common.on') : BO.t('common.off');
+        if (typeof v === 'number') return I.num(Math.round(v * 1000) / 1000);
+        return String(v);
+      };
+      const add = (label, value) => {
+        if (value === undefined || value === null || value === '') return;
+        const row = document.createElement('div');
+        row.className = 'xstat';
+        row.innerHTML = '<span class="x-key"></span><span class="x-val"></span>';
+        $('.x-key', row).textContent = label;
+        $('.x-val', row).textContent = fmt(value);
+        host.appendChild(row);
+      };
+      // Only the stats a player can act on. Internal tuning numbers (recoil
+      // bloom, muzzle velocity, camera shake, hit-stop, tracer colour, the
+      // silhouette, ...) stay in data/weapons.json but are not listed here.
+      add(BO.t('stat.pellets'), def.pellets > 1 ? def.pellets : undefined);
+      add(BO.t('stat.burst'), def.burst ? def.burst + ' @ ' + fmt(def.burstRate) + '/s' : undefined);
+      add(BO.t('stat.reserve'), def.reserve);
+      add(BO.t('stat.range'), def.range);
+      add(BO.t('stat.pierce'), def.pierce ? def.pierce : undefined);
+      add(BO.t('stat.explosive'), def.explosive || undefined);
+      add(BO.t('stat.moveMul'), def.moveMul);
+      // Behaviour flags and special effects the player feels in play.
+      add(BO.t('stat.auto'), def.auto);
+      add(BO.t('stat.silent'), def.silent);
+      add(BO.t('stat.burn'), def.burn ? def.burn + 's @ ' + fmt(def.burnDps) + '/s' : undefined);
+      add(BO.t('stat.chill'), def.chill ? def.chill + 's ×' + fmt(def.chillMul) : undefined);
+      add(BO.t('stat.chain'), def.chain ? def.chain + ' @ ' + fmt(def.chainRange) + 'px' : undefined);
+      add(BO.t('stat.homing'), def.homing ? fmt(def.homing) + ' @ ' + fmt(def.homingRange) + 'px' : undefined);
+      add(BO.t('stat.cluster'), def.cluster ? def.cluster + ' × ' + fmt(def.clusterDamage) + ' @ ' + fmt(def.clusterRadius) + 'px' : undefined);
+      add(BO.t('stat.noise'), def.noise || undefined);
     }
 
     _equip() {
@@ -419,7 +481,8 @@
       const s = this.game.save.data.settings;
       $$('[data-setting-label]').forEach(el => {
         const k = el.dataset.settingLabel;
-        el.textContent = k === 'sensitivity' ? I.num(s[k].toFixed(2)) + '×' : I.num(Math.round(s[k] * 100)) + '%';
+        if (k === 'sensitivity') { el.textContent = I.num(s[k].toFixed(2)) + '×'; return; }
+        el.textContent = I.num(Math.round(s[k] * 100)) + '%';
       });
     }
 

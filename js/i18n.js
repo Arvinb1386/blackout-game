@@ -34,6 +34,16 @@
       'loadout.equip': 'EQUIP', 'loadout.equipped': 'EQUIPPED', 'loadout.buy': 'UNLOCK {cost}', 'loadout.cantAfford': 'NOT ENOUGH CREDITS',
       'stat.damage': 'DAMAGE', 'stat.fireRate': 'FIRE RATE', 'stat.accuracy': 'ACCURACY', 'stat.magazine': 'MAGAZINE',
       'stat.reload': 'RELOAD SPEED', 'stat.range': 'RANGE',
+      'stat.price': 'COST', 'stat.pellets': 'PELLETS', 'stat.burst': 'BURST',
+      'stat.reserve': 'RESERVE', 'stat.spread': 'SPREAD', 'stat.recoil': 'RECOIL BLOOM',
+      'stat.maxBloom': 'MAX BLOOM', 'stat.recovery': 'BLOOM RECOVERY',
+      'stat.bulletSpeed': 'MUZZLE VELOCITY', 'stat.pierce': 'PIERCE',
+      'stat.explosive': 'BLAST RADIUS', 'stat.shake': 'CAMERA SHAKE', 'stat.kick': 'KICK',
+      'stat.hitStop': 'HIT STOP', 'stat.knockback': 'KNOCKBACK', 'stat.moveMul': 'MOVE SPEED',
+      'stat.tracer': 'TRACER', 'stat.tracerWidth': 'TRACER WIDTH', 'stat.auto': 'FULL AUTO',
+      'stat.silent': 'SUPPRESSED', 'stat.burn': 'BURN', 'stat.chill': 'CHILL',
+      'stat.chain': 'CHAIN', 'stat.homing': 'HOMING', 'stat.cluster': 'CLUSTER',
+      'stat.noise': 'NOISE RADIUS', 'stat.look': 'SILHOUETTE',
       'w.pistol': 'M9 SIDEARM', 'w.revolver': 'HAMMER .50', 'w.smg': 'VECTOR SMG', 'w.ar': 'K-17 RIFLE', 'w.burst': 'TRIAD BURST',
       'w.shotgun': 'BREACHER 12G', 'w.dmr': 'LONGSHOT DMR', 'w.lmg': 'ANVIL LMG', 'w.sniper': 'WIDOW .338', 'w.launcher': 'THUMPER GL',
       'wd.pistol': 'Reliable, accurate, always there.', 'wd.revolver': 'Six rounds. Every one pierces.',
@@ -51,7 +61,7 @@
       'set.low': 'LOW', 'set.medium': 'MEDIUM', 'set.high': 'HIGH', 'set.fullscreen': 'FULLSCREEN', 'set.fps': 'FPS COUNTER',
       'set.language': 'LANGUAGE', 'set.reset': 'RESET ALL PROGRESS', 'set.resetConfirm': 'Erase all progress? This cannot be undone.',
       'set.resetDone': 'Progress reset.', 'set.fsUnavailable': 'Fullscreen is not available here.',
-      'credits.title': 'CREDITS', 'credits.body': 'BLACKOUT\nDesign, code, audio & art: generated procedurally\nBuilt with HTML5 Canvas & Web Audio\n\nTypefaces (SIL Open Font License)\nVazirmatn by Saber Rastikerdar\nKhand by Indian Type Foundry\nChakra Petch by Cadson Demak\n\nMade for Mohsen B',
+      'credits.title': 'CREDITS', 'credits.body': 'BLACKOUT\nDesign, code, audio & art: generated procedurally\nBuilt with HTML5 Canvas & Web Audio\n\nTypefaces (SIL Open Font License)\nVazirmatn by Saber Rastikerdar\nKhand by Indian Type Foundry\nChakra Petch by Cadson Demak\n\nMade with love',
       'quit.title': 'SESSION ENDED', 'quit.body': 'You can close this tab now.', 'quit.return': 'RETURN TO BASE',
       'pause.title': 'PAUSED', 'pause.resume': 'RESUME', 'pause.restart': 'RESTART MISSION', 'pause.settings': 'SETTINGS', 'pause.quit': 'QUIT TO MENU',
       'res.complete': 'MISSION COMPLETE', 'res.kills': 'KILLS', 'res.accuracy': 'ACCURACY', 'res.headshots': 'HEADSHOTS', 'res.time': 'TIME',
@@ -110,6 +120,16 @@
       'loadout.equip': 'تجهیز', 'loadout.equipped': 'تجهیز شده', 'loadout.buy': 'باز کردن {cost}', 'loadout.cantAfford': 'اعتبار کافی نیست',
       'stat.damage': 'آسیب', 'stat.fireRate': 'سرعت شلیک', 'stat.accuracy': 'دقت', 'stat.magazine': 'خشاب',
       'stat.reload': 'سرعت خشاب‌گذاری', 'stat.range': 'برد',
+      'stat.price': 'قیمت', 'stat.pellets': 'ساچمه', 'stat.burst': 'رگبار',
+      'stat.reserve': 'ذخیره', 'stat.spread': 'پخش', 'stat.recoil': 'لگنگیری',
+      'stat.maxBloom': 'حداکثر لگنگیری', 'stat.recovery': 'بازیابی لگنگیری',
+      'stat.bulletSpeed': 'سرعت گلوله', 'stat.pierce': 'نفوذ',
+      'stat.explosive': 'شعاع انفجار', 'stat.shake': 'لرزش دوربین', 'stat.kick': 'ضربه',
+      'stat.hitStop': 'توقف ضربه', 'stat.knockback': 'پس‌زدن', 'stat.moveMul': 'سرعت حرکت',
+      'stat.tracer': 'رد گلوله', 'stat.tracerWidth': 'ضخامت رد', 'stat.auto': 'تمام‌خودکار',
+      'stat.silent': 'خفه‌شده', 'stat.burn': 'سوختن', 'stat.chill': 'یخ‌زدگی',
+      'stat.chain': 'زنجیر', 'stat.homing': 'هدایت‌شونده', 'stat.cluster': 'خوشه‌ای',
+      'stat.noise': 'شعاع صدا', 'stat.look': 'شکل ظاهری',
       'w.pistol': 'کلت M9', 'w.revolver': 'هَمِر .50', 'w.smg': 'مسلسل دستی وکتور', 'w.ar': 'تفنگ K-17', 'w.burst': 'تفنگ رگباری تریاد',
       'w.shotgun': 'شات‌گان بریچر', 'w.dmr': 'تک‌تیر لانگ‌شات', 'w.lmg': 'تیربار سندان', 'w.sniper': 'تک‌تیرانداز ویدو', 'w.launcher': 'نارنجک‌انداز تامپر',
       'wd.pistol': 'قابل اعتماد، دقیق، همیشه همراه.', 'wd.revolver': 'شش گلوله. هر کدام از هدف رد می‌شود.',
@@ -163,7 +183,7 @@
   const PERSIAN_DIGITS = '۰۱۲۳۴۵۶۷۸۹';
 
   const I18N = {
-    lang: 'fa',
+    lang: 'en',
     setLang(lang) {
       this.lang = STRINGS[lang] ? lang : 'en';
       const root = document.documentElement;
