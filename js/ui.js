@@ -77,6 +77,9 @@
         case 'loadout': this.pendingMission = null; this.showLoadout(); break;
         case 'upgrades': this.showUpgrades(false); break;
         case 'settings': this.settingsReturn = 'menu'; this.showSettings(); break;
+        case 'update': if (BO.Updater) BO.Updater.open(); break;
+        case 'update-close': if (BO.Updater) BO.Updater.close(); break;
+        case 'update-action': if (BO.Updater) BO.Updater.handleAction(); break;
         case 'credits': this.show('credits'); break;
         case 'quit': this._quit(); break;
         case 'back': this.showMenu(); break;

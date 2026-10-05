@@ -87,23 +87,38 @@ wss.on('connection', (ws, req) => {
   ws.on('error', () => { pool[role].delete(ws); });
 });
 
-/* -------------------------------- Boot -------------------------------- */
-server.listen(PORT, '0.0.0.0', () => {
-  const nets = os.networkInterfaces();
-  let ip = 'localhost';
-  for (const name in nets) {
-    for (const n of nets[name]) {
-      if (n.family === 'IPv4' && !n.internal) { ip = n.address; break; }
+function startServer(port = PORT, cb) {
+  server.listen(port, '0.0.0.0', () => {
+    const nets = os.networkInterfaces();
+    let ip = 'localhost';
+    for (const name in nets) {
+      for (const n of nets[name]) {
+        if (n.family === 'IPv4' && !n.internal) { ip = n.address; break; }
+      }
     }
-  }
-  console.log('');
-  console.log('  ╔═══════════════════════════════════════╗');
-  console.log('  ║         🎮  BLACKOUT SERVER            ║');
-  console.log('  ╠═══════════════════════════════════════╣');
-  console.log(`  ║  Game:       http://${ip}:${PORT}`.padEnd(43) + '║');
-  console.log(`  ║  Controller: http://${ip}:${PORT}/controller.html`.padEnd(43) + '║');
-  console.log('  ╠═══════════════════════════════════════╣');
-  console.log('  ║  Open Controller URL on your phone    ║');
-  console.log('  ╚═══════════════════════════════════════╝');
-  console.log('');
-});
+    console.log('');
+    console.log('  ╔═══════════════════════════════════════╗');
+    console.log('  ║         🎮  BLACKOUT SERVER            ║');
+    console.log('  ╠═══════════════════════════════════════╣');
+    console.log(`  ║  Game:       http://${ip}:${port}`.padEnd(43) + '║');
+    console.log(`  ║  Controller: http://${ip}:${port}/controller.html`.padEnd(43) + '║');
+    console.log('  ╠═══════════════════════════════════════╣');
+    console.log('  ║  Open Controller URL on your phone    ║');
+    console.log('  ╚═══════════════════════════════════════╝');
+    console.log('');
+    if (cb) cb(null, { ip, port });
+  });
+
+  server.once('error', (err) => {
+    if (cb) cb(err);
+    else console.error('Server error:', err);
+  });
+
+  return server;
+}
+
+if (require.main === module) {
+  startServer();
+}
+
+module.exports = { startServer, server, wss, PORT };
