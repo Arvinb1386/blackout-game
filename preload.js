@@ -8,7 +8,7 @@ contextBridge.exposeInMainWorld('electronUpdater', {
   isElectron: true,
   appVersion: pkg.version,
   checkForUpdates: () => ipcRenderer.invoke('check-update'),
-  downloadUpdate: () => ipcRenderer.invoke('download-update'),
+  downloadUpdate: (options) => ipcRenderer.invoke('download-update', options),
   installUpdate: () => ipcRenderer.invoke('install-update'),
   onUpdateAvailable: (cb) => {
     ipcRenderer.removeAllListeners('update-available');

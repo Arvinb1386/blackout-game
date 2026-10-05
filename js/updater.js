@@ -118,6 +118,16 @@
           const err = (res && res.error) ? res.error : 'Updater check failed';
           console.warn('[Updater] electron-updater check returned error, falling back to web check:', err);
           checkWebUpdates(err);
+        } else if (res.updateInfo) {
+          const info = res.updateInfo;
+          const tag = info.tag_name || (info.version ? ('v' + info.version) : '');
+          if (semverCompare(tag, APP_VERSION) > 0) {
+            onElectronUpdateAvailable(info);
+          } else {
+            onElectronUpdateNotAvailable(info);
+          }
+        } else {
+          checkWebUpdates();
         }
       }).catch((err) => {
         console.warn('[Updater] electron-updater IPC call failed:', err);
@@ -131,7 +141,9 @@
   function onElectronUpdateAvailable(info) {
     state = 'available';
     latestReleaseInfo = info;
-    const newVer = (info && info.version) ? ('v' + info.version) : 'New version';
+    const newVer = (info && (info.tag_name || info.version))
+      ? (info.tag_name ? info.tag_name : ('v' + info.version))
+      : 'New version';
     setStatus(BO.t('update.available', { version: newVer }), false);
 
     if (versionsEl) {
@@ -140,11 +152,17 @@
       if (targetVerEl) targetVerEl.textContent = newVer;
     }
 
-    if (info && info.releaseNotes && detailsEl) {
+    if (info && (info.releaseNotes || info.body) && detailsEl) {
       detailsEl.style.display = 'block';
-      detailsEl.textContent = typeof info.releaseNotes === 'string'
-        ? info.releaseNotes
-        : JSON.stringify(info.releaseNotes, null, 2);
+      const notes = info.releaseNotes || info.body;
+      detailsEl.textContent = typeof notes === 'string'
+        ? notes
+        : JSON.stringify(notes, null, 2);
+    }
+
+    if (hintEl) {
+      hintEl.style.display = 'block';
+      hintEl.textContent = BO.t('update.inAppHint');
     }
 
     if (actionBtnEl) {
@@ -174,14 +192,18 @@
 
   function onElectronDownloadProgress(prog) {
     state = 'downloading';
-    const percent = Math.round(prog.percent || 0);
+    const percent = Math.min(100, Math.max(0, Math.round(prog.percent || 0)));
     setStatus(BO.t('update.downloading', { percent: percent }), true);
 
     if (progressWrapEl) progressWrapEl.style.display = 'flex';
     if (progressFillEl) progressFillEl.style.width = percent + '%';
     if (progressPercentEl) progressPercentEl.textContent = percent + '%';
-    if (progressSpeedEl && prog.bytesPerSecond) {
-      progressSpeedEl.textContent = formatBytes(prog.bytesPerSecond) + '/s';
+    if (progressSpeedEl) {
+      if (prog.bytesPerSecond) {
+        progressSpeedEl.textContent = formatBytes(prog.bytesPerSecond) + '/s';
+      } else if (prog.transferred && prog.total) {
+        progressSpeedEl.textContent = formatBytes(prog.transferred) + ' / ' + formatBytes(prog.total);
+      }
     }
 
     if (actionBtnEl) actionBtnEl.style.display = 'none';
@@ -196,6 +218,11 @@
       if (progressFillEl) progressFillEl.style.width = '100%';
       if (progressPercentEl) progressPercentEl.textContent = '100%';
       if (progressSpeedEl) progressSpeedEl.textContent = '';
+    }
+
+    if (hintEl) {
+      hintEl.style.display = 'block';
+      hintEl.textContent = BO.t('update.restartNotice');
     }
 
     if (actionBtnEl) {
@@ -257,17 +284,40 @@
       }
 
       if (hasUpdate) {
-        state = 'web_available';
-        setStatus(BO.t('update.available', { version: tag }), false);
-        if (hintEl) hintEl.style.display = 'block';
-        if (release.body && detailsEl) {
-          detailsEl.style.display = 'block';
-          detailsEl.textContent = release.body;
-        }
-        if (actionBtnEl) {
-          actionBtnEl.style.display = 'inline-block';
-          actionBtnEl.textContent = BO.t('update.btnWeb');
-          actionBtnEl.className = 'btn primary';
+        if (isElectron) {
+          // Inside Electron desktop app: always offer in-app download!
+          state = 'available';
+          setStatus(BO.t('update.available', { version: tag }), false);
+          if (hintEl) {
+            hintEl.style.display = 'block';
+            hintEl.textContent = BO.t('update.inAppHint');
+          }
+          if (release.body && detailsEl) {
+            detailsEl.style.display = 'block';
+            detailsEl.textContent = release.body;
+          }
+          if (actionBtnEl) {
+            actionBtnEl.style.display = 'inline-block';
+            actionBtnEl.textContent = BO.t('update.btnDownload');
+            actionBtnEl.className = 'btn primary';
+          }
+        } else {
+          // Regular web browser fallback
+          state = 'web_available';
+          setStatus(BO.t('update.available', { version: tag }), false);
+          if (hintEl) {
+            hintEl.style.display = 'block';
+            hintEl.textContent = BO.t('update.manualHint');
+          }
+          if (release.body && detailsEl) {
+            detailsEl.style.display = 'block';
+            detailsEl.textContent = release.body;
+          }
+          if (actionBtnEl) {
+            actionBtnEl.style.display = 'inline-block';
+            actionBtnEl.textContent = BO.t('update.btnWeb');
+            actionBtnEl.className = 'btn primary';
+          }
         }
       } else {
         state = 'latest';
@@ -289,7 +339,7 @@
       }
       if (actionBtnEl) {
         actionBtnEl.style.display = 'inline-block';
-        actionBtnEl.textContent = BO.t('update.btnWeb');
+        actionBtnEl.textContent = isElectron ? BO.t('update.btnCheck') : BO.t('update.btnWeb');
         actionBtnEl.className = 'btn';
       }
     }
@@ -303,17 +353,40 @@
         progressWrapEl.style.display = 'flex';
         if (progressFillEl) progressFillEl.style.width = '0%';
         if (progressPercentEl) progressPercentEl.textContent = '0%';
+        if (progressSpeedEl) progressSpeedEl.textContent = '';
       }
       if (actionBtnEl) actionBtnEl.style.display = 'none';
-      window.electronUpdater.downloadUpdate().catch((e) => {
+      if (hintEl) hintEl.style.display = 'none';
+
+      let downloadOptions = null;
+      if (latestReleaseInfo && Array.isArray(latestReleaseInfo.assets) && latestReleaseInfo.assets.length > 0) {
+        const assets = latestReleaseInfo.assets;
+        const exeAsset = assets.find(a =>
+          a.name.endsWith('.exe') && !a.name.includes('.blockmap')
+        );
+        if (exeAsset) {
+          downloadOptions = {
+            downloadUrl: exeAsset.browser_download_url,
+            filename: exeAsset.name,
+            version: latestReleaseInfo.tag_name || latestReleaseInfo.name,
+            size: exeAsset.size
+          };
+        }
+      }
+
+      window.electronUpdater.downloadUpdate(downloadOptions).catch((e) => {
         onElectronError(e.message || String(e));
       });
     } else if (state === 'downloaded' && isElectron) {
-      window.electronUpdater.installUpdate();
-    } else if (state === 'web_available' || state === 'error') {
+      setStatus(BO.t('update.installing'), true);
+      if (actionBtnEl) actionBtnEl.style.display = 'none';
+      window.electronUpdater.installUpdate().catch((e) => {
+        onElectronError(e.message || String(e));
+      });
+    } else if (state === 'web_available') {
       const url = (latestReleaseInfo && latestReleaseInfo.html_url) ? latestReleaseInfo.html_url : RELEASES_URL;
       window.open(url, '_blank');
-    } else if (state === 'latest') {
+    } else if (state === 'latest' || state === 'error') {
       checkUpdates();
     }
   }
