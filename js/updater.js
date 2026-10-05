@@ -361,15 +361,21 @@
       let downloadOptions = null;
       if (latestReleaseInfo && Array.isArray(latestReleaseInfo.assets) && latestReleaseInfo.assets.length > 0) {
         const assets = latestReleaseInfo.assets;
-        const exeAsset = assets.find(a =>
-          a.name.endsWith('.exe') && !a.name.includes('.blockmap')
-        );
-        if (exeAsset) {
+        const isLinux = (window.electronUpdater && window.electronUpdater.platform === 'linux') ||
+          (typeof process !== 'undefined' && process.platform === 'linux') ||
+          (navigator.platform && navigator.platform.toLowerCase().includes('linux'));
+        let asset = null;
+        if (isLinux) {
+          asset = assets.find(a => a.name.endsWith('.deb') || a.name.endsWith('.AppImage'));
+        } else {
+          asset = assets.find(a => a.name.endsWith('.exe') && !a.name.includes('.blockmap'));
+        }
+        if (asset) {
           downloadOptions = {
-            downloadUrl: exeAsset.browser_download_url,
-            filename: exeAsset.name,
+            downloadUrl: asset.browser_download_url,
+            filename: asset.name,
             version: latestReleaseInfo.tag_name || latestReleaseInfo.name,
-            size: exeAsset.size
+            size: asset.size
           };
         }
       }

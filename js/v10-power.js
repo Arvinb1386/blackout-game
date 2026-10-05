@@ -36,9 +36,9 @@
     alarmChance: 0.35, minAlarms: 1, maxAlarms: 4,
     useRange: 62, flipCooldown: 0.8, flipNoise: 200,
     daze: [3.5, 5.5],          // seconds of disorientation right after the cut
-    darkSight: 140,            // how far a hostile in a dark room can see you
-    darkSightLitRoom: 0.4,     // x view range when you stand in a lit room
-    darkSightFiring: 0.6,      // x view range right after you fire (muzzle flash)
+    darkSight: 185,            // how far a hostile in a dark room can see you (ambient circle)
+    darkSightLitRoom: 0.85,    // x view range when you stand in a lit room
+    darkSightFiring: 1.0,      // x view range right after you fire (muzzle flash)
     darkSpread: 2.2,           // aim spread multiplier when firing from the dark
     runChance: 0.6, runRange: 1100, runHold: 1.3, runGiveUp: 12,
     alarmTime: 35,

@@ -295,13 +295,26 @@ ipcMain.handle('download-update', async (_e, options) => {
       const release = await fetchLatestGitHubRelease();
       version = release.tag_name || release.name;
       if (release && Array.isArray(release.assets)) {
-        const isPortable = isRunningPortable();
         let asset = null;
-        if (isPortable) {
-          asset = release.assets.find(a => a.name.includes('Portable') && a.name.endsWith('.exe'));
-        }
-        if (!asset) {
-          asset = release.assets.find(a => a.name.endsWith('.exe') && !a.name.includes('.blockmap'));
+        if (process.platform === 'linux') {
+          const isAppImage = !!process.env.APPIMAGE;
+          if (isAppImage) {
+            asset = release.assets.find(a => a.name.endsWith('.AppImage'));
+          }
+          if (!asset) {
+            asset = release.assets.find(a => a.name.endsWith('.deb'));
+          }
+          if (!asset) {
+            asset = release.assets.find(a => a.name.endsWith('.AppImage') || a.name.includes('linux') || a.name.endsWith('.tar.gz'));
+          }
+        } else {
+          const isPortable = isRunningPortable();
+          if (isPortable) {
+            asset = release.assets.find(a => a.name.includes('Portable') && a.name.endsWith('.exe'));
+          }
+          if (!asset) {
+            asset = release.assets.find(a => a.name.endsWith('.exe') && !a.name.includes('.blockmap'));
+          }
         }
         if (asset) {
           targetUrl = asset.browser_download_url;
@@ -316,7 +329,8 @@ ipcMain.handle('download-update', async (_e, options) => {
     }
 
     const tempDir = app.getPath('temp');
-    const safeFileName = (targetFileName || 'Blackout-Update-Setup.exe').replace(/[^a-zA-Z0-9_.-]/g, '_');
+    const defaultName = process.platform === 'linux' ? 'Blackout-Update.AppImage' : 'Blackout-Update-Setup.exe';
+    const safeFileName = (targetFileName || defaultName).replace(/[^a-zA-Z0-9_.-]/g, '_');
     const destPath = path.join(tempDir, safeFileName);
 
     await downloadFileWithProgress(targetUrl, destPath, (progress) => {
@@ -324,6 +338,10 @@ ipcMain.handle('download-update', async (_e, options) => {
         mainWindow.webContents.send('download-progress', progress);
       }
     });
+
+    if (process.platform === 'linux' && destPath.endsWith('.AppImage')) {
+      try { fs.chmodSync(destPath, 0o755); } catch (_) {}
+    }
 
     downloadedInstallerPath = destPath;
     isDownloading = false;
@@ -352,8 +370,24 @@ ipcMain.handle('install-update', () => {
     if (downloadedInstallerPath && fs.existsSync(downloadedInstallerPath)) {
       console.log('[Main] Launching downloaded installer:', downloadedInstallerPath);
       const isExe = downloadedInstallerPath.toLowerCase().endsWith('.exe');
+      const isAppImage = downloadedInstallerPath.endsWith('.AppImage');
+      const isDeb = downloadedInstallerPath.endsWith('.deb');
+
       if (isExe) {
         const child = spawn(downloadedInstallerPath, [], {
+          detached: true,
+          stdio: 'ignore'
+        });
+        child.unref();
+      } else if (isAppImage) {
+        try { fs.chmodSync(downloadedInstallerPath, 0o755); } catch (_) {}
+        const child = spawn(downloadedInstallerPath, [], {
+          detached: true,
+          stdio: 'ignore'
+        });
+        child.unref();
+      } else if (isDeb) {
+        const child = spawn('xdg-open', [downloadedInstallerPath], {
           detached: true,
           stdio: 'ignore'
         });

@@ -6,6 +6,7 @@ const pkg = require('./package.json');
 // Expose safe, isolated update methods to the renderer process
 contextBridge.exposeInMainWorld('electronUpdater', {
   isElectron: true,
+  platform: process.platform,
   appVersion: pkg.version,
   checkForUpdates: () => ipcRenderer.invoke('check-update'),
   downloadUpdate: (options) => ipcRenderer.invoke('download-update', options),

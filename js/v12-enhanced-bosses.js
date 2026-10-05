@@ -353,24 +353,95 @@
     };
   }
 
-  // 5. Enemy detection & Stealth: enemies cannot see player in the dark when flashlight is off
+  // 5. Enemy detection & Stealth mechanics:
+  // - Flashlight shining on enemy in dark: enemy immediately spots player!
+  // - Flashlight OFF in dark: enemy only spots player if player's ambient circle reaches enemy!
+  // - Player within 20% of view range: instant detection & engage!
   if (BO.AISystem && BO.AISystem.prototype._perceive) {
     const origPerceive = BO.AISystem.prototype._perceive;
     BO.AISystem.prototype._perceive = function(e) {
       const r = origPerceive.apply(this, arguments);
       const g = this.game;
       const p = g && g.player;
-      if (p && p.flashlight === false && e.canSee && !e.engaged && !e.isBoss) {
-        const d = U ? U.dist(e.x, e.y, p.x, p.y) : Math.hypot(e.x - p.x, e.y - p.y);
-        const exp = g.playerExposure || 0;
-        // Outside close contact (90px) and not exposed by lit room or gun flash
-        if (d > 90 && exp < 0.3) {
+      if (!p || p.dead || e.isBoss) return r;
+
+      const CFG = BO.CONFIG || {};
+      const ambientRadius = CFG.AMBIENT_LIGHT_RADIUS || 175;
+      const flashRange = CFG.FLASHLIGHT_RANGE || 560;
+      const flashHalf = ((CFG.FLASHLIGHT_FOV || 1.25) / 2) + 0.08;
+      const d = U ? U.dist(e.x, e.y, p.x, p.y) : Math.hypot(e.x - p.x, e.y - p.y);
+      const exp = g.playerExposure || 0;
+      const flashOn = p.flashlight !== false;
+
+      // Check if flashlight shines on this enemy
+      const angleToEnemy = Math.atan2(e.y - p.y, e.x - p.x);
+      const inCone = flashOn && (d <= flashRange) && (Math.abs(U.angleDiff(p.angle, angleToEnemy)) <= flashHalf);
+      const los = BO.Collision ? BO.Collision.lineOfSight(g.map, p.x, p.y, e.x, e.y, (BO.COLLISION_MODE ? BO.COLLISION_MODE.SIGHT : 0)) : true;
+      const flashlightHitsEnemy = inCone && los;
+
+      // 1. If flashlight hits enemy in the dark, enemy notices immediately:
+      if (flashlightHitsEnemy) {
+        e.canSee = true;
+        e.clearShot = BO.Collision ? BO.Collision.lineOfSight(g.map, e.x, e.y, p.x, p.y, (BO.COLLISION_MODE ? BO.COLLISION_MODE.BULLET : 1)) : true;
+        e.lastKnownX = p.x;
+        e.lastKnownY = p.y;
+        e.lastSeenAt = this.time;
+        e.playerDist = d;
+        e.awareness = 1;
+        if (!e.engaged) this.engage(e);
+        return r;
+      }
+
+      // 2. If flashlight is OFF in darkness and not exposed:
+      if (!flashOn && exp < 0.3 && !e.engaged) {
+        const inAmbientCircle = d <= (ambientRadius + (e.r || 16));
+        if (!inAmbientCircle) {
+          // Out of ambient circle in pitch black: enemy cannot see player
           e.canSee = false;
           e.clearShot = false;
+          return r;
         }
       }
+
+      // 3. If enemy can see player, check 20% view range for instant detection:
+      if (e.canSee) {
+        const viewRange = (e.def && e.def.view) || 450;
+        if (d <= viewRange * 0.2) {
+          e.awareness = 1;
+          if (!e.engaged) this.engage(e);
+        }
+      }
+
       return r;
     };
+
+    // Fast reaction awareness
+    if (BO.AISystem.prototype._updateAwareness) {
+      const origAware = BO.AISystem.prototype._updateAwareness;
+      BO.AISystem.prototype._updateAwareness = function(e, dt) {
+        origAware.apply(this, arguments);
+        if (e.isBoss || e.engaged) return;
+        if (e.canSee) {
+          const g = this.game;
+          const p = g && g.player;
+          if (p) {
+            const d = U ? U.dist(e.x, e.y, p.x, p.y) : Math.hypot(e.x - p.x, e.y - p.y);
+            const viewRange = (e.def && e.def.view) || 450;
+            if (d <= viewRange * 0.2) {
+              e.awareness = 1;
+              this.engage(e);
+            } else {
+              // Smooth, fast buildup so enemies react promptly (0.15s - 0.3s)
+              const rate = (1.5 + 4.5 * (1 - d / viewRange)) * dt;
+              e.awareness = Math.min(1, e.awareness + rate);
+              if (e.awareness >= 0.4) {
+                this.engage(e);
+              }
+            }
+          }
+        }
+      };
+    }
   }
 
   // 6. HUD indicator for Flashlight status

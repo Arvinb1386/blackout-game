@@ -38,14 +38,14 @@
   function tierScale(t) {
     const k = U.clamp(t, 1, 10) - 1;
     return {
-      hp: Math.round((0.8 + k * 0.13) * 100) / 100, // 0.80 .. 1.97 x 6500
-      dmg: 1 + k * 0.07,     // 1.00 .. 1.63
-      cd: 1 - k * 0.035,     // 1.00 .. 0.685 (attack cooldown multiplier)
-      shot: 1 + k * 0.045,   // 1.00 .. 1.405 (projectile speed)
-      move: 1 + k * 0.05,    // 1.00 .. 1.45
-      tele: 1 - k * 0.025,   // 1.00 .. 0.775 (telegraph length)
-      vent: 1 - k * 0.045,   // 1.00 .. 0.595 (vent window)
-      sig: 1 + k * 0.08      // 1.00 .. 1.72 (signature intensity)
+      hp: t === 1 ? 1.35 : Math.round((0.8 + k * 0.13) * 100) / 100, // 1.35 for Warden buff, 0.93..1.97 for others
+      dmg: t === 1 ? 1.25 : (1 + k * 0.07),
+      cd: t === 1 ? 0.75 : (1 - k * 0.035),
+      shot: t === 1 ? 1.15 : (1 + k * 0.045),
+      move: t === 1 ? 1.15 : (1 + k * 0.05),
+      tele: t === 1 ? 0.85 : (1 - k * 0.025),
+      vent: t === 1 ? 0.75 : (1 - k * 0.045),
+      sig: t === 1 ? 1.35 : (1 + k * 0.08)
     };
   }
   LB.tierScale = tierScale;
@@ -767,20 +767,20 @@
       },
       run(b, atk, dt, game, p) {
         if (atk.locked) {
-          b.angle = atk.cone = U.turnTowards(atk.cone, Math.atan2(p.y - b.y, p.x - b.x), dt * 4);
+          b.angle = atk.cone = U.turnTowards(atk.cone, Math.atan2(p.y - b.y, p.x - b.x), dt * 5);
           atk.timer -= dt;
           if (atk.timer > 0) return;
-          b._orb(game, atk.cone + U.randSpread() * 0.04, 620, 13, '#ffe27a');
+          b._orb(game, atk.cone + U.randSpread() * 0.05, 720, 16, '#ffe27a');
           game.onBossFired(b);
-          atk.timer = 0.11; atk.shots++;
-          if (atk.shots >= 3 + b.phase) b._endAttack();
+          atk.timer = 0.09; atk.shots++;
+          if (atk.shots >= 5 + b.phase * 2) b._endAttack();
           return;
         }
-        atk.cone += atk.dir * dt * 1.45 * b.labS.sig;
+        atk.cone += atk.dir * dt * 1.65 * b.labS.sig;
         b.angle = atk.cone;
         const d = U.dist(b.x, b.y, p.x, p.y);
-        if (p && !p.dead && d < 600 && Math.abs(U.angleDiff(atk.cone, Math.atan2(p.y - b.y, p.x - b.x))) < atk.half && los(game, b.x, b.y, p.x, p.y)) {
-          atk.locked = true; atk.timer = 0.22; atk.shots = 0;
+        if (p && !p.dead && d < 650 && Math.abs(U.angleDiff(atk.cone, Math.atan2(p.y - b.y, p.x - b.x))) < atk.half && los(game, b.x, b.y, p.x, p.y)) {
+          atk.locked = true; atk.timer = 0.12; atk.shots = 0;
           if (game.audio && game.audio.telegraph) game.audio.telegraph();
           return;
         }
@@ -1072,7 +1072,17 @@
 
   /* ----------------------------- Passives ---------------------------- */
   const PASSIVE = {
-    sentinel(b, dt, game, p) { if (p) b.labLook = Math.atan2(p.y - b.y, p.x - b.x) - b.angle; },
+    sentinel(b, dt, game, p) {
+      if (p) b.labLook = Math.atan2(p.y - b.y, p.x - b.x) - b.angle;
+      b.labScan = (b.labScan || 0) + dt;
+      if (b.labScan >= 3.0 && p && !p.dead) {
+        b.labScan = 0;
+        if (U.dist(b.x, b.y, p.x, p.y) < 700 && los(game, b.x, b.y, p.x, p.y)) {
+          b.angle = U.turnTowards(b.angle, Math.atan2(p.y - b.y, p.x - b.x), 1.2);
+          if (game.particles && game.particles.spark) game.particles.spark(b.x, b.y, 6, '#ffd27a');
+        }
+      }
+    },
     ram(b, dt, game) {
       b.labTread = (b.labTread || 0) + Math.hypot(b.vx, b.vy) * dt * 0.5;
       b.labPlate = Math.max(0, (b.labPlate || 0) - dt);
@@ -1242,9 +1252,9 @@
   /* ------------------------------ Roster ----------------------------- */
   // Campaign order -> tier. Pools keep the v11 classics and add signatures.
   const ROSTER = {
-    m3:  { tier: 1, look: 'sentinel', title: 'THE WARDEN', epithet: 'Sentinel Eye', fa: 'چشم نگهبان: نورافکن می‌چرخونه، اگه دیده بشی قفل می‌کنه و رگبار می‌زنه.', r: 40,
+    m3:  { tier: 1, look: 'sentinel', title: 'THE WARDEN', epithet: 'Sentinel Eye', fa: 'چشم نگهبان: رصد مداوم آرنا، نورافکن با قفل سریع و شلیک‌های رگباری سنگین.', r: 42,
            pal: { glow: '#ffd27a', orb: '#ffcf6b', eye: ['#ffb02e', '#ff4d3a', '#fff2c7'] },
-           sigs: ['searchlight'], pools: [null, ['fan', 'searchlight', 'stream'], ['fan', 'searchlight', 'mortar', 'stream'], ['searchlight', 'fan', 'mortar', 'charge', 'summon']] },
+           sigs: ['searchlight'], pools: [null, ['fan', 'searchlight', 'stream'], ['fan', 'searchlight', 'mortar', 'snipe', 'stream'], ['searchlight', 'spiral', 'mortar', 'charge', 'nova', 'summon']] },
     m5:  { tier: 2, look: 'ram', title: 'IRON WARDEN', epithet: 'Iron Ram', fa: 'قوچ آهنین: از جلو زره داره (پهلو و پشتش رو بزن)، با کوبیدن زمین موج ضربه می‌فرسته.', r: 44,
            pal: { glow: '#c9d1dc', orb: '#d7dee8' }, frontArmor: 0.35,
            sigs: ['quake'], pools: [null, ['charge', 'fan', 'quake'], ['charge', 'quake', 'mortar', 'fan'], ['charge', 'quake', 'nova', 'charge', 'summon']] },

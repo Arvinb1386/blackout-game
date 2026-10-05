@@ -69,11 +69,12 @@
   function visibility(g, p) {
     if (!p) return 1;
     const exp = g.playerExposure || 0;
-    const light = exp >= 0.5 ? 1 : exp > 0 ? CONF.lightLit : CONF.lightDark;
+    const flashOn = p.flashlight !== false;
+    const light = flashOn ? 1.0 : (exp >= 0.5 ? 1 : exp > 0 ? CONF.lightLit : CONF.lightDark);
     const sp = Math.hypot(p.vx || 0, p.vy || 0);
     let move = sp < CONF.still ? CONF.moveStill : p.sprinting ? CONF.moveSprint : CONF.moveWalk;
     if (p.isDodging) move = Math.max(move, CONF.moveDodge);
-    if (exp >= 0.5) move = Math.max(move, 1); // a muzzle flash gives you away
+    if (exp >= 0.5 || flashOn) move = Math.max(move, 1); // flashlight or muzzle flash gives you away
     return U.clamp(light * move, CONF.minVis, 1);
   }
 
@@ -87,14 +88,15 @@
     const vis = visibility(g, p);
     e.v11vis = vis;
     const d = U.dist(e.x, e.y, p.x, p.y);
-    if (d <= CONF.touchRange) return r;
+    const ambientR = (BO.CONFIG && BO.CONFIG.AMBIENT_LIGHT_RADIUS) || 175;
+    if (d <= ambientR + (e.r || 16)) return r;
     const recent = this.time - (ls || -99) < CONF.trackMemory;
     let range, fov;
     if (e.engaged) {
-      range = e.def.view * (recent ? 1 : 0.55 + 0.45 * vis);
+      range = e.def.view * (recent ? 1 : 0.6 + 0.4 * vis);
       fov = recent ? 0 : e.def.fov * CONF.engagedFov;
     } else {
-      range = e.def.view * (0.3 + 0.7 * vis);
+      range = e.def.view * (0.5 + 0.5 * vis);
       fov = e.def.fov;
     }
     let ok = d <= range;
@@ -199,8 +201,8 @@
 
   // One variant per boss fight, in campaign order. Pools are per phase (index 1..3).
   const VARIANTS = {
-    m3:  { name: 'warden', hp: 0.8, fields: 0, vent: 2.6, cooldown: [0, 2.1, 1.8, 1.5], chain: [0, 2, 2, 3], minions: ['grunt'], summon: { maxAlive: 1, total: 3 },
-           pools: [null, ['fan', 'stream'], ['fan', 'stream', 'mortar'], ['fan', 'mortar', 'charge', 'summon']] },
+    m3:  { name: 'warden', hp: 1.35, fields: 2, vent: 1.5, cooldown: [0, 1.4, 1.1, 0.85], chain: [0, 3, 3, 4], minions: ['grunt', 'shield', 'rusher'], summon: { maxAlive: 2, total: 6, perCast: 2 },
+           pools: [null, ['fan', 'searchlight', 'stream'], ['fan', 'searchlight', 'mortar', 'snipe', 'stream'], ['searchlight', 'spiral', 'mortar', 'charge', 'nova', 'summon']] },
     m5:  { name: 'iron', hp: 1, fields: 0, vent: 2.4, cooldown: [0, 2, 1.7, 1.45], minions: ['rusher'],
            pools: [null, ['charge', 'fan'], ['charge', 'mortar', 'fan'], ['charge', 'nova', 'charge', 'summon']] },
     m8:  { name: 'siege', hp: 1.05, fields: 3, minions: ['grenadier', 'grunt'],

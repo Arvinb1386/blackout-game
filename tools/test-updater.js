@@ -114,5 +114,44 @@ try {
   fail('semver test failed', e);
 }
 
-console.log(`\nAll ${passed} updater checks passed successfully.`);
+// 6. Verify Linux updater support in main.js and package.json
+try {
+  const mainContent = fs.readFileSync(path.join(root, 'main.js'), 'utf8');
+  assert(mainContent.includes("process.platform === 'linux'"), 'main.js missing linux platform check');
+  assert(mainContent.includes('.AppImage'), 'main.js missing AppImage handling');
+  assert(mainContent.includes('.deb'), 'main.js missing deb handling');
+  assert(mainContent.includes('xdg-open'), 'main.js missing xdg-open package launcher for linux');
+
+  const pkgContent = fs.readFileSync(path.join(root, 'package.json'), 'utf8');
+  assert(pkgContent.includes('"target": "AppImage"'), 'package.json missing AppImage target');
+  assert(pkgContent.includes('"target": "deb"'), 'package.json missing deb target');
+  pass('linux: updater and packaging targets verified for Linux (deb + AppImage)');
+} catch (e) {
+  fail('Linux updater test failed', e);
+}
+
+// 7. Verify Mission 3 boss buff in v11-tactics and lab-bosses
+try {
+  const v11Content = fs.readFileSync(path.join(root, 'js', 'v11-tactics.js'), 'utf8');
+  assert(v11Content.includes('m3:  { name: \'warden\', hp: 1.35, fields: 2'), 'v11-tactics missing Warden buff (hp 1.35, fields 2)');
+
+  const labContent = fs.readFileSync(path.join(root, 'js', 'lab-bosses.js'), 'utf8');
+  assert(labContent.includes('hp: t === 1 ? 1.35 :'), 'lab-bosses missing tier 1 Sentinel hp buff');
+  pass('boss: Mission 3 Warden buffed with 1.35x HP, shield fields, and fast attacks');
+} catch (e) {
+  fail('Mission 3 boss buff test failed', e);
+}
+
+// 8. Verify stealth & flashlight perception mechanics
+try {
+  const v12Content = fs.readFileSync(path.join(root, 'js', 'v12-enhanced-bosses.js'), 'utf8');
+  assert(v12Content.includes('flashlightHitsEnemy'), 'v12 missing flashlightHitsEnemy check');
+  assert(v12Content.includes('inAmbientCircle'), 'v12 missing inAmbientCircle check');
+  assert(v12Content.includes('viewRange * 0.2'), 'v12 missing 20% viewRange instant detection check');
+  pass('stealth: flashlight detection, ambient darkness circle, and 20% FOV detection verified');
+} catch (e) {
+  fail('Stealth perception test failed', e);
+}
+
+console.log(`\nAll ${passed} updater & gameplay checks passed successfully.`);
 process.exit(0);
