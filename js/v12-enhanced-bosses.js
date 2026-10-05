@@ -20,8 +20,8 @@
     OriginalBossDraw.call(this, ctx);
     
     // Add variant-specific visual enhancements
-    if (this.variant && v11 && v11.tactics[this.variant]) {
-      const tactic = v11.tactics[this.variant];
+    const variant = this.variant || (this.v11 && this.v11.name);
+    if (variant) {
       const enhancedColor = this._getVariantColor();
       
       // Draw glowing aura based on variant
@@ -46,6 +46,7 @@
   };
 
   BO.Boss.prototype._getVariantColor = function() {
+    const variant = this.variant || (this.v11 && this.v11.name);
     const colors = {
       'tactical': '#ff4444',     // Red glow
       'aggressive': '#ff6600',   // Orange glow
@@ -55,13 +56,22 @@
       'teleport': '#bb00ff',     // Purple glow
       'cloner': '#00ff44',       // Green glow
       'minion': '#ffaa00',       // Gold glow
-      'hybrid': '#ff00ff'        // Magenta glow
+      'hybrid': '#ff00ff',       // Magenta glow
+      'warden': '#ff8a1a',
+      'iron': '#00ccff',
+      'siege': '#ff4444',
+      'vortex': '#bb00ff',
+      'hunter': '#ffff00',
+      'prime': '#ffaa00',
+      'forge': '#ff6600',
+      'wraith': '#00ff44',
+      'tempest': '#8df7ff'
     };
-    return colors[this.variant] || '#ffffff';
+    return colors[variant] || '#ffffff';
   };
 
   BO.Boss.prototype._drawVariantMarkings = function(ctx, color) {
-    const variant = this.variant;
+    const variant = this.variant || (this.v11 && this.v11.name);
     ctx.strokeStyle = color;
     ctx.lineWidth = 1.5;
     ctx.globalAlpha = 0.6;
@@ -259,110 +269,149 @@
     };
   }
 
-  // ===== FLASHLIGHT TOGGLE MECHANIC =====
-  // Add ability to toggle flashlight; enemies cannot detect player in darkness
+  // ===== FLASHLIGHT TOGGLE MECHANIC (F KEY) =====
+  const U = BO.U;
+  const CFG = BO.CONFIG;
 
-  // Initialize flashlight state on player
-  const OriginalPlayer = BO.Player;
-  const OriginalPlayerInit = OriginalPlayer.prototype.init;
-  
-  BO.Player.prototype.init = function() {
-    if (OriginalPlayerInit) {
-      OriginalPlayerInit.call(this);
-    }
-    this.flashlightEnabled = true; // Flashlight starts ON
-  };
-
-  // Add keyboard input handler for flashlight toggle (F key)
-  const OriginalInputHandleKey = BO.input && BO.input.handleKey;
-  if (BO.input) {
-    BO.input.handleKey = function(key) {
-      if (OriginalInputHandleKey) {
-        OriginalInputHandleKey.call(this, key);
-      }
-      
-      // Toggle flashlight on F key
-      if (key === 'f' || key === 'F') {
-        if (BO.game && BO.game.player) {
-          BO.game.player.flashlightEnabled = !BO.game.player.flashlightEnabled;
-        }
-      }
-    };
-  }
-
-  // Alternatively, hook into keydown at game level
-  if (!BO.input || !BO.input.handleKey) {
-    const OriginalGameUpdate = BO.game && BO.game.update;
-    if (BO.game) {
-      BO.game.update = function() {
-        if (OriginalGameUpdate) {
-          OriginalGameUpdate.call(this);
-        }
-        // Check if F key was pressed
-        if (BO.keys && (BO.keys['f'] || BO.keys['F'])) {
-          if (this.player && !this._flashlightToggleLocked) {
-            this.player.flashlightEnabled = !this.player.flashlightEnabled;
-            this._flashlightToggleLocked = true;
+  // 1. Toggle handling on F key press
+  if (BO.events) {
+    BO.events.on('input:key', function(code) {
+      if (code === 'KeyF') {
+        const g = BO.game;
+        if (!g || g.state !== BO.Game.STATE.PLAYING || !g.player || g.player.dead) return;
+        const p = g.player;
+        p.flashlight = p.flashlight === false ? true : false;
+        
+        // Mechanical switch sound
+        if (g.audio) {
+          if (g.audio.uiClick) {
+            g.audio.uiClick();
+          } else if (g.audio.tone && g.audio.ctx) {
+            g.audio.tone({
+              when: g.audio.ctx.currentTime,
+              freq: p.flashlight ? 820 : 420,
+              dur: 0.03,
+              vol: 0.15,
+              type: 'triangle'
+            });
           }
-        } else {
-          this._flashlightToggleLocked = false;
         }
-      };
-    }
-  }
-
-  // Modify enemy perception: can't detect player when flashlight is OFF
-  const OriginalAIVisibility = BO.ai && BO.ai.visibility;
-  if (BO.ai && BO.ai.visibility) {
-    BO.ai.visibility = function(enemy, target) {
-      if (!target) return false;
-      
-      // If target is player and flashlight is off, enemy can't see them
-      if (target === BO.game.player && !target.flashlightEnabled) {
-        return false;
-      }
-      
-      // Otherwise use original visibility logic
-      return OriginalAIVisibility.call(this, enemy, target);
-    };
-  }
-
-  // Modify postfx flashlight rendering to reflect toggle state
-  const OriginalPostfxDraw = BO.postfx && BO.postfx.draw;
-  if (BO.postfx) {
-    BO.postfx.draw = function(ctx, player) {
-      // Only render flashlight effects if flashlight is enabled
-      if (player && player.flashlightEnabled !== false) {
-        if (OriginalPostfxDraw) {
-          OriginalPostfxDraw.call(this, ctx, player);
+        
+        // Toast notification
+        if (g.ui && g.ui.notify) {
+          g.ui.notify(
+            BO.t(p.flashlight ? 'flash.on' : 'flash.off'),
+            p.flashlight ? '#ffea75' : '#777d8e',
+            1.2
+          );
         }
-      } else {
-        // When flashlight is off, render darkness/shadow effect
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
-        ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+      }
+    });
+  }
+
+  // 2. Lighting rendering: disable flashlight cone when flashlight is off
+  if (BO.Renderer && BO.Renderer.prototype._renderLighting) {
+    const origLighting = BO.Renderer.prototype._renderLighting;
+    BO.Renderer.prototype._renderLighting = function(game, time, rect) {
+      const p = game && game.player;
+      const oldRange = CFG ? CFG.FLASHLIGHT_RANGE : 560;
+      if (p && p.flashlight === false && CFG) {
+        CFG.FLASHLIGHT_RANGE = 0; // Disables cone casting & drawing; ambient circle remains
+      }
+      try {
+        return origLighting.call(this, game, time, rect);
+      } finally {
+        if (CFG) CFG.FLASHLIGHT_RANGE = oldRange;
       }
     };
   }
 
-  // Add HUD indicator for flashlight status
-  const OriginalGameRender = BO.game && BO.game.render;
-  if (BO.game) {
-    BO.game.render = function(ctx) {
-      if (OriginalGameRender) {
-        OriginalGameRender.call(this, ctx);
+  // 3. Volumetric postfx: disable light beam when flashlight is off
+  if (BO.PostFX && BO.PostFX.prototype.world) {
+    const origPostfxWorld = BO.PostFX.prototype.world;
+    BO.PostFX.prototype.world = function(game, time) {
+      const p = game && game.player;
+      if (p && p.flashlight === false) return;
+      return origPostfxWorld.call(this, game, time);
+    };
+  }
+
+  // 4. Enemy cone illumination: player cannot illuminate distant enemies in dark
+  if (BO.Game && BO.Game.prototype._updateVisibility) {
+    const origVis = BO.Game.prototype._updateVisibility;
+    BO.Game.prototype._updateVisibility = function() {
+      const p = this.player;
+      const oldRange = CFG ? CFG.FLASHLIGHT_RANGE : 560;
+      if (p && p.flashlight === false && CFG) {
+        CFG.FLASHLIGHT_RANGE = 0;
       }
-      
-      // Draw flashlight status indicator
-      if (this.player) {
-        ctx.font = '14px Arial';
-        ctx.fillStyle = this.player.flashlightEnabled ? '#00ff00' : '#ff0000';
-        ctx.fillText(
-          'Flashlight: ' + (this.player.flashlightEnabled ? 'ON (F)' : 'OFF (F)'),
-          10,
-          30
-        );
+      try {
+        return origVis.apply(this, arguments);
+      } finally {
+        if (CFG) CFG.FLASHLIGHT_RANGE = oldRange;
       }
     };
+  }
+
+  // 5. Enemy detection & Stealth: enemies cannot see player in the dark when flashlight is off
+  if (BO.AISystem && BO.AISystem.prototype._perceive) {
+    const origPerceive = BO.AISystem.prototype._perceive;
+    BO.AISystem.prototype._perceive = function(e) {
+      const r = origPerceive.apply(this, arguments);
+      const g = this.game;
+      const p = g && g.player;
+      if (p && p.flashlight === false && e.canSee && !e.engaged && !e.isBoss) {
+        const d = U ? U.dist(e.x, e.y, p.x, p.y) : Math.hypot(e.x - p.x, e.y - p.y);
+        const exp = g.playerExposure || 0;
+        // Outside close contact (90px) and not exposed by lit room or gun flash
+        if (d > 90 && exp < 0.3) {
+          e.canSee = false;
+          e.clearShot = false;
+        }
+      }
+      return r;
+    };
+  }
+
+  // 6. HUD indicator for Flashlight status
+  if (BO.UIManager && BO.UIManager.prototype.renderHUD) {
+    const origHUD = BO.UIManager.prototype.renderHUD;
+    BO.UIManager.prototype.renderHUD = function(ctx, game, time) {
+      origHUD.apply(this, arguments);
+      if (!game || !game.player || this.current === 'results' || this.current === 'death') return;
+      const p = game.player;
+      const on = p.flashlight !== false;
+      ctx.save();
+      ctx.setTransform(game.renderer.dpr, 0, 0, game.renderer.dpr, 0, 0);
+      ctx.font = '700 11px "Chakra Petch", Vazirmatn, sans-serif';
+      const x = game.renderer.w - 18;
+      const y = 30;
+      ctx.textAlign = 'right';
+      ctx.fillStyle = on ? '#ffea75' : '#555b6e';
+      const label = on ? BO.t('flash.onHud') : BO.t('flash.offHud');
+      ctx.fillText(label, x, y);
+      ctx.fillStyle = on ? '#ffea75' : '#333846';
+      ctx.beginPath();
+      ctx.arc(x - ctx.measureText(label).width - 8, y - 4, 4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    };
+  }
+
+  // 7. Translations
+  if (BO.I18N && BO.I18N.extend) {
+    BO.I18N.extend('en', {
+      'flash.on': 'FLASHLIGHT: ON',
+      'flash.off': 'FLASHLIGHT: OFF',
+      'flash.onHud': 'FLASHLIGHT: ON [F]',
+      'flash.offHud': 'FLASHLIGHT: OFF [F]',
+    });
+    BO.I18N.extend('fa', {
+      'flash.on': 'چراغ‌قوه: روشن',
+      'flash.off': 'چراغ‌قوه: خاموش',
+      'flash.onHud': 'چراغ‌قوه: روشن [F]',
+      'flash.offHud': 'چراغ‌قوه: خاموش [F]',
+    });
   }
 
   console.log('v12-enhanced-bosses.js loaded: stronger bosses, destructible obstacles, enemy variety, flashlight toggle');

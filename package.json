@@ -1,11 +1,81 @@
 {
   "name": "blackout-game",
   "version": "1.0.0",
+  "description": "BLACKOUT // خاموشی - Tactical top-down shooter in the dark",
+  "author": "Arvin",
+  "main": "main.js",
   "private": true,
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "desktop": "electron .",
+    "dist": "electron-builder --win",
+    "dist:nsis": "electron-builder --win nsis",
+    "dist:portable": "electron-builder --win portable",
+    "dist:linux": "electron-builder --linux AppImage"
   },
   "dependencies": {
+    "electron-updater": "^6.8.9",
     "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "electron": "^44.5.1",
+    "electron-builder": "^26.15.3"
+  },
+  "build": {
+    "appId": "com.blackout.game",
+    "productName": "Blackout",
+    "copyright": "Copyright © 2026",
+    "directories": {
+      "output": "dist"
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "Arvinb1386",
+        "repo": "blackout-game"
+      }
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "assets/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Blackout",
+      "uninstallDisplayName": "Blackout Game",
+      "runAfterFinish": true
+    },
+    "portable": {
+      "artifactName": "${productName}-Portable-${version}.${ext}"
+    },
+    "files": [
+      "assets/**/*",
+      "css/**/*",
+      "docs/**/*",
+      "js/**/*",
+      "index.html",
+      "controller.html",
+      "blackout-single.html",
+      "main.js",
+      "preload.js",
+      "server.js",
+      "package.json"
+    ]
   }
 }

@@ -217,8 +217,29 @@
     const g = ai.game, s = st(g);
     if (!s || s.alarm > 0 || !s.panels.length || e.dead || e.isBoss || e.isWave || e.minion || NO_RUN[e.type] || e.v10daze > 0) return;
     if (s.runner && !s.runner.dead && s.runner.v10run) return; // one runner at a time
+
+    // Enemy MUST have actually spotted and visually seen a player!
+    // If player is behind walls, in another room, or sneaking in darkness, enemy cannot run for alarm!
+    const players = (g.coop && g.players) ? g.players : [g.player];
+    const visiblePlayer = players.find(pl => {
+      if (!pl || pl.dead) return false;
+      const d = U.dist(e.x, e.y, pl.x, pl.y);
+      const viewRange = (e.def && e.def.view) || 500;
+      if (d > viewRange) return false;
+      if (!C.lineOfSight(g.map, e.x, e.y, pl.x, pl.y, BO.COLLIDE.SIGHT)) return false;
+      const a = Math.atan2(pl.y - e.y, pl.x - e.x);
+      const fov = (e.def && e.def.fov) || 1.8;
+      if (Math.abs(U.angleDiff(e.angle, a)) > fov / 2) return false;
+      // If player's flashlight is off and in darkness: cannot see player to run for alarm
+      if (pl.flashlight === false && (g.playerExposure || 0) < 0.3 && d > 90) return false;
+      return true;
+    });
+
+    if (!visiblePlayer) return;
+    if (!e.canSee && (ai.time - (e.lastSeenAt || 0) > 0.4)) return;
+
     if (!U.chance(CONF.runChance)) return;
-    const p = g.player;
+    const p = visiblePlayer;
     let best = null, bd = CONF.runRange;
     s.panels.forEach(q => {
       if (p && U.dist(p.x, p.y, q.ax, q.ay) < 160) return; // you're guarding that one
@@ -237,11 +258,14 @@
     const g = ai.game, s = st(g), r = e.v10run;
     if (!r) return false;
     r.t += dt;
-    if (!s || s.alarm > 0 || e.v10daze > 0 || r.t > CONF.runGiveUp) {
+    // Abort if alarm already active, dazed, timed out, or enemy heavily damaged
+    if (!s || s.alarm > 0 || e.v10daze > 0 || r.t > CONF.runGiveUp || (e.hp < e.maxHp * 0.35)) {
       e.v10run = null;
       if (s && s.runner === e) s.runner = null;
       return false;
     }
+    // Taking bullet hits interrupts holding the alarm button
+    if (e.hitFlash > 0) r.hold = Math.max(0, r.hold - dt * 2);
     const q = r.panel;
     const arrived = U.dist(e.x, e.y, q.ax, q.ay) <= 24 || ai._navigate(e, q.ax, q.ay, 1.15);
     if (!arrived) { r.hold = 0; return true; }

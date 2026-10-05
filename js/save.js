@@ -117,12 +117,43 @@
       try { return sanitize(JSON.parse(raw)); } catch (err) { return defaults(); }
     },
     write(key, data) {
-      try { storage.set(key, JSON.stringify(data)); } catch (err) { BO.U.reportError('save', err); }
+      const str = JSON.stringify(data);
+      try { storage.set(key, str); } catch (err) { BO.U.reportError('save', err); }
+      if (window.electronStorage && window.electronStorage.saveToFile) {
+        window.electronStorage.saveToFile(key, str).catch(function () {});
+      }
+    },
+    async syncFromDisk() {
+      if (!window.electronStorage || !window.electronStorage.loadFromFile) return;
+      try {
+        const res = await window.electronStorage.loadFromFile(this.key);
+        if (res && res.success && res.data) {
+          const diskData = sanitize(JSON.parse(res.data));
+          const currentXp = (this.data && this.data.xp) || 0;
+          const diskXp = diskData.xp || 0;
+          const currentMissions = (this.data && this.data.completedMissions) ? this.data.completedMissions.length : 0;
+          const diskMissions = diskData.completedMissions ? diskData.completedMissions.length : 0;
+          if (diskXp > currentXp || diskMissions > currentMissions || (this.data.level === 1 && diskData.level > 1)) {
+            console.log('[SaveSystem] Restored save data from disk backup file');
+            this.data = diskData;
+            storage.set(this.key, JSON.stringify(this.data));
+            if (BO.game && BO.game.ui) BO.game.ui.renderProfile();
+          }
+        }
+      } catch (e) {
+        console.warn('[SaveSystem] syncFromDisk error:', e);
+      }
     },
     load() {
       this.wasCorrupted = false;
       const raw = storage.get(this.key);
-      if (!raw) { this.data = defaults(); return this.data; }
+      if (!raw) {
+        this.data = defaults();
+        if (window.electronStorage && window.electronStorage.loadFromFile) {
+          this.syncFromDisk();
+        }
+        return this.data;
+      }
       try {
         this.data = sanitize(JSON.parse(raw));
       } catch (err) {
@@ -131,12 +162,19 @@
         this.data = defaults();
         this.save();
       }
+      if (window.electronStorage && window.electronStorage.loadFromFile) {
+        this.syncFromDisk();
+      }
       return this.data;
     },
     save() {
+      const str = JSON.stringify(this.data);
       try {
-        storage.set(this.key, JSON.stringify(this.data));
+        storage.set(this.key, str);
       } catch (err) { BO.U.reportError('save', err); }
+      if (window.electronStorage && window.electronStorage.saveToFile) {
+        window.electronStorage.saveToFile(this.key, str).catch(function () {});
+      }
     },
     reset() {
       const keepSettings = this.data.settings;
