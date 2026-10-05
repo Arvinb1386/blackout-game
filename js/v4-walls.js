@@ -53,7 +53,16 @@
   function hashStr(s) { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
 
   /* ----------------------------- Textures ----------------------------- */
+  // Keyed by material + theme colours, so the set is naturally small, but a
+  // long play session with many themes could still grow it. Cap it and drop
+  // the oldest entries so replaying missions cannot leak canvases.
   const CACHE = Object.create(null);
+  const CACHE_MAX = 64;
+  function cachePut(key, canvas) {
+    CACHE[key] = canvas;
+    const keys = Object.keys(CACHE);
+    if (keys.length > CACHE_MAX) for (let i = 0; i < keys.length - CACHE_MAX; i++) delete CACHE[keys[i]];
+  }
 
   /** Draws fn at (x,y) plus wrapped copies so the texture tiles seamlessly. */
   function wrapped(W, H, x, y, r, fn) {
@@ -294,7 +303,7 @@
         break;
     }
     grit(g, W, y0, y1, rng, face ? 500 : 2200, 0.22);
-    CACHE[key] = c;
+    cachePut(key, c);
     return c;
   }
 

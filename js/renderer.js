@@ -47,8 +47,18 @@
 
     resize() {
       this.dpr = Math.min(window.devicePixelRatio || 1, MAX_DPR);
-      this.w = Math.max(320, window.innerWidth);
-      this.h = Math.max(240, window.innerHeight);
+      // visualViewport tracks the actual visible area in fullscreen; innerWidth
+      // can still report the pre-fullscreen size for a frame, which pushed the
+      // canvas past the bottom of the screen.
+      const vv = window.visualViewport;
+      const vw = vv && vv.width ? vv.width : window.innerWidth;
+      const vh = vv && vv.height ? vv.height : window.innerHeight;
+      this.w = Math.max(1, Math.round(vw));
+      this.h = Math.max(1, Math.round(vh));
+      // Setting width/height reallocates the backing store, which invalidates
+      // every CanvasPattern made from this context. Cached patterns held by
+      // postfx would silently stop painting after a resize, so drop them.
+      if (this._fx) { this._fx.patCtx = null; this._fx.grainPats = null; this._fx.scanPat = null; }
       this.canvas.width = Math.round(this.w * this.dpr);
       this.canvas.height = Math.round(this.h * this.dpr);
       this.canvas.style.width = this.w + 'px';
@@ -63,6 +73,21 @@
       const c = document.createElement('canvas');
       c.width = map.pixelW; c.height = map.pixelH;
       const g = c.getContext('2d');
+      // Big maps (92x66 tiles = 4416x3168) can exceed the browser's canvas area
+      // limit. getContext('2d') then returns a context whose every draw call
+      // silently does nothing, which is exactly the "plain, texture-less floor"
+      // symptom. Detect it once, loudly, instead of shipping a blank map.
+      if (!g) {
+        console.warn('[renderer] static layer ' + c.width + 'x' + c.height +
+          ' could not be allocated - the floor will render untextured.');
+        const fallback = document.createElement('canvas');
+        fallback.width = Math.min(c.width, 4096);
+        fallback.height = Math.min(c.height, 4096);
+        this.staticLayer = fallback;
+        const fg = fallback.getContext('2d');
+        if (fg) { fg.fillStyle = '#06070b'; fg.fillRect(0, 0, fallback.width, fallback.height); }
+        return fallback;
+      }
       const rng = U.makeRng(level.seed + 99);
       g.fillStyle = '#06070b';
       g.fillRect(0, 0, c.width, c.height);

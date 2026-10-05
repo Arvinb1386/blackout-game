@@ -15,7 +15,32 @@
     return Promise.race([Promise.all(loads).catch(() => null), new Promise(r => setTimeout(r, timeoutMs))]);
   }
 
+  function requestFullscreen() {
+    const el = document.documentElement;
+    if (!el || !el.requestFullscreen) return;
+    const go = () => {
+      const p = el.requestFullscreen({ navigationUI: 'hide' });
+      if (p && p.catch) p.catch(() => { try { el.requestFullscreen(); } catch (_) {} });
+    };
+    // Fire immediately (works when the browser allows it), and otherwise retry
+    // on the first real user gesture.
+    try { go(); } catch (_) { /* needs a gesture */ }
+    if (document.fullscreenElement) return;
+    const retry = () => {
+      if (document.fullscreenElement) return;
+      try { go(); } catch (_) { /* blocked */ }
+    };
+    window.addEventListener('pointerdown', retry, { once: true });
+    window.addEventListener('keydown', retry, { once: true });
+  }
+
   async function boot() {
+    // data/weapons.json is applied before anything reads BO.WEAPONS.
+    if (BO.WeaponConfig && BO.WeaponConfig.ready) { try { await BO.WeaponConfig.ready; } catch (_) {} }
+    // Open fullscreen. Browsers only honour a request made from a user gesture,
+    // so this is attempted on the first click/keypress and silently skipped when
+    // it is refused.
+    requestFullscreen();
     const save = BO.SaveSystem.load();
     BO.I18N.setLang(save.settings.lang);
     const canvas = document.getElementById('game');
@@ -31,12 +56,23 @@
     document.body.classList.add('ready');
 
     let resizeQueued = false;
-    window.addEventListener('resize', () => {
+    const queueResize = () => {
       if (resizeQueued) return;
       resizeQueued = true;
       requestAnimationFrame(() => { resizeQueued = false; game.onResize(); });
+    };
+    window.addEventListener('resize', queueResize);
+    // Entering/leaving fullscreen and browser UI changes alter the viewport
+    // without always firing `resize`.
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', queueResize);
+      window.visualViewport.addEventListener('scroll', queueResize);
+    }
+    document.addEventListener('fullscreenchange', queueResize);
+    if (window.screen && screen.orientation) screen.orientation.addEventListener('change', queueResize);
+    document.addEventListener('fullscreenchange', () => {
+      if (ui.current === 'settings') ui.renderSettings();
     });
-    document.addEventListener('fullscreenchange', () => { game.onResize(); if (ui.current === 'settings') ui.renderSettings(); });
 
     const unlockAudio = () => { game.audio.unlock(); };
     window.addEventListener('pointerdown', unlockAudio);

@@ -31,7 +31,7 @@
   function defaultSettings() {
     return {
       master: 0.8, music: 0.55, sfx: 0.85, sensitivity: 1, screenShake: true,
-      particles: 'high', fps: false, lang: 'fa', postfx: true
+      particles: 'high', fps: false, lang: 'en', postfx: true
     };
   }
 

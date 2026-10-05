@@ -33,7 +33,14 @@
     return FILTER_OK;
   }
 
+  /* Noise tiles are deterministic per (size, seed) and reused across missions. */
+  const NOISE_CACHE = Object.create(null);
+
   function noiseCanvas(size, seed) {
+    // Deterministic per (size, seed), so cache it: the static pass runs on every
+    // mission start and regenerating these each time was pure overhead.
+    const key = size + ':' + seed;
+    if (NOISE_CACHE[key]) return NOISE_CACHE[key];
     const c = document.createElement('canvas');
     c.width = c.height = size;
     const g = c.getContext('2d');
@@ -45,34 +52,46 @@
       img.data[i + 3] = 255;
     }
     g.putImageData(img, 0, 0);
+    NOISE_CACHE[key] = c;
     return c;
   }
 
   /* ========================= Static map detail ========================= */
-  function enhanceStatic(c, level) {
+  function enhanceStatic(c, level, opts) {
+    const skipNoise = !!(opts && opts.skipNoise);
     const g = c.getContext('2d');
     const map = level.map, th = level.theme;
     const rng = U.makeRng((level.seed || 1) + 4242);
     const isFloor = (x, y) => map.inBounds(x, y) && map.tiles[map.idx(x, y)] !== T.SOLID;
     const isSolid = (x, y) => !map.inBounds(x, y) || map.tiles[map.idx(x, y)] === T.SOLID;
 
-    // 1. Grime: blotchy coarse noise + fine grit, blended into every surface.
-    const coarse = noiseCanvas(40, (level.seed || 1) + 1);
-    const big = document.createElement('canvas');
-    big.width = big.height = 480;
-    const bg = big.getContext('2d');
-    bg.imageSmoothingEnabled = true;
-    bg.drawImage(coarse, 0, 0, 480, 480);
-    const fine = noiseCanvas(128, (level.seed || 1) + 2);
-    g.save();
-    g.globalCompositeOperation = 'overlay';
-    g.globalAlpha = 0.28;
-    g.fillStyle = g.createPattern(big, 'repeat');
-    g.fillRect(0, 0, c.width, c.height);
-    g.globalAlpha = 0.12;
-    g.fillStyle = g.createPattern(fine, 'repeat');
-    g.fillRect(0, 0, c.width, c.height);
-    g.restore();
+    // Large maps (up to 92x66 tiles = 4416x3168 = ~53 MP) can exceed the
+    // browser's canvas area limit. A silent failure here left the floor
+    // untextured until the player retried, so wrap the whole pass.
+    if (!g) return;
+
+    // 1. Grime. The noise is TILED at its native size, never stretched: blowing a
+    // 40x40 tile up to 480px turns every sample into a ~12px blob, which tiled
+    // across the whole map reads as smeared, out-of-focus fog that buries the
+    // floor tiles underneath it.
+    if (!skipNoise) {
+      const coarse = noiseCanvas(256, (level.seed || 1) + 1);
+      const big = document.createElement('canvas');
+      big.width = big.height = 512;
+      const bg = big.getContext('2d');
+      bg.fillStyle = bg.createPattern(coarse, 'repeat');
+      bg.fillRect(0, 0, 512, 512);
+      const fine = noiseCanvas(128, (level.seed || 1) + 2);
+      g.save();
+      g.globalCompositeOperation = 'overlay';
+      g.globalAlpha = 0.16;
+      g.fillStyle = g.createPattern(big, 'repeat');
+      g.fillRect(0, 0, c.width, c.height);
+      g.globalAlpha = 0.07;
+      g.fillStyle = g.createPattern(fine, 'repeat');
+      g.fillRect(0, 0, c.width, c.height);
+      g.restore();
+    }
 
     // 2. Floor plates with bevels and bolts (rooms only).
     for (let ty = 0; ty < map.h - 1; ty += 2) for (let tx = 0; tx < map.w - 1; tx += 2) {
@@ -201,7 +220,22 @@
   const origBuild = R.buildStaticLayer;
   R.buildStaticLayer = function (level) {
     const c = origBuild.call(this, level);
-    if (enabled()) U.safe('postfx.static', () => enhanceStatic(c, level));
+    if (!enabled()) return c;
+    // The floor-decor pass allocates several full-size canvases on top of the
+    // static layer. On the biggest maps that can trip the browser's canvas
+    // memory limit, and the old U.safe() call swallowed the failure - leaving a
+    // flat, texture-less floor that only reappeared on a retry. Now a failure
+    // is recorded and retried once at a reduced quality instead of hidden.
+    try {
+      enhanceStatic(c, level);
+    } catch (err) {
+      console.warn('[postfx] static pass failed, retrying at reduced quality:', err);
+      try {
+        enhanceStatic(c, level, { skipNoise: true });
+      } catch (err2) {
+        console.warn('[postfx] static pass failed again, floor left plain:', err2);
+      }
+    }
     return c;
   };
 
@@ -224,6 +258,10 @@
       this.grain = [noiseCanvas(160, 11), noiseCanvas(160, 23), noiseCanvas(160, 37)];
       this.grainPats = null;
       this.scanPat = null;
+      // CanvasPattern belongs to the context that created it. The canvas is
+      // reallocated on resize (and patterns die with it), so remember which
+      // context the cached patterns belong to and rebuild when it changes.
+      this.patCtx = null;
     }
 
     /* ------------------- world space (camera applied) ------------------- */
@@ -360,16 +398,43 @@
       return c;
     }
 
+    /**
+     * True when every cached pattern can still be used on this context.
+     * Existence is not enough: a pattern whose canvas was reallocated still
+     * "exists" as a JS object, but assigning it to fillStyle is silently
+     * ignored. So probe it - the cheapest reliable test is to actually set
+     * fillStyle and see whether the setter took.
+     */
+    _patsUsable(ctx) {
+      if (!this.grainPats || this.grainPats.length !== this.grain.length) return false;
+      if (!this.scanPat || !this.grainPats.every(Boolean)) return false;
+      const probe = this.grainPats[0];
+      const before = ctx.fillStyle;
+      ctx.fillStyle = probe;
+      const took = ctx.fillStyle === probe;
+      ctx.fillStyle = before;
+      return took;
+    }
+
+    /** Builds the grain + scanline patterns against the given context. */
+    _buildPatterns(ctx) {
+      this.grainPats = this.grain.map(c => ctx.createPattern(c, 'repeat'));
+      const s = document.createElement('canvas');
+      s.width = 1; s.height = 4;
+      const sg = s.getContext('2d');
+      sg.fillStyle = 'rgba(0,0,0,0.07)';
+      sg.fillRect(0, 0, 1, 1);
+      this.scanPat = ctx.createPattern(s, 'repeat');
+      this.patCtx = ctx;
+    }
+
     _grain(ctx, W, H, time) {
-      if (!this.grainPats) {
-        this.grainPats = this.grain.map(c => ctx.createPattern(c, 'repeat'));
-        const s = document.createElement('canvas');
-        s.width = 1; s.height = 4;
-        const sg = s.getContext('2d');
-        sg.fillStyle = 'rgba(0,0,0,0.07)';
-        sg.fillRect(0, 0, 1, 1);
-        this.scanPat = ctx.createPattern(s, 'repeat');
-      }
+      // A CanvasPattern belongs to the context that created it, and it is
+      // invalidated when that canvas's backing store is reallocated (any
+      // resize). Assigning a dead pattern to fillStyle is a silent no-op that
+      // leaves the previous colour behind - the "striped / checkered" screen.
+      // So key the cache on the context and verify the patterns before use.
+      if (this.patCtx !== ctx || !this._patsUsable(ctx)) this._buildPatterns(ctx);
       const idx = Math.floor(time * 24) % this.grainPats.length;
       const ox = Math.floor(Math.random() * 160), oy = Math.floor(Math.random() * 160);
       ctx.save();
