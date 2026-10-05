@@ -450,13 +450,82 @@
           <div class="control-row"><label>MAX COOLDOWN</label><input type="number" id="inp-cd-max" min="0.1" step="0.1" value="3"></div>
           <button class="btn" data-act="cooldown-apply" style="width: 100%;">Apply Cooldowns</button>
         </div>
+
+        <div class="card">
+          <h4>Skill Bullet Counts (میزان تیر اسکیل‌ها)</h4>
+          <p style="color: var(--c-fg-dim); font-size: 10px; margin-bottom: 10px;">تعداد تیر و امواج هر اسکیل باس را تنظیم کنید (اعمال آنی و در لحظه):</p>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+            <div class="control-row" style="margin-bottom: 6px;">
+              <label style="flex: 0 0 78px;" title="Fan: Orbs per volley">FAN ORBS</label>
+              <input type="number" id="tun-fan-count" min="1" max="50" step="1" value="9">
+            </div>
+            <div class="control-row" style="margin-bottom: 6px;">
+              <label style="flex: 0 0 78px;" title="Fan: Number of volleys">FAN WAVES</label>
+              <input type="number" id="tun-fan-volleys" min="1" max="10" step="1" value="3">
+            </div>
+
+            <div class="control-row" style="margin-bottom: 6px;">
+              <label style="flex: 0 0 78px;" title="Stream: Bullets per burst">STREAM AMMO</label>
+              <input type="number" id="tun-stream-bullets" min="1" max="50" step="1" value="5">
+            </div>
+            <div class="control-row" style="margin-bottom: 6px;">
+              <label style="flex: 0 0 78px;" title="Stream: Burst count">STREAM BURSTS</label>
+              <input type="number" id="tun-stream-bursts" min="1" max="10" step="1" value="3">
+            </div>
+
+            <div class="control-row" style="margin-bottom: 6px;">
+              <label style="flex: 0 0 78px;" title="Nova: 360 circle orbs">NOVA RING</label>
+              <input type="number" id="tun-nova-count" min="4" max="100" step="2" value="24">
+            </div>
+            <div class="control-row" style="margin-bottom: 6px;">
+              <label style="flex: 0 0 78px;" title="Nova: Number of rings">NOVA WAVES</label>
+              <input type="number" id="tun-nova-waves" min="1" max="10" step="1" value="3">
+            </div>
+
+            <div class="control-row" style="margin-bottom: 6px;">
+              <label style="flex: 0 0 78px;" title="Spiral: Rotating arms count">SPIRAL ARMS</label>
+              <input type="number" id="tun-spiral-arms" min="1" max="12" step="1" value="3">
+            </div>
+            <div class="control-row" style="margin-bottom: 6px;">
+              <label style="flex: 0 0 78px;" title="Cross: Directions count">CROSS RAYS</label>
+              <input type="number" id="tun-cross-ways" min="2" max="12" step="1" value="4">
+            </div>
+
+            <div class="control-row" style="margin-bottom: 6px;">
+              <label style="flex: 0 0 78px;" title="Cross: Orbs per ray">CROSS ORBS</label>
+              <input type="number" id="tun-cross-orbs" min="1" max="6" step="1" value="2">
+            </div>
+            <div class="control-row" style="margin-bottom: 6px;">
+              <label style="flex: 0 0 78px;" title="Sniper: Shots count">SNIPE SHOTS</label>
+              <input type="number" id="tun-snipe-shots" min="1" max="15" step="1" value="3">
+            </div>
+
+            <div class="control-row" style="margin-bottom: 6px;">
+              <label style="flex: 0 0 78px;" title="Blink: Teleport fan bullets">BLINK ORBS</label>
+              <input type="number" id="tun-blink-orbs" min="1" max="30" step="1" value="5">
+            </div>
+            <div class="control-row" style="margin-bottom: 6px;">
+              <label style="flex: 0 0 78px;" title="Mortar: Explosive strikes">MORTAR HITS</label>
+              <input type="number" id="tun-mortar-count" min="1" max="25" step="1" value="6">
+            </div>
+
+            <div class="control-row" style="margin-bottom: 6px;">
+              <label style="flex: 0 0 78px;" title="Mines: Delayed mines count">MINES COUNT</label>
+              <input type="number" id="tun-mines-count" min="1" max="30" step="1" value="10">
+            </div>
+          </div>
+          <div class="grid2" style="margin-top: 8px;">
+            <button class="btn tech" data-act="tuning-reset">Default Counts</button>
+            <button class="btn" data-act="tuning-apply">Apply Counts</button>
+          </div>
+        </div>
       </div>
 
       <div class="lab-section" data-section="arena">
         <div class="card">
           <h4>Arena Generation</h4>
           <div class="control-row"><label>SEED</label><input type="number" id="inp-seed" value="31337"></div>
-          <div class="control-row"><label>THEME</label><select id="sel-theme"><option value="blacksite">Blacksite</option><option value="jungle">Jungle</option><option value="labs">Labs</option><option value="urban">Urban</option><option value="industrial">Industrial</option></select></div>
+          <div class="control-row"><label>THEME</label><select id="sel-theme"><option value="blacksite">Blacksite</option><option value="outpost">Outpost</option><option value="industrial">Industrial</option><option value="datacore">Datacore</option><option value="jungle">Jungle</option><option value="citadel">Citadel</option><option value="frost">Frost</option><option value="magma">Magma</option><option value="orbital">Orbital</option></select></div>
           <button class="btn" data-act="arena-build" style="width: 100%;">Rebuild Arena</button>
         </div>
 
@@ -640,6 +709,22 @@
     { key: 'classic', name: 'Classic Base Warden',           v11: 'classic' }
   ];
 
+  const DEFAULT_BULLET_TUNING = {
+    fanCount: 9,
+    fanVolleys: 3,
+    streamBullets: 5,
+    streamBursts: 3,
+    novaCount: 24,
+    novaWaves: 3,
+    spiralArms: 3,
+    crossWays: 4,
+    crossOrbs: 2,
+    snipeShots: 3,
+    blinkOrbs: 5,
+    mortarCount: 6,
+    minesCount: 10
+  };
+
   const DEFAULT_PREFS = {
     open: true,
     tab: 'boss',
@@ -665,7 +750,8 @@
     postfx: true,
     music: false,
     particles: 'high',
-    speed: 1.0
+    speed: 1.0,
+    bulletTuning: Object.assign({}, DEFAULT_BULLET_TUNING)
   };
 
   /* -------------------------- Sandbox Storage -------------------------- */
@@ -943,15 +1029,42 @@
     boss: null,
     variantKey: prefs.variant,
     currentMissionDef: null,
-    pausedForStep: false
+    pausedForStep: false,
+    bulletTuning: Object.assign({}, DEFAULT_BULLET_TUNING, prefs.bulletTuning || {})
   };
+
+  function getArenaLampTemplates(TILE) {
+    return [
+      { x: 17 * TILE, y: 13 * TILE, color: '#ffffff', radius: 480, intensity: 0.95, pulse: true, flicker: 0, phase: 0 },
+      { x: 5 * TILE,  y: 5 * TILE,  color: '#19c3dd', radius: 420, intensity: 0.85, pulse: false, flicker: 0, phase: 1 },
+      { x: 30 * TILE, y: 5 * TILE,  color: '#ff2d55', radius: 420, intensity: 0.85, pulse: false, flicker: 0, phase: 2 },
+      { x: 5 * TILE,  y: 20 * TILE, color: '#ff8a1a', radius: 420, intensity: 0.85, pulse: false, flicker: 0, phase: 3 },
+      { x: 30 * TILE, y: 20 * TILE, color: '#b07cff', radius: 420, intensity: 0.85, pulse: false, flicker: 0, phase: 4 }
+    ];
+  }
+
+  function updateArenaLamps(count) {
+    if (!lab.game || !lab.game.level) return;
+    const TILE = BO.CONFIG.TILE || 64;
+    const tpls = getArenaLampTemplates(TILE);
+    const lamps = [];
+    for (let i = 0; i < count && i < tpls.length; i++) {
+      lamps.push(Object.assign({}, tpls[i]));
+    }
+    lab.game.level.lamps = lamps;
+  }
 
   /* ----------------------- Arena Procedural Gen ----------------------- */
   function createLabArena(themeName, seed) {
     const W = 36, H = 26;
     const TILE = BO.CONFIG.TILE || 64;
     const map = new BO.TileMap(W, H);
-    const theme = BO.THEMES[themeName] || BO.THEMES.blacksite;
+    const baseTheme = BO.THEMES[themeName] || BO.THEMES.blacksite;
+    const theme = Object.assign({}, baseTheme);
+    const dVal = parseFloat(prefs.darkness);
+    if (!isNaN(dVal) && dVal >= 0) {
+      theme.darkness = dVal;
+    }
 
     for (let y = 0; y < H; y++) {
       for (let x = 0; x < W; x++) {
@@ -981,14 +1094,12 @@
     const spawn = { x: 6 * TILE, y: 13 * TILE };
     const bossSpawn = { x: 26 * TILE, y: 13 * TILE };
 
-    const lampMult = parseFloat(prefs.lamps) || 1;
-    const lamps = [
-      { x: 4 * TILE,  y: 4 * TILE,  color: '#19c3dd', r: 850 * lampMult, a: 0.8 },
-      { x: 31 * TILE, y: 4 * TILE,  color: '#ff2d55', r: 850 * lampMult, a: 0.8 },
-      { x: 4 * TILE,  y: 21 * TILE, color: '#ff8a1a', r: 850 * lampMult, a: 0.8 },
-      { x: 31 * TILE, y: 21 * TILE, color: '#b07cff', r: 850 * lampMult, a: 0.8 },
-      { x: 17 * TILE, y: 13 * TILE, color: '#ffffff', r: 950 * lampMult, a: 0.7 }
-    ];
+    const tpls = getArenaLampTemplates(TILE);
+    const lampCount = (prefs.lamps !== undefined) ? parseInt(prefs.lamps, 10) : 1;
+    const lamps = [];
+    for (let i = 0; i < lampCount && i < tpls.length; i++) {
+      lamps.push(Object.assign({}, tpls[i]));
+    }
 
     return {
       def: { theme: themeName, seed },
@@ -1145,6 +1256,196 @@
       origRender.call(this);
       drawDebugOverlays(this.renderer.ctx, this);
     };
+
+    // 7. Lighting interceptor
+    const origRenderLighting = game.renderer._renderLighting;
+    game.renderer._renderLighting = function (g, time, rect) {
+      const dPref = parseFloat(prefs.darkness);
+      if (dPref === 0) {
+        // Complete full daylight (no darkness overlay at all)
+        this.lctx.setTransform(1, 0, 0, 1, 0, 0);
+        this.lctx.clearRect(0, 0, this.light.width, this.light.height);
+        return;
+      }
+      if (dPref > 0 && g.level && g.level.theme) {
+        g.level.theme.darkness = dPref;
+      } else if (dPref < 0 && g.level && g.level.theme) {
+        const themeDef = BO.THEMES[prefs.theme || 'blacksite'] || BO.THEMES.blacksite;
+        g.level.theme.darkness = (typeof themeDef.darkness === 'number') ? themeDef.darkness : (BO.CONFIG.DARKNESS || 0.92);
+      }
+      return origRenderLighting.call(this, g, time, rect);
+    };
+
+    // 8. Camera zoom multiplier hook
+    const origCamUpdate = game.camera.update;
+    game.camera.update = function (dt, target, aimX, aimY, lookAhead) {
+      origCamUpdate.apply(this, arguments);
+      const z = parseFloat(prefs.zoom) || 0;
+      if (z !== 0) {
+        this.zoom = this.zoom * (1.0 + z);
+      }
+    };
+
+    // 9. Boss Skill Bullet Tuning
+    hookBossBulletTuning();
+  }
+
+  /* ---------------------- Boss Bullet Tuning ---------------------- */
+  function hookBossBulletTuning() {
+    const targets = [BO.Boss && BO.Boss.prototype, BO.BossBase && BO.BossBase.prototype].filter(Boolean);
+    targets.forEach(proto => {
+      // Fan
+      proto._runFan = function (atk, dt, game) {
+        atk.timer -= dt;
+        if (atk.timer > 0) return;
+        const tuning = lab.bulletTuning;
+        const volleys = tuning.fanVolleys || (this.phase === 3 ? 3 : 2);
+        const count = Math.max(1, tuning.fanCount || (this.phase === 1 ? 7 : 9));
+        const spreadA = 1.15;
+        const speed = 400 + this.phase * 40;
+        for (let i = 0; i < count; i++) {
+          const frac = count > 1 ? (i / (count - 1)) : 0.5;
+          const a = atk.aim - spreadA / 2 + spreadA * frac + (atk.shots % 2 ? spreadA / Math.max(1, count - 1) / 2 : 0);
+          this._orb(game, a, speed, 12);
+        }
+        game.onBossFired(this);
+        atk.shots++;
+        atk.timer = 0.35;
+        if (atk.shots >= volleys) this._endAttack();
+      };
+
+      // Stream
+      proto._runStream = function (atk, dt, game, p) {
+        atk.aim = BO.U.turnTowards(atk.aim, Math.atan2(p.y - this.y, p.x - this.x), dt * (1.1 + this.phase * 0.3));
+        this.angle = atk.aim;
+        atk.timer -= dt;
+        if (atk.timer > 0) return;
+        const tuning = lab.bulletTuning;
+        const perBurst = Math.max(1, tuning.streamBullets || 5);
+        const bursts = Math.max(1, tuning.streamBursts || 3);
+        this._orb(game, atk.aim + BO.U.randSpread() * 0.06, 540, 8, '#ff6b81');
+        atk.shots++;
+        if (atk.shots % 3 === 1) game.onBossFired(this);
+        if (atk.shots >= perBurst * bursts) { this._endAttack(); return; }
+        atk.timer = atk.shots % perBurst === 0 ? 0.45 : 1 / 11;
+      };
+
+      // Nova
+      proto._runNova = function (atk, dt, game) {
+        atk.timer -= dt;
+        if (atk.timer > 0) return;
+        const tuning = lab.bulletTuning;
+        const count = Math.max(3, tuning.novaCount || 24);
+        const waves = Math.max(1, tuning.novaWaves || 3);
+        const offset = atk.shots * (Math.PI / count) + this.ringSpin;
+        for (let i = 0; i < count; i++) {
+          this._orb(game, offset + (i / count) * BO.U.TAU, 290, 14, '#ffd0d8');
+        }
+        game.onBossFired(this, true);
+        atk.shots++;
+        atk.timer = 0.55;
+        if (atk.shots >= waves) this._endAttack();
+      };
+
+      // Spiral
+      proto._runSpiral = function (atk, dt, game) {
+        const arms = Math.max(1, lab.bulletTuning.spiralArms || 3);
+        atk.timer -= dt;
+        if (atk.timer <= 0) {
+          atk.timer = 0.12;
+          for (let k = 0; k < arms; k++) {
+            this._orb(game, atk.spin + (k * BO.U.TAU / arms), 290, 9, '#ffb36b');
+          }
+          atk.spin += 0.32;
+          if (atk.shots++ % 4 === 0) game.onBossFired(this);
+        }
+        if (atk.t > 1.6) this._endAttack();
+      };
+
+      // Cross
+      proto._runCross = function (atk, dt, game) {
+        atk.timer -= dt;
+        if (atk.timer > 0) return;
+        const tuning = lab.bulletTuning;
+        const ways = Math.max(2, tuning.crossWays || 4);
+        const orbs = Math.max(1, tuning.crossOrbs || 2);
+        for (let k = 0; k < ways; k++) {
+          const a = atk.aim + (k * BO.U.TAU / ways);
+          for (let o = 1; o <= orbs; o++) {
+            this._orb(game, a, 280 + o * 70, 11, '#b07cff');
+          }
+        }
+        game.onBossFired(this);
+        atk.aim += 0.35;
+        atk.shots++;
+        atk.timer = 0.5;
+        if (atk.shots >= (this.phase === 3 ? 4 : 3)) this._endAttack();
+      };
+
+      // Snipe
+      proto._runSnipe = function (atk, dt, game, p) {
+        atk.timer -= dt;
+        if (atk.timer > 0.25) atk.aim = BO.U.turnTowards(atk.aim, Math.atan2(p.y - this.y, p.x - this.x), dt * 2.6);
+        this.angle = atk.aim;
+        if (atk.timer > 0) return;
+        const maxShots = Math.max(1, lab.bulletTuning.snipeShots || 3);
+        this._orb(game, atk.aim, 950, 20, '#7fe3ff');
+        game.onBossFired(this);
+        atk.shots++;
+        if (atk.shots >= maxShots) { this._endAttack(); return; }
+        atk.timer = 0.75;
+      };
+
+      // Blink
+      proto._runBlink = function (atk, dt, game, p) {
+        if (!atk.moved) {
+          atk.moved = true;
+          if (game.particles && game.particles.pickupBurst) game.particles.pickupBurst(this.x, this.y, '#b07cff');
+          this.x = atk.bx; this.y = atk.by;
+          this.vx = 0; this.vy = 0; this.moveX = this.x; this.moveY = this.y;
+          if (game.particles && game.particles.pickupBurst) game.particles.pickupBurst(this.x, this.y, '#b07cff');
+          game.addLight(this.x, this.y, 300, '#b07cff', 0.4, 0.9);
+          atk.timer = 0.35;
+          return;
+        }
+        atk.timer -= dt;
+        if (atk.timer > 0) return;
+        const aim = Math.atan2(p.y - this.y, p.x - this.x);
+        const orbs = Math.max(1, lab.bulletTuning.blinkOrbs || 5);
+        for (let i = 0; i < orbs; i++) {
+          const frac = orbs > 1 ? (i / (orbs - 1)) : 0.5;
+          this._orb(game, aim - 0.35 + 0.7 * frac, 420, 11, '#b07cff');
+        }
+        game.onBossFired(this);
+        this._endAttack();
+      };
+
+      // Mortar & Mines
+      const origBegin = proto._beginAttack;
+      proto._beginAttack = function (atk, game, p) {
+        if (atk.name === 'mortar') {
+          const n = Math.max(1, lab.bulletTuning.mortarCount || (this.phase === 3 ? 7 : 5));
+          game.hazards.addStrike(p.x + p.vx * 0.4, p.y + p.vy * 0.4, 88, 1.25, 30);
+          for (let i = 1; i < n; i++) {
+            const a = Math.random() * BO.U.TAU, r = BO.U.rand(110, 280);
+            game.hazards.addStrike(p.x + Math.cos(a) * r, p.y + Math.sin(a) * r, 80, 1.25 + i * 0.12, 28);
+          }
+          return;
+        }
+        if (atk.name === 'mines') {
+          const count = Math.max(3, lab.bulletTuning.minesCount || (8 + this.phase * 2));
+          const r = 220;
+          for (let i = 0; i < count; i++) {
+            const a = (i / count) * BO.U.TAU + Math.random() * 0.2;
+            game.hazards.addStrike(this.x + Math.cos(a) * r, this.y + Math.sin(a) * r, 70, 1.6 + i * 0.08, 24);
+          }
+          atk.stage = 'idle';
+          atk.timer = 0.5;
+          return;
+        }
+        return origBegin ? origBegin.apply(this, arguments) : undefined;
+      };
+    });
   }
 
   /* ------------------------ Debug Overlays ------------------------ */
@@ -1152,8 +1453,9 @@
     if (!ctx || !game || !game.player || !game.camera) return;
 
     ctx.save();
-    const cam = game.camera;
-    ctx.translate(game.canvas.width / 2 - cam.x, game.canvas.height / 2 - cam.y);
+    const dpr = (game.renderer && game.renderer.dpr) || 1;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    game.camera.apply(ctx);
 
     const b = game.boss;
     const p = game.player;
@@ -1226,8 +1528,9 @@
       ctx.setLineDash([]);
 
       const dist = Math.round(Math.hypot(p.x - b.x, p.y - b.y));
+      const fsz = Math.max(10, Math.round(12 / (game.camera.zoom || 1)));
       ctx.fillStyle = '#ffffff';
-      ctx.font = '11px "Chakra Petch", monospace';
+      ctx.font = 'bold ' + fsz + 'px "Chakra Petch", monospace';
       ctx.textAlign = 'center';
       ctx.fillText(dist + ' px', (b.x + p.x) / 2, (b.y + p.y) / 2 - 8);
 
@@ -1480,6 +1783,7 @@
 
     // 9. Wire Controls & Sliders
     wireSliders();
+    wireBulletTuningUI();
 
     // 10. Start Game & Lab Mission
     game.start();
@@ -1875,12 +2179,13 @@
     const sldZoom = $('#sld-zoom');
     const zoomVal = $('#zoom-val');
     if (sldZoom) {
+      sldZoom.value = (prefs.zoom !== undefined) ? prefs.zoom : 0;
+      if (zoomVal) zoomVal.textContent = (1.0 + parseFloat(sldZoom.value)).toFixed(2) + 'x';
       sldZoom.addEventListener('input', () => {
         const z = parseFloat(sldZoom.value) || 0;
         if (zoomVal) zoomVal.textContent = (1.0 + z).toFixed(2) + 'x';
-        if (lab.game && lab.game.camera) {
-          lab.game.camera.targetZoom = 1.0 + z;
-        }
+        prefs.zoom = z;
+        savePrefs();
       });
     }
 
@@ -1888,12 +2193,19 @@
     const sldDark = $('#sld-darkness');
     const darkVal = $('#darkness-val');
     if (sldDark) {
+      sldDark.value = (prefs.darkness !== undefined) ? prefs.darkness : -1;
+      const syncDarkLabel = (d) => {
+        if (darkVal) darkVal.textContent = d < 0 ? 'Auto' : (d === 0 ? 'Daylight (0.0)' : d.toFixed(1));
+      };
+      syncDarkLabel(parseFloat(sldDark.value));
       sldDark.addEventListener('input', () => {
         const d = parseFloat(sldDark.value);
-        if (darkVal) darkVal.textContent = d < 0 ? 'Auto' : d.toFixed(1);
+        prefs.darkness = d;
+        syncDarkLabel(d);
         if (lab.game && lab.game.level && lab.game.level.theme) {
           if (d >= 0) lab.game.level.theme.darkness = d;
         }
+        savePrefs();
       });
     }
 
@@ -1901,11 +2213,14 @@
     const sldLamps = $('#sld-lamps');
     const lampsVal = $('#lamps-val');
     if (sldLamps) {
+      sldLamps.value = (prefs.lamps !== undefined) ? prefs.lamps : 1;
+      if (lampsVal) lampsVal.textContent = String(sldLamps.value);
       sldLamps.addEventListener('input', () => {
         const l = parseInt(sldLamps.value, 10);
         if (lampsVal) lampsVal.textContent = String(l);
         prefs.lamps = l;
         savePrefs();
+        updateArenaLamps(l);
       });
     }
 
@@ -1920,6 +2235,77 @@
           }
         });
       }
+    }
+  }
+
+  /* ----------------------- Bullet Tuning UI ----------------------- */
+  function wireBulletTuningUI() {
+    const map = [
+      { id: 'tun-fan-count', key: 'fanCount' },
+      { id: 'tun-fan-volleys', key: 'fanVolleys' },
+      { id: 'tun-stream-bullets', key: 'streamBullets' },
+      { id: 'tun-stream-bursts', key: 'streamBursts' },
+      { id: 'tun-nova-count', key: 'novaCount' },
+      { id: 'tun-nova-waves', key: 'novaWaves' },
+      { id: 'tun-spiral-arms', key: 'spiralArms' },
+      { id: 'tun-cross-ways', key: 'crossWays' },
+      { id: 'tun-cross-orbs', key: 'crossOrbs' },
+      { id: 'tun-snipe-shots', key: 'snipeShots' },
+      { id: 'tun-blink-orbs', key: 'blinkOrbs' },
+      { id: 'tun-mortar-count', key: 'mortarCount' },
+      { id: 'tun-mines-count', key: 'minesCount' }
+    ];
+
+    const syncInputs = () => {
+      map.forEach(item => {
+        const el = $('#' + item.id);
+        if (el && lab.bulletTuning[item.key] !== undefined) {
+          el.value = lab.bulletTuning[item.key];
+        }
+      });
+    };
+
+    syncInputs();
+
+    map.forEach(item => {
+      const el = $('#' + item.id);
+      if (el) {
+        el.addEventListener('input', () => {
+          const val = parseInt(el.value, 10);
+          if (!isNaN(val) && val > 0) {
+            lab.bulletTuning[item.key] = val;
+            prefs.bulletTuning = Object.assign({}, lab.bulletTuning);
+            savePrefs();
+          }
+        });
+      }
+    });
+
+    const btnReset = $('[data-act="tuning-reset"]');
+    if (btnReset) {
+      btnReset.addEventListener('click', () => {
+        lab.bulletTuning = Object.assign({}, DEFAULT_BULLET_TUNING);
+        prefs.bulletTuning = Object.assign({}, lab.bulletTuning);
+        savePrefs();
+        syncInputs();
+        toast('Bullet tuning reset to defaults');
+      });
+    }
+
+    const btnApply = $('[data-act="tuning-apply"]');
+    if (btnApply) {
+      btnApply.addEventListener('click', () => {
+        map.forEach(item => {
+          const el = $('#' + item.id);
+          if (el) {
+            const val = parseInt(el.value, 10);
+            if (!isNaN(val) && val > 0) lab.bulletTuning[item.key] = val;
+          }
+        });
+        prefs.bulletTuning = Object.assign({}, lab.bulletTuning);
+        savePrefs();
+        toast('Skill bullet counts applied!');
+      });
     }
   }
 
