@@ -103,6 +103,7 @@ function startServer(port = PORT, cb) {
     console.log(`  ║  Game:  http://${ip}:${port}`.padEnd(43) + '║');
     console.log(`  ║  Lab:   http://${ip}:${port}/boss-lab.html`.padEnd(43) + '║');
     console.log(`  ║  Review:http://${ip}:${port}/inspector.html`.padEnd(43) + '║');
+    console.log(`  ║  Maker: http://${ip}:${port}/map-maker.html`.padEnd(43) + '║');
     console.log('  ╚═══════════════════════════════════════╝');
     console.log('');
     if (cb) cb(null, { ip, port });

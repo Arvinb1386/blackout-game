@@ -1,0 +1,2650 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#07080d">
+  <meta name="description" content="BLACKOUT // MAP MAKER - ابزار پیشرفته و کامل ساخت و شخصی‌سازی نقشه‌ها و مراحل بازی بلک‌اوت با تمام متریال‌ها، دشمنان و باس‌ها">
+  <title>BLACKOUT // MAP MAKER | سازنده و ویرایشگر پیشرفته نقشه بلک‌اوت</title>
+  <link rel="stylesheet" href="css/fonts.css">
+  <style>
+    :root {
+      --ink: #07080d;
+      --ink-2: #0d101a;
+      --ink-3: #141824;
+      --ink-card: rgba(16, 20, 32, 0.88);
+      --ink-panel: rgba(11, 14, 22, 0.96);
+      --line: rgba(238, 240, 246, 0.10);
+      --line-bright: rgba(238, 240, 246, 0.24);
+      --text: #eef0f6;
+      --muted: #9aa0b4;
+      --dim: #5c6275;
+      
+      --blaze: #ff8a1a;
+      --blaze-glow: rgba(255, 138, 26, 0.35);
+      --blaze-dim: rgba(255, 138, 26, 0.14);
+      --hostile: #ff3355;
+      --hostile-glow: rgba(255, 51, 85, 0.4);
+      --hostile-dim: rgba(255, 51, 85, 0.15);
+      --tech: #00d4ff;
+      --tech-glow: rgba(0, 212, 255, 0.35);
+      --tech-dim: rgba(0, 212, 255, 0.12);
+      --ok: #3ddc84;
+      --ok-glow: rgba(61, 220, 132, 0.35);
+      --violet: #a68bff;
+      --gold: #ffd27a;
+      
+      --font-display: 'Khand', 'Chakra Petch', sans-serif;
+      --font-ui: 'Chakra Petch', 'Khand', sans-serif;
+      --font-fa: 'Vazirmatn', Tahoma, sans-serif;
+      --ease: cubic-bezier(.16, 1, .3, 1);
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 16px;
+      --shadow-panel: 0 16px 40px rgba(0, 0, 0, 0.7);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      width: 100%; height: 100%;
+      background: var(--ink);
+      color: var(--text);
+      font-family: var(--font-fa);
+      font-size: 14px;
+      line-height: 1.5;
+      overflow: hidden;
+      user-select: none;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    html[lang="en"] { direction: ltr; }
+    html[lang="en"] body { font-family: var(--font-ui); }
+
+    /* Scrollbars */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.2); }
+    ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--blaze); }
+
+    /* App Layout */
+    #app {
+      position: relative;
+      width: 100%; height: 100%;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* Top Navigation & Action Bar */
+    header.editor-header {
+      height: 56px;
+      min-height: 56px;
+      background: var(--ink-panel);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      gap: 12px;
+      z-index: 100;
+    }
+
+    .brand-section {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .brand-section h1 {
+      font-family: var(--font-display);
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+    }
+    .brand-section h1 span.accent { color: var(--blaze); }
+
+    .map-title-input-box {
+      display: flex;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-sm);
+      padding: 4px 10px;
+      gap: 6px;
+    }
+    .map-title-input-box input {
+      background: transparent;
+      border: none;
+      color: #fff;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 700;
+      outline: none;
+      width: 180px;
+    }
+
+    /* Middle Header Tools */
+    .header-quick-tools {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .quick-select {
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-family: inherit;
+      font-size: 12px;
+      padding: 6px 10px;
+      outline: none;
+      cursor: pointer;
+    }
+    .quick-select:hover { border-color: var(--line-bright); }
+    .quick-select option { background: var(--ink-2); color: #fff; }
+
+    .btn-header {
+      padding: 6px 12px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+      font-family: inherit;
+      white-space: nowrap;
+    }
+    .btn-header:hover {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: var(--line-bright);
+      color: #fff;
+    }
+    .btn-header.primary {
+      background: var(--blaze);
+      border-color: var(--blaze);
+      color: #fff;
+      box-shadow: 0 2px 10px var(--blaze-glow);
+    }
+    .btn-header.primary:hover {
+      background: #ff9b3b;
+    }
+    .btn-header.tech {
+      background: var(--tech-dim);
+      border-color: var(--tech);
+      color: #fff;
+    }
+    .btn-header.tech:hover {
+      background: rgba(0, 212, 255, 0.25);
+    }
+    .btn-header.danger:hover {
+      background: var(--hostile);
+      border-color: var(--hostile);
+      color: #fff;
+    }
+
+    /* Main Workspace (Left Tool Palette + Center Canvas + Right Library Panel) */
+    .workspace {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Left Vertical Toolbar */
+    aside.tool-rail {
+      width: 54px;
+      min-width: 54px;
+      background: var(--ink-panel);
+      border-inline-end: 1px solid var(--line);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 10px 0;
+      gap: 6px;
+      z-index: 10;
+    }
+    .tool-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: var(--radius-sm);
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--muted);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 16px;
+      transition: all 0.15s ease;
+      position: relative;
+    }
+    .tool-btn:hover {
+      background: rgba(255, 255, 255, 0.08);
+      color: #fff;
+    }
+    .tool-btn.active {
+      background: var(--blaze);
+      color: #fff;
+      box-shadow: 0 2px 10px var(--blaze-glow);
+      border-color: var(--blaze);
+    }
+    .tool-btn .key-hint {
+      position: absolute;
+      bottom: 2px;
+      inset-inline-end: 3px;
+      font-size: 8px;
+      font-family: var(--font-ui);
+      opacity: 0.6;
+    }
+    .rail-separator {
+      width: 32px;
+      height: 1px;
+      background: var(--line);
+      margin: 4px 0;
+    }
+
+    /* Center Viewport Stage */
+    main.canvas-viewport {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+      background: #090c14;
+      cursor: crosshair;
+    }
+    main.canvas-viewport.panning { cursor: grab; }
+    main.canvas-viewport.panning:active { cursor: grabbing; }
+
+    #editorCanvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    /* Playtest Overlay Canvas */
+    #playtestCanvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: none;
+      z-index: 50;
+      background: #000;
+    }
+
+    /* Floating Viewport HUD Controls */
+    .viewport-floating-bar {
+      position: absolute;
+      bottom: 16px;
+      inset-inline-start: 16px;
+      background: rgba(10, 14, 23, 0.9);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-sm);
+      padding: 6px 12px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 11px;
+      font-family: var(--font-ui);
+      color: var(--muted);
+      z-index: 20;
+      pointer-events: auto;
+    }
+    .hud-coords { color: var(--tech); font-weight: 700; }
+    .hud-zoom { color: var(--blaze); font-weight: 700; }
+    .hud-brush-size {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .brush-size-btn {
+      width: 22px; height: 22px;
+      border: 1px solid var(--line);
+      border-radius: 3px;
+      background: rgba(255, 255, 255, 0.05);
+      color: #fff;
+      font-size: 11px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .brush-size-btn.active {
+      background: var(--blaze);
+      border-color: var(--blaze);
+    }
+
+    /* Right Asset Library & Inspector Panel */
+    aside.library-panel {
+      width: 360px;
+      min-width: 360px;
+      background: var(--ink-panel);
+      border-inline-start: 1px solid var(--line);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      z-index: 10;
+    }
+
+    /* Library Tabs Header */
+    .lib-tabs-header {
+      display: flex;
+      border-bottom: 1px solid var(--line);
+      background: rgba(0, 0, 0, 0.25);
+      overflow-x: auto;
+    }
+    .lib-tab-btn {
+      flex: 1;
+      min-width: 56px;
+      padding: 10px 6px;
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid transparent;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      transition: all 0.15s ease;
+      font-family: inherit;
+      white-space: nowrap;
+    }
+    .lib-tab-btn:hover { color: #fff; }
+    .lib-tab-btn.active {
+      color: var(--blaze);
+      border-bottom-color: var(--blaze);
+      background: rgba(255, 138, 26, 0.05);
+    }
+
+    /* Library Content Container */
+    .lib-content-area {
+      flex: 1;
+      overflow-y: auto;
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .lib-tab-pane {
+      display: none;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .lib-tab-pane.active { display: flex; }
+
+    .pane-title {
+      font-size: 12px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    /* Asset Grid Cards */
+    .asset-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+    .asset-grid.single-col { grid-template-columns: 1fr; }
+    .asset-grid.three-col { grid-template-columns: repeat(3, 1fr); }
+
+    .asset-card {
+      padding: 10px 12px;
+      background: var(--ink-card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transition: all 0.15s ease;
+    }
+    .asset-card:hover {
+      background: rgba(255, 255, 255, 0.06);
+      border-color: var(--line-bright);
+      transform: translateY(-1px);
+    }
+    .asset-card.active {
+      background: rgba(255, 138, 26, 0.12);
+      border-color: var(--blaze);
+      box-shadow: 0 2px 10px var(--blaze-glow);
+    }
+    .asset-icon {
+      font-size: 18px;
+      flex-shrink: 0;
+      width: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .asset-text {
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .asset-name {
+      font-weight: 700;
+      font-size: 12px;
+      color: #fff;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      overflow: hidden;
+    }
+    .asset-sub {
+      font-size: 10px;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    /* Sliders and Input Controls */
+    .ctrl-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      background: rgba(0, 0, 0, 0.2);
+      padding: 10px 12px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--line);
+    }
+    .ctrl-label {
+      font-size: 11px;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .ctrl-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .ctrl-row input[type="range"] {
+      flex: 1;
+      accent-color: var(--blaze);
+      cursor: pointer;
+    }
+    .ctrl-row input[type="color"] {
+      width: 32px; height: 26px;
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      background: transparent;
+      cursor: pointer;
+    }
+    .ctrl-row input[type="number"], .ctrl-row input[type="text"] {
+      width: 80px;
+      padding: 4px 8px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      color: #fff;
+      font-family: inherit;
+      font-size: 12px;
+    }
+
+    /* Modal Windows */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(5, 7, 12, 0.85);
+      backdrop-filter: blur(8px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+    .modal-overlay.active {
+      display: flex;
+      opacity: 1;
+    }
+    .modal-card {
+      width: min(640px, 94vw);
+      max-height: 85vh;
+      background: var(--ink-card);
+      border: 1px solid var(--line-bright);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-panel);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .modal-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .modal-header h2 {
+      font-size: 16px;
+      font-weight: 700;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .modal-body {
+      padding: 20px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .modal-footer {
+      padding: 14px 20px;
+      border-top: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 10px;
+      background: rgba(0, 0, 0, 0.25);
+    }
+    .json-textarea {
+      width: 100%;
+      height: 260px;
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-sm);
+      color: #9fe8ff;
+      font-family: monospace;
+      font-size: 12px;
+      padding: 12px;
+      resize: vertical;
+      outline: none;
+    }
+
+    /* Playtest HUD Overlay */
+    .playtest-hud {
+      position: absolute;
+      top: 20px;
+      inset-inline-start: 20px;
+      background: rgba(11, 14, 22, 0.9);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--tech);
+      border-radius: var(--radius-sm);
+      padding: 12px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      z-index: 60;
+      color: #fff;
+    }
+    .playtest-hud-title {
+      font-weight: 700;
+      color: var(--tech);
+      font-size: 13px;
+    }
+    .playtest-keys {
+      font-size: 11px;
+      color: var(--muted);
+      font-family: var(--font-ui);
+    }
+
+    /* Toast Notification */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      inset-inline-end: 24px;
+      padding: 10px 18px;
+      border-radius: var(--radius-sm);
+      background: var(--ink-card);
+      border: 1px solid var(--blaze);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 600;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.7);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transform: translateY(30px);
+      opacity: 0;
+      transition: all 0.25s var(--ease);
+      z-index: 2000;
+      pointer-events: none;
+    }
+    .toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <!-- Header Navigation & Quick Actions -->
+    <header class="editor-header">
+      <div class="brand-section">
+        <h1><span>BLACK</span><span class="accent">O</span><span>UT</span> // <span id="txtHeaderTitle">MAP MAKER</span></h1>
+        <div class="map-title-input-box">
+          <span>🏷️</span>
+          <input type="text" id="mapNameInput" value="Custom Operation Alpha" placeholder="Operation Name...">
+        </div>
+      </div>
+
+      <div class="header-quick-tools">
+        <!-- Theme Selector -->
+        <select class="quick-select" id="themeSelect" title="Select Map Visual Theme"></select>
+
+        <!-- Grid Size Preset -->
+        <select class="quick-select" id="gridSizeSelect" title="Map Grid Size">
+          <option value="40,30">Small (40x30)</option>
+          <option value="60,45" selected>Standard (60x45)</option>
+          <option value="80,55">Large (80x55)</option>
+          <option value="94,68">Campaign Finale (94x68)</option>
+          <option value="custom">Custom Size...</option>
+        </select>
+
+        <!-- Generate Starter Base -->
+        <button class="btn-header" id="btnGenBase" title="Generate procedural base layout">
+          <span>🎲</span> <span id="txtGenBase">Generate Base</span>
+        </button>
+
+        <!-- Undo & Redo -->
+        <button class="btn-header" id="btnUndo" title="Undo (Ctrl+Z)">
+          <span>↩️</span>
+        </button>
+        <button class="btn-header" id="btnRedo" title="Redo (Ctrl+Y)">
+          <span>↪️</span>
+        </button>
+
+        <!-- Playtest Preview Mode -->
+        <button class="btn-header tech" id="btnPlaytest" title="Playtest in Browser (Key: P)">
+          <span>🎮</span> <span id="txtPlaytest">Playtest</span>
+        </button>
+
+        <!-- Save / Slots -->
+        <button class="btn-header" id="btnSaveSlots" title="Save Map Slots">
+          <span>💾</span> <span id="txtSave">Save</span>
+        </button>
+
+        <!-- Export / Import -->
+        <button class="btn-header primary" id="btnExportModal" title="Export / Import JSON">
+          <span>📤</span> <span id="txtExport">Export / Import</span>
+        </button>
+
+        <!-- Language Switcher -->
+        <div style="display:flex; border: 1px solid var(--line); border-radius: 4px; overflow:hidden;">
+          <button class="btn-header" style="border:none; padding:4px 8px;" id="btnLangFa">فارسی</button>
+          <button class="btn-header" style="border:none; padding:4px 8px;" id="btnLangEn">EN</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <div class="workspace">
+      <!-- Left Tool Rail -->
+      <aside class="tool-rail">
+        <button class="tool-btn active" data-tool="brush" title="Pencil Brush [B]">
+          <span>✏️</span><span class="key-hint">B</span>
+        </button>
+        <button class="tool-btn" data-tool="room" title="Hollow Room Box [R]">
+          <span>🏠</span><span class="key-hint">R</span>
+        </button>
+        <button class="tool-btn" data-tool="floorbox" title="Floor Fill Box [F]">
+          <span>🔲</span><span class="key-hint">F</span>
+        </button>
+        <button class="tool-btn" data-tool="wallbox" title="Wall Fill Box [W]">
+          <span>🧱</span><span class="key-hint">W</span>
+        </button>
+        <button class="tool-btn" data-tool="door" title="Door Placer [D]">
+          <span>🚪</span><span class="key-hint">D</span>
+        </button>
+        <button class="tool-btn" data-tool="bucket" title="Flood Fill Bucket [G]">
+          <span>🪣</span><span class="key-hint">G</span>
+        </button>
+        <button class="tool-btn" data-tool="eraser" title="Eraser [E]">
+          <span>🧹</span><span class="key-hint">E</span>
+        </button>
+
+        <div class="rail-separator"></div>
+
+        <button class="tool-btn" data-tool="entity" title="Place Entity (From Right Panel)">
+          <span>📍</span>
+        </button>
+        <button class="tool-btn" data-tool="patrol" title="Link Enemy Patrol Waypoints">
+          <span>🚶</span>
+        </button>
+        <button class="tool-btn" data-tool="pan" title="Pan Hand Tool [Space]">
+          <span>✋</span>
+        </button>
+      </aside>
+
+      <!-- Center Canvas Viewport -->
+      <main class="canvas-viewport" id="viewport">
+        <canvas id="editorCanvas"></canvas>
+        <canvas id="playtestCanvas"></canvas>
+
+        <!-- Bottom Viewport HUD -->
+        <div class="viewport-floating-bar">
+          <div><span id="txtHudTile">Tile:</span> <span class="hud-coords" id="hudCoords">X: 0, Y: 0</span></div>
+          <div><span id="txtHudZoom">Zoom:</span> <span class="hud-zoom" id="hudZoom">100%</span></div>
+          <div class="hud-brush-size">
+            <span id="txtBrushSize">Size:</span>
+            <button class="brush-size-btn active" data-size="1">1</button>
+            <button class="brush-size-btn" data-size="2">2</button>
+            <button class="brush-size-btn" data-size="3">3</button>
+            <button class="brush-size-btn" data-size="4">4</button>
+          </div>
+          <div><button class="btn-header" style="padding: 2px 8px;" id="btnFitMap">⛶ Fit</button></div>
+        </div>
+
+        <!-- Playtest Simulation HUD -->
+        <div class="playtest-hud" id="playtestHud" style="display:none;">
+          <div class="playtest-hud-title">🎮 LIVE PLAYTEST SIMULATION</div>
+          <div class="playtest-keys">WASD / Arrow Keys: Move • Mouse: Aim • F: Toggle Flashlight</div>
+          <button class="btn-header danger" id="btnExitPlaytest" style="margin-top:6px;">Exit Playtest (ESC)</button>
+        </div>
+      </main>
+
+      <!-- Right Asset Library & Properties Panel -->
+      <aside class="library-panel">
+        <!-- Tabs Header -->
+        <div class="lib-tabs-header">
+          <button class="lib-tab-btn active" data-pane="tiles">
+            <span>🧱</span><span id="txtTabTiles">Tiles</span>
+          </button>
+          <button class="lib-tab-btn" data-pane="props">
+            <span>📦</span><span id="txtTabProps">Cover</span>
+          </button>
+          <button class="lib-tab-btn" data-pane="enemies">
+            <span>💀</span><span id="txtTabEnemies">Hostiles</span>
+          </button>
+          <button class="lib-tab-btn" data-pane="weapons">
+            <span>🔫</span><span id="txtTabWeapons">Arsenal</span>
+          </button>
+          <button class="lib-tab-btn" data-pane="lights">
+            <span>💡</span><span id="txtTabLights">Lights</span>
+          </button>
+          <button class="lib-tab-btn" data-pane="rules">
+            <span>⭐</span><span id="txtTabRules">Rules</span>
+          </button>
+        </div>
+
+        <!-- Tab Content Panes -->
+        <div class="lib-content-area">
+          <!-- 1. TILES & ROOMS PANE -->
+          <div class="lib-tab-pane active" id="pane-tiles">
+            <div class="pane-title"><span id="txtStructureTiles">Structure & Tiles</span></div>
+            <div class="asset-grid">
+              <div class="asset-card active" data-tile-type="0">
+                <span class="asset-icon">🔲</span>
+                <div class="asset-text">
+                  <span class="asset-name" id="txtTileFloor">Floor</span>
+                  <span class="asset-sub">Passable</span>
+                </div>
+              </div>
+              <div class="asset-card" data-tile-type="1">
+                <span class="asset-icon">🧱</span>
+                <div class="asset-text">
+                  <span class="asset-name" id="txtTileWall">Solid Wall</span>
+                  <span class="asset-sub">Impassable</span>
+                </div>
+              </div>
+              <div class="asset-card" data-tile-type="2">
+                <span class="asset-icon">🚪</span>
+                <div class="asset-text">
+                  <span class="asset-name" id="txtTileDoor">Sliding Door</span>
+                  <span class="asset-sub">Interactable</span>
+                </div>
+              </div>
+              <div class="asset-card" data-tile-type="3">
+                <span class="asset-icon">🔒</span>
+                <div class="asset-text">
+                  <span class="asset-name" id="txtTileArenaDoor">Arena Door</span>
+                  <span class="asset-sub">Locked Boss</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="pane-title" style="margin-top:8px;"><span id="txtRoomTags">Room Tags & Sectors</span></div>
+            <div class="asset-grid single-col">
+              <div class="asset-card" data-room-tag="start">
+                <span class="asset-icon">🟢</span>
+                <div class="asset-text">
+                  <span class="asset-name" id="txtTagStart">Player Start Sector</span>
+                  <span class="asset-sub">Safe Deployment Zone</span>
+                </div>
+              </div>
+              <div class="asset-card" data-room-tag="room">
+                <span class="asset-icon">🟡</span>
+                <div class="asset-text">
+                  <span class="asset-name" id="txtTagRoom">Combat Sector</span>
+                  <span class="asset-sub">Standard Room</span>
+                </div>
+              </div>
+              <div class="asset-card" data-room-tag="arena">
+                <span class="asset-icon">🔴</span>
+                <div class="asset-text">
+                  <span class="asset-name" id="txtTagArena">Boss Arena Zone</span>
+                  <span class="asset-sub">Sealed Encounter</span>
+                </div>
+              </div>
+              <div class="asset-card" data-room-tag="extraction">
+                <span class="asset-icon">🔵</span>
+                <div class="asset-text">
+                  <span class="asset-name" id="txtTagEvac">Evac / Extraction Pad</span>
+                  <span class="asset-sub">Mission Complete</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 2. PROPS & COVER PANE -->
+          <div class="lib-tab-pane" id="pane-props">
+            <div class="pane-title"><span id="txtTacticalProps">Tactical Props & Obstacles</span></div>
+            <div class="asset-grid" id="propsGridContainer"></div>
+          </div>
+
+          <!-- 3. HOSTILES & BOSSES PANE -->
+          <div class="lib-tab-pane" id="pane-enemies">
+            <div class="pane-title"><span id="txtHostileArchetypes">Hostiles (8 Archetypes)</span></div>
+            <div class="asset-grid" id="enemiesGridContainer"></div>
+
+            <div class="pane-title" style="margin-top:10px;"><span id="txtBossesPlacement">Bosses (T1 to T10 + Classic)</span></div>
+            <div class="asset-grid single-col" id="bossesGridContainer"></div>
+          </div>
+
+          <!-- 4. ARSENAL & WEAPONS PANE -->
+          <div class="lib-tab-pane" id="pane-weapons">
+            <div class="pane-title"><span id="txtPickupsSupplies">Pickups & Supplies</span></div>
+            <div class="asset-grid">
+              <div class="asset-card" data-entity-type="pickup" data-pickup-kind="health">
+                <span class="asset-icon">💚</span>
+                <div class="asset-text"><span class="asset-name">Medkit</span><span class="asset-sub">+50 HP</span></div>
+              </div>
+              <div class="asset-card" data-entity-type="pickup" data-pickup-kind="ammo">
+                <span class="asset-icon">🟡</span>
+                <div class="asset-text"><span class="asset-name">Ammo Crate</span><span class="asset-sub">Full Refill</span></div>
+              </div>
+              <div class="asset-card" data-entity-type="pickup" data-pickup-kind="armor">
+                <span class="asset-icon">🛡️</span>
+                <div class="asset-text"><span class="asset-name">Armor Vest</span><span class="asset-sub">+50 Armor</span></div>
+              </div>
+              <div class="asset-card" data-entity-type="pickup" data-pickup-kind="credits">
+                <span class="asset-icon">💰</span>
+                <div class="asset-text"><span class="asset-name">Credits Stash</span><span class="asset-sub">Bounty</span></div>
+              </div>
+            </div>
+
+            <div class="pane-title" style="margin-top:10px;"><span id="txtWeaponCrates">Weapon Crates (30 Guns)</span></div>
+            <div class="asset-grid single-col" id="weaponsGridContainer" style="max-height:260px; overflow-y:auto;"></div>
+          </div>
+
+          <!-- 5. LIGHTS & HAZARDS PANE -->
+          <div class="lib-tab-pane" id="pane-lights">
+            <div class="pane-title"><span id="txtLampsFixtures">Lighting & Fixtures</span></div>
+            <div class="ctrl-group">
+              <div class="ctrl-label"><span>Light Radius (px)</span><b id="lblLampRadius">220 px</b></div>
+              <div class="ctrl-row"><input type="range" id="lampRadiusSlider" min="60" max="420" value="220"></div>
+            </div>
+            <div class="ctrl-group">
+              <div class="ctrl-label"><span>Color & Tone</span></div>
+              <div class="ctrl-row">
+                <input type="color" id="lampColorPicker" value="#ffb15c">
+                <button class="btn-header" id="btnLampThemeColor" style="flex:1;">Use Theme Color</button>
+              </div>
+            </div>
+            <div class="ctrl-group">
+              <div class="ctrl-label"><span>Light Intensity</span><b id="lblLampIntensity">85%</b></div>
+              <div class="ctrl-row"><input type="range" id="lampIntensitySlider" min="20" max="100" value="85"></div>
+            </div>
+            <button class="btn-header tech" id="btnPlaceLampTool"><span>💡</span> Place Light Fixture</button>
+
+            <div class="pane-title" style="margin-top:12px;"><span id="txtHazardsFloor">Environmental Hazards</span></div>
+            <div class="asset-grid" id="hazardsGridContainer"></div>
+          </div>
+
+          <!-- 6. RULES & OBJECTIVES PANE -->
+          <div class="lib-tab-pane" id="pane-rules">
+            <div class="pane-title"><span id="txtMissionObjectives">Mission Objectives</span></div>
+            <div class="ctrl-group">
+              <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+                <input type="checkbox" id="objEliminate" checked>
+                <span>Eliminate All Hostiles</span>
+              </label>
+              <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+                <input type="checkbox" id="objExtract" checked>
+                <span>Extract to Evac Zone</span>
+              </label>
+              <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+                <input type="checkbox" id="objBoss">
+                <span>Defeat Area Boss</span>
+              </label>
+              <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+                <input type="checkbox" id="objCaches">
+                <span>Destroy Weapon Caches</span>
+              </label>
+              <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+                <input type="checkbox" id="objIntel">
+                <span>Recover Classified Intel</span>
+              </label>
+            </div>
+
+            <div class="pane-title" style="margin-top:8px;"><span>Atmosphere & Darkness</span></div>
+            <div class="ctrl-group">
+              <div class="ctrl-label"><span>Ambient Darkness</span><b id="lblDarkness">90%</b></div>
+              <div class="ctrl-row"><input type="range" id="darknessSlider" min="50" max="98" value="90"></div>
+            </div>
+            <div class="ctrl-group">
+              <div class="ctrl-label"><span>Weather System</span></div>
+              <select class="quick-select" id="weatherSelect">
+                <option value="none">None (Clear Interior)</option>
+                <option value="dust">Dust Storm</option>
+                <option value="rain">Heavy Rain</option>
+                <option value="embers">Volcanic Embers</option>
+                <option value="motes">Quantum Motes</option>
+                <option value="snow">Snow Blizzard</option>
+                <option value="storm">Lightning Storm</option>
+                <option value="fallout">Toxic Fallout</option>
+              </select>
+            </div>
+
+            <div class="pane-title" style="margin-top:8px;"><span>Rewards & Difficulty</span></div>
+            <div class="ctrl-group">
+              <div class="ctrl-label"><span>Difficulty Rating</span></div>
+              <select class="quick-select" id="diffSelect">
+                <option value="easy">Easy (کودکانه / مبتدی)</option>
+                <option value="medium">Medium (متوسط)</option>
+                <option value="hard" selected>Hard (سخت و چالش‌برانگیز)</option>
+                <option value="extreme">Extreme (بسیار سنگین / نهایی)</option>
+              </select>
+            </div>
+            <div class="ctrl-group">
+              <div class="ctrl-row">
+                <div style="flex:1;">
+                  <span class="ctrl-label">Credits:</span>
+                  <input type="number" id="rewardCredits" value="1500" style="width:100%;">
+                </div>
+                <div style="flex:1;">
+                  <span class="ctrl-label">XP:</span>
+                  <input type="number" id="rewardXp" value="1000" style="width:100%;">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </div>
+
+    <!-- Export & Import Modal -->
+    <div class="modal-overlay" id="exportModal">
+      <div class="modal-card">
+        <div class="modal-header">
+          <h2><span>📤</span> <span id="txtModalExportTitle">Export & Import Custom Map</span></h2>
+          <button class="btn-header" id="btnCloseModal">✕</button>
+        </div>
+        <div class="modal-body">
+          <p style="font-size:12px; color:var(--muted);" id="txtModalDesc">
+            You can copy this JSON to share your map, or paste a previously saved JSON below and click "Import Map" to load it!
+          </p>
+          <textarea class="json-textarea" id="jsonExportArea" spellcheck="false"></textarea>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-header" id="btnCopyJson">📋 Copy to Clipboard</button>
+          <button class="btn-header" id="btnDownloadJson">💾 Download .json</button>
+          <button class="btn-header primary" id="btnImportJson">📥 Import & Load</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Save Slots Modal -->
+    <div class="modal-overlay" id="slotsModal">
+      <div class="modal-card" style="width:500px;">
+        <div class="modal-header">
+          <h2><span>💾</span> <span>Local Map Save Slots</span></h2>
+          <button class="btn-header" id="btnCloseSlotsModal">✕</button>
+        </div>
+        <div class="modal-body" id="slotsListContainer" style="max-height:360px;"></div>
+        <div class="modal-footer">
+          <button class="btn-header primary" id="btnSaveToCurrentSlot">Save Current to Slot</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast Banner -->
+    <div class="toast" id="toast"></div>
+  </div>
+
+  <!-- Game Engine Dependencies -->
+  <script src="js/utils.js"></script>
+  <script src="js/i18n.js"></script>
+  <script src="js/collision.js"></script>
+  <script src="js/particles.js"></script>
+  <script src="js/weapons.js"></script>
+  <script src="js/projectiles.js"></script>
+  <script src="js/player.js"></script>
+  <script src="js/enemies.js"></script>
+  <script src="js/ai.js"></script>
+  <script src="js/boss.js"></script>
+  <script src="js/hazards.js"></script>
+  <script src="js/pickups.js"></script>
+  <script src="js/objectives.js"></script>
+  <script src="js/missions.js"></script>
+  <script src="js/level.js"></script>
+  <script src="js/upgrades.js"></script>
+  <script src="js/i18n-extra.js"></script>
+  <script src="js/arsenal.js"></script>
+  <script src="js/campaign.js"></script>
+  <script src="js/characters-plus.js"></script>
+  <script src="js/v4-core.js"></script>
+  <script src="js/v4-arsenal.js"></script>
+  <script src="js/v4-enemies.js"></script>
+  <script src="js/v4-campaign.js"></script>
+  <script src="js/v7-arsenal.js"></script>
+  <script src="js/v7-campaign.js"></script>
+  <script src="js/v11-tactics.js"></script>
+  <script src="js/v12-enhanced-bosses.js"></script>
+  <script src="js/lab-bosses.js"></script>
+  <script src="data/weapons.data.js"></script>
+  <script src="js/weapon-config.js"></script>
+
+  <!-- Map Maker Application Logic -->
+  <script>
+  'use strict';
+  (function () {
+    const BO = window.BO || {};
+    const U = BO.U;
+    const TAU = Math.PI * 2;
+    const TILE = (BO.CONFIG && BO.CONFIG.TILE) || 48;
+
+    /* -------------------------------------------------------------------------
+     * 1. Internationalization
+     * ------------------------------------------------------------------------- */
+    const I18N = {
+      en: {
+        headerTitle: 'MAP MAKER',
+        genBase: 'Generate Base',
+        playtest: 'Playtest',
+        save: 'Save',
+        export: 'Export / Import',
+        hudTile: 'Tile:',
+        hudZoom: 'Zoom:',
+        brushSize: 'Size:',
+        tabTiles: 'Tiles',
+        tabProps: 'Cover',
+        tabEnemies: 'Hostiles',
+        tabWeapons: 'Arsenal',
+        tabLights: 'Lights',
+        tabRules: 'Rules',
+        structureTiles: 'Structure & Tiles',
+        tileFloor: 'Floor',
+        tileWall: 'Solid Wall',
+        tileDoor: 'Sliding Door',
+        tileArenaDoor: 'Arena Door',
+        roomTags: 'Room Tags & Sectors',
+        tagStart: 'Start Sector',
+        tagRoom: 'Combat Sector',
+        tagArena: 'Boss Arena Zone',
+        tagEvac: 'Evac / Extraction Pad',
+        tacticalProps: 'Tactical Props & Obstacles',
+        hostileArchetypes: 'Hostiles (8 Archetypes)',
+        bossesPlacement: 'Bosses (T1-T10 + Classic)',
+        pickupsSupplies: 'Pickups & Supplies',
+        weaponCrates: 'Weapon Crates (30 Guns)',
+        lampsFixtures: 'Lighting & Fixtures',
+        hazardsFloor: 'Environmental Hazards',
+        missionObjectives: 'Mission Objectives',
+        modalExportTitle: 'Export & Import Custom Map',
+        modalDesc: 'You can copy this JSON to share your map, or paste a previously saved JSON below and click "Import & Load"!'
+      },
+      fa: {
+        headerTitle: 'سازنده نقشه',
+        genBase: 'تولید پایه تصادفی',
+        playtest: 'تست زنده',
+        save: 'ذخیره',
+        export: 'خروجی / ورودی',
+        hudTile: 'تایل:',
+        hudZoom: 'بزرگ‌نمایی:',
+        brushSize: 'قلم:',
+        tabTiles: 'تایل‌ها',
+        tabProps: 'موانع',
+        tabEnemies: 'دشمنان',
+        tabWeapons: 'سلاح‌ها',
+        tabLights: 'نورپردازی',
+        tabRules: 'قوانین',
+        structureTiles: 'ساختار و تایل‌ها',
+        tileFloor: 'کف زمین',
+        tileWall: 'دیوار بتنی',
+        tileDoor: 'درب کشویی',
+        tileArenaDoor: 'درب آرنای باس',
+        roomTags: 'برچسب و بخش‌های اتاق',
+        tagStart: 'بخش شروع پلیر',
+        tagRoom: 'اتاق مبارزه',
+        tagArena: 'آرنای باس',
+        tagEvac: 'پد استخراج اضطراری',
+        tacticalProps: 'موانع و تجهیزات تاکتیکی',
+        hostileArchetypes: 'دشمنان میدانی (۸ نوع)',
+        bossesPlacement: 'باس‌ها (۱۰ تیر + کلاسیک)',
+        pickupsSupplies: 'مهمات و تدارکات',
+        weaponCrates: 'جعبه سلاح (۳۰ اسلحه)',
+        lampsFixtures: 'چراغ و نورافکن‌ها',
+        hazardsFloor: 'خطرات محیطی کف',
+        missionObjectives: 'اهداف مأموریت',
+        modalExportTitle: 'خروجی و ورود نقشه سفارشی',
+        modalDesc: 'می‌توانید کد JSON زیر را برای اشتراک‌گذاری کپی کنید یا نقشه ذخیره‌شده قبلی را جای‌گذاری کرده و روی "ورود و بارگذاری" کلیک کنید!'
+      }
+    };
+
+    /* -------------------------------------------------------------------------
+     * 2. Map State Model
+     * ------------------------------------------------------------------------- */
+    const mapData = {
+      meta: {
+        name: 'Custom Operation Alpha',
+        name_fa: 'عملیات سفارشی آلفا',
+        theme: 'blacksite',
+        difficulty: 'hard',
+        parTime: 420,
+        darkness: 0.90,
+        weather: 'dust',
+        rewards: { credits: 1500, xp: 1000 },
+        objectives: [{ type: 'eliminate' }, { type: 'extract' }]
+      },
+      w: 60,
+      h: 45,
+      tiles: null, // Uint8Array: 0: Floor, 1: Wall, 2: Door, 3: ArenaDoor
+      rooms: [],
+      spawn: { x: 5, y: 5 },
+      extraction: { x: 54, y: 39, r: 2 },
+      bossSpawn: null,
+      arenaRect: null,
+      enemies: [],
+      props: [],
+      pickups: [],
+      lamps: [],
+      hazards: []
+    };
+
+    const editorState = {
+      lang: localStorage.getItem('blackout_map_maker_lang') || 'fa',
+      activeTool: 'brush', // brush, room, floorbox, wallbox, door, bucket, eraser, entity, patrol, pan
+      brushSize: 1,
+      selectedTileType: 0,
+      selectedRoomTag: null,
+      
+      // Selected Entity to place
+      selectedEntity: null, // { category: 'prop'|'enemy'|'boss'|'pickup'|'lamp'|'hazard', kind: string, extra: {} }
+      
+      // Patrol linking
+      linkingEnemyIndex: null,
+      
+      // Transform & Navigation
+      zoom: 0.45,
+      pan: { x: 60, y: 60 },
+      isPanning: false,
+      panStart: { x: 0, y: 0 },
+      isMouseDown: false,
+      dragStartTile: { x: 0, y: 0 },
+      currentHoverTile: { x: 0, y: 0 },
+      
+      // Undo / Redo History
+      history: [],
+      historyIndex: -1,
+      
+      // Playtest Mode State
+      playtest: {
+        active: false,
+        player: { x: 0, y: 0, angle: 0, speed: 280, r: 16 },
+        keys: {},
+        flashlight: true,
+        mouse: { x: 0, y: 0 }
+      }
+    };
+
+    /* -------------------------------------------------------------------------
+     * 3. Initialization of Map Data Grid
+     * ------------------------------------------------------------------------- */
+    function initGrid(w, h, fillType = 1) {
+      mapData.w = w;
+      mapData.h = h;
+      mapData.tiles = new Uint8Array(w * h);
+      mapData.tiles.fill(fillType);
+      mapData.rooms = [];
+      mapData.enemies = [];
+      mapData.props = [];
+      mapData.pickups = [];
+      mapData.lamps = [];
+      mapData.hazards = [];
+      mapData.spawn = { x: 4, y: Math.floor(h / 2) };
+      mapData.extraction = { x: w - 5, y: Math.floor(h / 2), r: 2 };
+
+      // Carve default start room and extraction room
+      carveRoomBox(2, Math.floor(h / 2) - 4, 8, 8, 'start');
+      carveRoomBox(w - 10, Math.floor(h / 2) - 4, 8, 8, 'extraction');
+      
+      // Add a default corridor
+      for (let x = 10; x < w - 10; x++) {
+        setTile(x, Math.floor(h / 2), 0);
+      }
+
+      pushHistorySnapshot();
+    }
+
+    function idx(x, y) { return y * mapData.w + x; }
+    function inBounds(x, y) { return x >= 0 && y >= 0 && x < mapData.w && y < mapData.h; }
+    function getTile(x, y) { return inBounds(x, y) ? mapData.tiles[idx(x, y)] : 1; }
+    function setTile(x, y, type) {
+      if (!inBounds(x, y)) return;
+      mapData.tiles[idx(x, y)] = type;
+    }
+
+    function carveRoomBox(rx, ry, rw, rh, tag = 'room') {
+      for (let y = ry; y < ry + rh; y++) {
+        for (let x = rx; x < rx + rw; x++) {
+          if (!inBounds(x, y)) continue;
+          const isBorder = (x === rx || x === rx + rw - 1 || y === ry || y === ry + rh - 1);
+          setTile(x, y, isBorder ? 1 : 0);
+        }
+      }
+      mapData.rooms.push({ x: rx, y: ry, w: rw, h: rh, tag, id: Date.now() + Math.random() });
+    }
+
+    /* -------------------------------------------------------------------------
+     * 4. History (Undo / Redo)
+     * ------------------------------------------------------------------------- */
+    function pushHistorySnapshot() {
+      // Truncate redo history
+      if (editorState.historyIndex < editorState.history.length - 1) {
+        editorState.history = editorState.history.slice(0, editorState.historyIndex + 1);
+      }
+      const snapshot = {
+        w: mapData.w,
+        h: mapData.h,
+        tiles: new Uint8Array(mapData.tiles),
+        rooms: JSON.parse(JSON.stringify(mapData.rooms)),
+        spawn: { ...mapData.spawn },
+        extraction: { ...mapData.extraction },
+        bossSpawn: mapData.bossSpawn ? { ...mapData.bossSpawn } : null,
+        arenaRect: mapData.arenaRect ? { ...mapData.arenaRect } : null,
+        enemies: JSON.parse(JSON.stringify(mapData.enemies)),
+        props: JSON.parse(JSON.stringify(mapData.props)),
+        pickups: JSON.parse(JSON.stringify(mapData.pickups)),
+        lamps: JSON.parse(JSON.stringify(mapData.lamps)),
+        hazards: JSON.parse(JSON.stringify(mapData.hazards))
+      };
+      editorState.history.push(snapshot);
+      if (editorState.history.length > 30) editorState.history.shift();
+      editorState.historyIndex = editorState.history.length - 1;
+    }
+
+    function undo() {
+      if (editorState.historyIndex > 0) {
+        editorState.historyIndex--;
+        restoreSnapshot(editorState.history[editorState.historyIndex]);
+        showToast('Undo / بازگشت به عقب');
+      }
+    }
+
+    function redo() {
+      if (editorState.historyIndex < editorState.history.length - 1) {
+        editorState.historyIndex++;
+        restoreSnapshot(editorState.history[editorState.historyIndex]);
+        showToast('Redo / انجام مجدد');
+      }
+    }
+
+    function restoreSnapshot(snap) {
+      mapData.w = snap.w;
+      mapData.h = snap.h;
+      mapData.tiles = new Uint8Array(snap.tiles);
+      mapData.rooms = JSON.parse(JSON.stringify(snap.rooms));
+      mapData.spawn = { ...snap.spawn };
+      mapData.extraction = { ...snap.extraction };
+      mapData.bossSpawn = snap.bossSpawn ? { ...snap.bossSpawn } : null;
+      mapData.arenaRect = snap.arenaRect ? { ...snap.arenaRect } : null;
+      mapData.enemies = JSON.parse(JSON.stringify(snap.enemies));
+      mapData.props = JSON.parse(JSON.stringify(snap.props));
+      mapData.pickups = JSON.parse(JSON.stringify(snap.pickups));
+      mapData.lamps = JSON.parse(JSON.stringify(snap.lamps));
+      mapData.hazards = JSON.parse(JSON.stringify(snap.hazards));
+      renderCanvas();
+    }
+
+    /* -------------------------------------------------------------------------
+     * 5. Procedural Starter Base Generator
+     * ------------------------------------------------------------------------- */
+    function generateStarterProceduralBase() {
+      const theme = mapData.meta.theme || 'outpost';
+      const dummyDef = {
+        id: 'temp_base',
+        theme,
+        size: [mapData.w, mapData.h],
+        roomCount: Math.floor(mapData.w * mapData.h / 180),
+        propDensity: 1.1,
+        barrels: 6,
+        hazards: 4,
+        enemies: { count: 16, types: { grunt: 0.5, rusher: 0.25, heavy: 0.25 } },
+        pickups: { health: 4, ammo: 4, armor: 2, credits: 4, power: 2 },
+        weaponPickups: ['shotgun', 'ar', 'dmr'],
+        seed: Math.floor(Math.random() * 900000) + 1000
+      };
+
+      try {
+        const lvl = BO.LevelManager.generate(dummyDef);
+        mapData.tiles = new Uint8Array(lvl.map.tiles);
+        mapData.rooms = lvl.rooms.map(r => ({ x: r.x, y: r.y, w: r.w, h: r.h, tag: r.tag, id: Date.now() + Math.random() }));
+        mapData.spawn = { x: Math.floor(lvl.spawn.x / TILE), y: Math.floor(lvl.spawn.y / TILE) };
+        mapData.extraction = { x: Math.floor(lvl.extraction.x / TILE), y: Math.floor(lvl.extraction.y / TILE), r: 2 };
+        
+        mapData.props = lvl.props.map(p => ({ kind: p.kind, x: p.tx, y: p.ty }));
+        mapData.enemies = lvl.enemies.map(e => ({
+          type: e.type,
+          x: Math.floor(e.x / TILE),
+          y: Math.floor(e.y / TILE),
+          patrol: (e.patrol || []).map(pt => ({ x: Math.floor(pt.x / TILE), y: Math.floor(pt.y / TILE) }))
+        }));
+        mapData.pickups = lvl.pickups.map(p => ({
+          type: p.type,
+          weaponId: p.weaponId,
+          x: Math.floor(p.x / TILE),
+          y: Math.floor(p.y / TILE)
+        }));
+        mapData.lamps = lvl.lamps.map(l => ({
+          x: Math.floor(l.x / TILE),
+          y: Math.floor(l.y / TILE),
+          radius: l.radius,
+          color: l.color,
+          intensity: l.intensity || 0.85
+        }));
+        mapData.hazards = lvl.panels.map(p => ({
+          kind: 'acid',
+          x: Math.floor(p.x / TILE),
+          y: Math.floor(p.y / TILE),
+          w: Math.floor(p.w / TILE),
+          h: Math.floor(p.h / TILE)
+        }));
+
+        pushHistorySnapshot();
+        fitToScreen();
+        renderCanvas();
+        showToast('Generated Procedural Base Layout!');
+      } catch (err) {
+        console.error('Base generation error:', err);
+        showToast('Error generating base layout');
+      }
+    }
+
+    /* -------------------------------------------------------------------------
+     * 6. Canvas Rendering & Blueprint Display
+     * ------------------------------------------------------------------------- */
+    const canvas = document.getElementById('editorCanvas');
+    const ctx = canvas.getContext('2d');
+    const viewport = document.getElementById('viewport');
+
+    function resizeCanvas() {
+      const rect = viewport.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      canvas.style.width = `${rect.width}px`;
+      canvas.style.height = `${rect.height}px`;
+      renderCanvas();
+    }
+    window.addEventListener('resize', resizeCanvas);
+
+    function fitToScreen() {
+      const rect = viewport.getBoundingClientRect();
+      const worldW = mapData.w * TILE;
+      const worldH = mapData.h * TILE;
+      const scaleX = (rect.width - 60) / worldW;
+      const scaleY = (rect.height - 60) / worldH;
+      editorState.zoom = Math.min(scaleX, scaleY, 0.7);
+      editorState.pan.x = (rect.width - worldW * editorState.zoom) / 2;
+      editorState.pan.y = (rect.height - worldH * editorState.zoom) / 2;
+      document.getElementById('hudZoom').textContent = `${Math.round(editorState.zoom * 100)}%`;
+      renderCanvas();
+    }
+
+    function renderCanvas() {
+      if (!mapData.tiles) return;
+      const dpr = window.devicePixelRatio || 1;
+      const theme = BO.THEMES[mapData.meta.theme] || BO.THEMES.blacksite;
+
+      ctx.save();
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.scale(dpr, dpr);
+
+      // Pan & Zoom
+      ctx.translate(editorState.pan.x, editorState.pan.y);
+      ctx.scale(editorState.zoom, editorState.zoom);
+
+      const W = mapData.w;
+      const H = mapData.h;
+
+      // 1. Draw Tiles (Floor, Walls, Doors)
+      for (let y = 0; y < H; y++) {
+        for (let x = 0; x < W; x++) {
+          const t = getTile(x, y);
+          const px = x * TILE;
+          const py = y * TILE;
+
+          if (t === 0) { // Floor
+            ctx.fillStyle = (x + y) % 2 === 0 ? (theme.floor || '#1a1c24') : (theme.floorAlt || '#1e212b');
+            ctx.fillRect(px, py, TILE, TILE);
+          } else if (t === 1) { // Wall
+            ctx.fillStyle = theme.wall || '#2b303d';
+            ctx.fillRect(px, py, TILE, TILE);
+            ctx.fillStyle = theme.wallTop || '#3c4355';
+            ctx.fillRect(px + 4, py + 4, TILE - 8, TILE - 8);
+            ctx.strokeStyle = 'rgba(0, 0, 0, 0.4)';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(px, py, TILE, TILE);
+          } else if (t === 2) { // Door
+            ctx.fillStyle = theme.corridor || '#14161f';
+            ctx.fillRect(px, py, TILE, TILE);
+            ctx.fillStyle = theme.trim || '#ff8a1a';
+            ctx.fillRect(px + 6, py + TILE / 2 - 4, TILE - 12, 8);
+            ctx.strokeStyle = '#fff';
+            ctx.strokeRect(px + 6, py + TILE / 2 - 4, TILE - 12, 8);
+          } else if (t === 3) { // Arena Locked Door
+            ctx.fillStyle = '#ff2d55';
+            ctx.fillRect(px, py, TILE, TILE);
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 12px sans-serif';
+            ctx.fillText('🔒', px + 14, py + 30);
+          }
+        }
+      }
+
+      // 2. Grid Overlay
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+      ctx.lineWidth = 1;
+      for (let x = 0; x <= W; x++) {
+        ctx.beginPath(); ctx.moveTo(x * TILE, 0); ctx.lineTo(x * TILE, H * TILE); ctx.stroke();
+      }
+      for (let y = 0; y <= H; y++) {
+        ctx.beginPath(); ctx.moveTo(0, y * TILE); ctx.lineTo(W * TILE, y * TILE); ctx.stroke();
+      }
+
+      // 3. Room Boundaries & Labels
+      mapData.rooms.forEach(r => {
+        const rx = r.x * TILE, ry = r.y * TILE, rw = r.w * TILE, rh = r.h * TILE;
+        ctx.save();
+        ctx.lineWidth = 2;
+        if (r.tag === 'arena') {
+          ctx.strokeStyle = '#ff2d55';
+          ctx.fillStyle = 'rgba(255, 45, 85, 0.08)';
+        } else if (r.tag === 'start') {
+          ctx.strokeStyle = '#3ddc84';
+          ctx.fillStyle = 'rgba(61, 220, 132, 0.06)';
+        } else if (r.tag === 'extraction') {
+          ctx.strokeStyle = '#00d4ff';
+          ctx.fillStyle = 'rgba(0, 212, 255, 0.06)';
+        } else {
+          ctx.strokeStyle = theme.trim || 'rgba(255, 138, 26, 0.5)';
+          ctx.fillStyle = 'transparent';
+        }
+        ctx.fillRect(rx, ry, rw, rh);
+        ctx.strokeRect(rx, ry, rw, rh);
+
+        // Label
+        ctx.fillStyle = '#ffffff99';
+        ctx.font = 'bold 13px Chakra Petch, sans-serif';
+        ctx.fillText(`[${r.tag.toUpperCase()}] ${r.w}x${r.h}`, rx + 10, ry + 22);
+        ctx.restore();
+      });
+
+      // 4. Hazards
+      mapData.hazards.forEach(hz => {
+        ctx.save();
+        const colors = { acid: '#3ddc84', lava: '#ff6a1a', steam: '#00d4ff', cryo: '#9fe8ff', radiation: '#c6ff3d', spirit: '#a68bff' };
+        const c = colors[hz.kind] || '#ff4b37';
+        ctx.fillStyle = `${c}33`;
+        ctx.strokeStyle = c;
+        ctx.lineWidth = 2;
+        ctx.fillRect(hz.x * TILE, hz.y * TILE, hz.w * TILE, hz.h * TILE);
+        ctx.strokeRect(hz.x * TILE, hz.y * TILE, hz.w * TILE, hz.h * TILE);
+        ctx.fillStyle = c;
+        ctx.font = 'bold 12px sans-serif';
+        ctx.fillText(`⚠️ ${hz.kind.toUpperCase()}`, hz.x * TILE + 6, hz.y * TILE + 20);
+        ctx.restore();
+      });
+
+      // 5. Lamps & Lighting Halos
+      mapData.lamps.forEach(l => {
+        ctx.save();
+        const lx = l.x * TILE + TILE / 2;
+        const ly = l.y * TILE + TILE / 2;
+        const rad = ctx.createRadialGradient(lx, ly, 4, lx, ly, l.radius);
+        rad.addColorStop(0, `${l.color}40`);
+        rad.addColorStop(1, 'transparent');
+        ctx.fillStyle = rad;
+        ctx.beginPath(); ctx.arc(lx, ly, l.radius, 0, TAU); ctx.fill();
+        ctx.fillStyle = l.color;
+        ctx.beginPath(); ctx.arc(lx, ly, 6, 0, TAU); ctx.fill();
+        ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
+        ctx.restore();
+      });
+
+      // 6. Props
+      mapData.props.forEach(p => {
+        const px = p.x * TILE + TILE / 2;
+        const py = p.y * TILE + TILE / 2;
+        const def = (BO.PROP_DEFS && BO.PROP_DEFS[p.kind]) || { color: '#5a4630' };
+        ctx.save();
+        ctx.fillStyle = def.color;
+        ctx.fillRect(px - 16, py - 16, 32, 32);
+        ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+        ctx.strokeRect(px - 16, py - 16, 32, 32);
+        
+        // Prop icon
+        const icons = { crate: '📦', barrier: '🚧', barrel: '🛢️', computer: '💻', pillar: '🏛️', locker: '🚪', cache: '🎁', core: '⚛️', terminal: '📟', intel: '📂' };
+        ctx.fillStyle = '#fff';
+        ctx.font = '16px sans-serif';
+        ctx.fillText(icons[p.kind] || '📦', px - 8, py + 6);
+        ctx.restore();
+      });
+
+      // 7. Pickups & Weapons
+      mapData.pickups.forEach(pk => {
+        const px = pk.x * TILE + TILE / 2;
+        const py = pk.y * TILE + TILE / 2;
+        ctx.save();
+        const pColors = { health: '#3ddc84', ammo: '#ffd27a', armor: '#00d4ff', credits: '#ffb347', weapon: '#ff8a1a' };
+        ctx.fillStyle = pColors[pk.type] || '#ff8a1a';
+        ctx.beginPath(); ctx.arc(px, py, 14, 0, TAU); ctx.fill();
+        ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
+        ctx.fillStyle = '#000';
+        ctx.font = 'bold 11px sans-serif';
+        const txt = pk.type === 'weapon' ? (pk.weaponId ? pk.weaponId.slice(0, 3).toUpperCase() : 'GUN') : pk.type.slice(0, 2).toUpperCase();
+        ctx.fillText(txt, px - 10, py + 4);
+        ctx.restore();
+      });
+
+      // 8. Enemy Spawns & Patrol Routes
+      mapData.enemies.forEach((e, idx) => {
+        const ex = e.x * TILE + TILE / 2;
+        const ey = e.y * TILE + TILE / 2;
+        const def = (BO.ENEMY_TYPES && BO.ENEMY_TYPES[e.type]) || { color: '#ff3355' };
+        ctx.save();
+
+        // Draw Patrol Route dashed paths
+        if (e.patrol && e.patrol.length > 0) {
+          ctx.strokeStyle = `${def.color}90`;
+          ctx.lineWidth = 2;
+          ctx.setLineDash([6, 4]);
+          ctx.beginPath();
+          ctx.moveTo(ex, ey);
+          e.patrol.forEach((wp, wIdx) => {
+            const wpx = wp.x * TILE + TILE / 2;
+            const wpy = wp.y * TILE + TILE / 2;
+            ctx.lineTo(wpx, wpy);
+          });
+          ctx.stroke();
+
+          // Waypoint markers
+          e.patrol.forEach((wp, wIdx) => {
+            const wpx = wp.x * TILE + TILE / 2;
+            const wpy = wp.y * TILE + TILE / 2;
+            ctx.fillStyle = def.color;
+            ctx.beginPath(); ctx.arc(wpx, wpy, 7, 0, TAU); ctx.fill();
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 9px sans-serif';
+            ctx.fillText(`${wIdx + 1}`, wpx - 3, wpy + 3);
+          });
+        }
+
+        // Enemy Main Token
+        ctx.fillStyle = def.color;
+        ctx.beginPath(); ctx.arc(ex, ey, 16, 0, TAU); ctx.fill();
+        ctx.strokeStyle = (editorState.linkingEnemyIndex === idx) ? '#00d4ff' : '#ffffff';
+        ctx.lineWidth = (editorState.linkingEnemyIndex === idx) ? 3 : 1.5;
+        ctx.stroke();
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 11px sans-serif';
+        ctx.fillText(e.type.slice(0, 2).toUpperCase(), ex - 8, ey + 4);
+        ctx.restore();
+      });
+
+      // 9. Boss Spawn
+      if (mapData.bossSpawn) {
+        const bx = mapData.bossSpawn.x * TILE + TILE / 2;
+        const by = mapData.bossSpawn.y * TILE + TILE / 2;
+        ctx.save();
+        ctx.fillStyle = '#ff2d55';
+        ctx.beginPath(); ctx.arc(bx, by, 28, 0, TAU); ctx.fill();
+        ctx.strokeStyle = '#ffd27a'; ctx.lineWidth = 3; ctx.stroke();
+        ctx.fillStyle = '#fff';
+        ctx.font = 'bold 14px sans-serif';
+        ctx.fillText('👑 BOSS', bx - 26, by + 5);
+        ctx.restore();
+      }
+
+      // 10. Player Spawn & Extraction
+      if (mapData.spawn) {
+        const sx = mapData.spawn.x * TILE + TILE / 2;
+        const sy = mapData.spawn.y * TILE + TILE / 2;
+        ctx.save();
+        ctx.fillStyle = '#3ddc84';
+        ctx.beginPath(); ctx.arc(sx, sy, 18, 0, TAU); ctx.fill();
+        ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
+        ctx.fillStyle = '#000';
+        ctx.font = 'bold 10px sans-serif';
+        ctx.fillText('SPAWN', sx - 16, sy + 4);
+        ctx.restore();
+      }
+
+      if (mapData.extraction) {
+        const ex = mapData.extraction.x * TILE + TILE / 2;
+        const ey = mapData.extraction.y * TILE + TILE / 2;
+        ctx.save();
+        ctx.fillStyle = '#00d4ff';
+        ctx.beginPath(); ctx.arc(ex, ey, 22, 0, TAU); ctx.fill();
+        ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
+        ctx.fillStyle = '#000';
+        ctx.font = 'bold 11px sans-serif';
+        ctx.fillText('EVAC', ex - 14, ey + 4);
+        ctx.restore();
+      }
+
+      // 11. Tool Hover / Ghost Preview
+      const hx = editorState.currentHoverTile.x;
+      const hy = editorState.currentHoverTile.y;
+      if (inBounds(hx, hy)) {
+        ctx.save();
+        const gx = hx * TILE;
+        const gy = hy * TILE;
+        ctx.strokeStyle = 'rgba(0, 212, 255, 0.8)';
+        ctx.lineWidth = 2;
+        const bSize = editorState.brushSize;
+        ctx.strokeRect(gx, gy, TILE * bSize, TILE * bSize);
+
+        // Dragging Rectangle Preview (Room / Floorbox / Wallbox)
+        if (editorState.isMouseDown && (editorState.activeTool === 'room' || editorState.activeTool === 'floorbox' || editorState.activeTool === 'wallbox')) {
+          const sx = Math.min(editorState.dragStartTile.x, hx) * TILE;
+          const sy = Math.min(editorState.dragStartTile.y, hy) * TILE;
+          const sw = (Math.abs(hx - editorState.dragStartTile.x) + 1) * TILE;
+          const sh = (Math.abs(hy - editorState.dragStartTile.y) + 1) * TILE;
+          ctx.fillStyle = 'rgba(255, 138, 26, 0.2)';
+          ctx.strokeStyle = '#ff8a1a';
+          ctx.fillRect(sx, sy, sw, sh);
+          ctx.strokeRect(sx, sy, sw, sh);
+        }
+        ctx.restore();
+      }
+
+      ctx.restore();
+    }
+
+    /* -------------------------------------------------------------------------
+     * 7. Mouse & Tool Interactions
+     * ------------------------------------------------------------------------- */
+    viewport.addEventListener('mousedown', (e) => {
+      if (editorState.playtest.active) return;
+      
+      const rect = viewport.getBoundingClientRect();
+      const mouseX = e.clientX - rect.left;
+      const mouseY = e.clientY - rect.top;
+
+      // Pan tool or Middle click / Right click / Space key
+      if (e.button === 1 || e.button === 2 || e.spaceKey || editorState.activeTool === 'pan') {
+        editorState.isPanning = true;
+        editorState.panStart.x = mouseX - editorState.pan.x;
+        editorState.panStart.y = mouseY - editorState.pan.y;
+        viewport.classList.add('panning');
+        return;
+      }
+
+      if (e.button === 0) {
+        editorState.isMouseDown = true;
+        const worldX = (mouseX - editorState.pan.x) / editorState.zoom;
+        const worldY = (mouseY - editorState.pan.y) / editorState.zoom;
+        const tx = Math.floor(worldX / TILE);
+        const ty = Math.floor(worldY / TILE);
+
+        editorState.dragStartTile = { x: tx, y: ty };
+        applyTool(tx, ty, false);
+      }
+    });
+
+    viewport.addEventListener('mousemove', (e) => {
+      const rect = viewport.getBoundingClientRect();
+      const mouseX = e.clientX - rect.left;
+      const mouseY = e.clientY - rect.top;
+
+      if (editorState.isPanning) {
+        editorState.pan.x = mouseX - editorState.panStart.x;
+        editorState.pan.y = mouseY - editorState.panStart.y;
+        renderCanvas();
+        return;
+      }
+
+      const worldX = (mouseX - editorState.pan.x) / editorState.zoom;
+      const worldY = (mouseY - editorState.pan.y) / editorState.zoom;
+      const tx = Math.floor(worldX / TILE);
+      const ty = Math.floor(worldY / TILE);
+
+      editorState.currentHoverTile = { x: tx, y: ty };
+      document.getElementById('hudCoords').textContent = `X: ${tx}, Y: ${ty}`;
+
+      if (editorState.isMouseDown) {
+        if (editorState.activeTool === 'brush' || editorState.activeTool === 'eraser') {
+          applyTool(tx, ty, false);
+        } else {
+          renderCanvas(); // Redraw drag rectangle
+        }
+      } else {
+        renderCanvas();
+      }
+    });
+
+    window.addEventListener('mouseup', (e) => {
+      if (editorState.isPanning) {
+        editorState.isPanning = false;
+        viewport.classList.remove('panning');
+      }
+
+      if (editorState.isMouseDown) {
+        editorState.isMouseDown = false;
+        const rect = viewport.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const mouseY = e.clientY - rect.top;
+        const worldX = (mouseX - editorState.pan.x) / editorState.zoom;
+        const worldY = (mouseY - editorState.pan.y) / editorState.zoom;
+        const tx = Math.floor(worldX / TILE);
+        const ty = Math.floor(worldY / TILE);
+
+        if (editorState.activeTool === 'room' || editorState.activeTool === 'floorbox' || editorState.activeTool === 'wallbox') {
+          applyBoxTool(editorState.dragStartTile.x, editorState.dragStartTile.y, tx, ty);
+        }
+        pushHistorySnapshot();
+        renderCanvas();
+      }
+    });
+
+    // Zoom with Wheel
+    viewport.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const zoomFactor = e.deltaY < 0 ? 1.15 : 0.85;
+      const rect = viewport.getBoundingClientRect();
+      const mouseX = e.clientX - rect.left;
+      const mouseY = e.clientY - rect.top;
+
+      editorState.pan.x = mouseX - (mouseX - editorState.pan.x) * zoomFactor;
+      editorState.pan.y = mouseY - (mouseY - editorState.pan.y) * zoomFactor;
+      editorState.zoom = Math.max(0.15, Math.min(2.5, editorState.zoom * zoomFactor));
+      document.getElementById('hudZoom').textContent = `${Math.round(editorState.zoom * 100)}%`;
+      renderCanvas();
+    });
+
+    viewport.addEventListener('contextmenu', (e) => e.preventDefault());
+
+    /* -------------------------------------------------------------------------
+     * 8. Tool Execution Logic
+     * ------------------------------------------------------------------------- */
+    function applyTool(tx, ty, isDragEnd = false) {
+      if (!inBounds(tx, ty)) return;
+      const tool = editorState.activeTool;
+
+      if (tool === 'brush') {
+        const b = editorState.brushSize;
+        for (let dy = 0; dy < b; dy++) {
+          for (let dx = 0; dx < b; dx++) {
+            setTile(tx + dx, ty + dy, editorState.selectedTileType);
+          }
+        }
+        renderCanvas();
+      } else if (tool === 'eraser') {
+        // Clear tile to wall or floor
+        setTile(tx, ty, 1);
+        // Remove entities at tile
+        mapData.props = mapData.props.filter(p => !(p.x === tx && p.y === ty));
+        mapData.enemies = mapData.enemies.filter(e => !(e.x === tx && e.y === ty));
+        mapData.pickups = mapData.pickups.filter(pk => !(pk.x === tx && pk.y === ty));
+        mapData.lamps = mapData.lamps.filter(l => !(l.x === tx && l.y === ty));
+        mapData.hazards = mapData.hazards.filter(hz => !(tx >= hz.x && tx < hz.x + hz.w && ty >= hz.y && ty < hz.y + hz.h));
+        renderCanvas();
+      } else if (tool === 'door') {
+        setTile(tx, ty, 2);
+        renderCanvas();
+      } else if (tool === 'bucket') {
+        floodFill(tx, ty, editorState.selectedTileType);
+        pushHistorySnapshot();
+        renderCanvas();
+      } else if (tool === 'patrol') {
+        handlePatrolLink(tx, ty);
+      } else if (tool === 'entity') {
+        placeSelectedEntity(tx, ty);
+      }
+    }
+
+    function applyBoxTool(x0, y0, x1, y1) {
+      const rx = Math.min(x0, x1);
+      const ry = Math.min(y0, y1);
+      const rw = Math.abs(x1 - x0) + 1;
+      const rh = Math.abs(y1 - y0) + 1;
+
+      if (editorState.activeTool === 'room') {
+        carveRoomBox(rx, ry, rw, rh, editorState.selectedRoomTag || 'room');
+      } else if (editorState.activeTool === 'floorbox') {
+        for (let y = ry; y < ry + rh; y++) {
+          for (let x = rx; x < rx + rw; x++) setTile(x, y, 0);
+        }
+      } else if (editorState.activeTool === 'wallbox') {
+        for (let y = ry; y < ry + rh; y++) {
+          for (let x = rx; x < rx + rw; x++) setTile(x, y, 1);
+        }
+      }
+    }
+
+    function floodFill(startX, startY, newType) {
+      const targetType = getTile(startX, startY);
+      if (targetType === newType) return;
+      const queue = [[startX, startY]];
+      const visited = new Uint8Array(mapData.w * mapData.h);
+
+      while (queue.length > 0) {
+        const [x, y] = queue.pop();
+        if (!inBounds(x, y)) continue;
+        const i = idx(x, y);
+        if (visited[i] || mapData.tiles[i] !== targetType) continue;
+        visited[i] = 1;
+        mapData.tiles[i] = newType;
+
+        if (x + 1 < mapData.w) queue.push([x + 1, y]);
+        if (x - 1 >= 0) queue.push([x - 1, y]);
+        if (y + 1 < mapData.h) queue.push([x, y + 1]);
+        if (y - 1 >= 0) queue.push([x, y - 1]);
+      }
+    }
+
+    function placeSelectedEntity(tx, ty) {
+      const ent = editorState.selectedEntity;
+      if (!ent) return;
+
+      if (ent.category === 'prop') {
+        mapData.props = mapData.props.filter(p => !(p.x === tx && p.y === ty));
+        mapData.props.push({ kind: ent.kind, x: tx, y: ty });
+        showToast(`Placed ${ent.kind}`);
+      } else if (ent.category === 'enemy') {
+        mapData.enemies = mapData.enemies.filter(e => !(e.x === tx && e.y === ty));
+        mapData.enemies.push({ type: ent.kind, x: tx, y: ty, patrol: [] });
+        showToast(`Placed ${ent.kind}`);
+      } else if (ent.category === 'boss') {
+        mapData.bossSpawn = { x: tx, y: ty, key: ent.kind };
+        mapData.meta.objectives = mapData.meta.objectives || [];
+        if (!mapData.meta.objectives.some(o => o.type === 'boss')) {
+          mapData.meta.objectives.push({ type: 'boss' });
+        }
+        showToast(`Placed Boss: ${ent.kind}`);
+      } else if (ent.category === 'pickup') {
+        mapData.pickups = mapData.pickups.filter(pk => !(pk.x === tx && pk.y === ty));
+        mapData.pickups.push({ type: ent.kind, weaponId: ent.weaponId, x: tx, y: ty });
+        showToast(`Placed ${ent.kind}`);
+      } else if (ent.category === 'lamp') {
+        const r = parseInt(document.getElementById('lampRadiusSlider').value, 10) || 220;
+        const color = document.getElementById('lampColorPicker').value || '#ffb15c';
+        const intensity = (parseInt(document.getElementById('lampIntensitySlider').value, 10) || 85) / 100;
+        mapData.lamps.push({ x: tx, y: ty, radius: r, color, intensity });
+        showToast('Placed Light Fixture');
+      } else if (ent.category === 'hazard') {
+        mapData.hazards.push({ kind: ent.kind, x: tx, y: ty, w: 2, h: 2 });
+        showToast(`Placed Hazard (${ent.kind})`);
+      } else if (ent.category === 'spawn') {
+        mapData.spawn = { x: tx, y: ty };
+        showToast('Player Spawn set');
+      } else if (ent.category === 'extraction') {
+        mapData.extraction = { x: tx, y: ty, r: 2 };
+        showToast('Extraction Pad set');
+      }
+
+      pushHistorySnapshot();
+      renderCanvas();
+    }
+
+    function handlePatrolLink(tx, ty) {
+      if (editorState.linkingEnemyIndex === null) {
+        // Look for enemy at tile
+        const found = mapData.enemies.findIndex(e => e.x === tx && e.y === ty);
+        if (found >= 0) {
+          editorState.linkingEnemyIndex = found;
+          showToast(`Selected Enemy #${found + 1}. Now click tiles to add patrol waypoints!`);
+        } else {
+          showToast('Click an enemy first to set patrol waypoints');
+        }
+      } else {
+        const e = mapData.enemies[editorState.linkingEnemyIndex];
+        if (e) {
+          e.patrol = e.patrol || [];
+          e.patrol.push({ x: tx, y: ty });
+          showToast(`Added Waypoint #${e.patrol.length} at (${tx}, ${ty})`);
+          pushHistorySnapshot();
+        }
+      }
+      renderCanvas();
+    }
+
+    /* -------------------------------------------------------------------------
+     * 9. Build Palettes & Library Grids
+     * ------------------------------------------------------------------------- */
+    function populateThemesSelect() {
+      const select = document.getElementById('themeSelect');
+      select.innerHTML = '';
+      const themes = Object.keys(BO.THEMES || {});
+      themes.forEach(t => {
+        const opt = document.createElement('option');
+        opt.value = t;
+        opt.textContent = `${t.toUpperCase()} Theme`;
+        if (t === mapData.meta.theme) opt.selected = true;
+        select.appendChild(opt);
+      });
+      select.addEventListener('change', () => {
+        mapData.meta.theme = select.value;
+        renderCanvas();
+        showToast(`Theme changed to ${select.value}`);
+      });
+    }
+
+    function populatePropsGrid() {
+      const container = document.getElementById('propsGridContainer');
+      const props = Object.keys(BO.PROP_DEFS || {});
+      const icons = { crate: '📦', barrier: '🚧', barrel: '🛢️', computer: '💻', pillar: '🏛️', locker: '🚪', cache: '🎁', core: '⚛️', terminal: '📟' };
+
+      container.innerHTML = props.map(p => {
+        const d = BO.PROP_DEFS[p];
+        return `
+          <div class="asset-card" data-entity-type="prop" data-prop-kind="${p}">
+            <span class="asset-icon">${icons[p] || '📦'}</span>
+            <div class="asset-text">
+              <span class="asset-name">${p.toUpperCase()}</span>
+              <span class="asset-sub">${d.destructible ? `${d.hp} HP` : 'Indestructible'}</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      container.querySelectorAll('.asset-card').forEach(card => {
+        card.addEventListener('click', () => {
+          container.querySelectorAll('.asset-card').forEach(c => c.classList.remove('active'));
+          card.classList.add('active');
+          editorState.activeTool = 'entity';
+          editorState.selectedEntity = { category: 'prop', kind: card.dataset.propKind };
+          updateToolButtons();
+          showToast(`Selected Prop: ${card.dataset.propKind}`);
+        });
+      });
+    }
+
+    function populateEnemiesGrid() {
+      const container = document.getElementById('enemiesGridContainer');
+      const enemies = Object.keys(BO.ENEMY_TYPES || {});
+      const icons = { grunt: '🎯', rusher: '⚡', heavy: '🛡️', sniper: '🔭', breacher: '💥', grenadier: '💣', shield: '🛡️', drone: '🛸' };
+
+      container.innerHTML = enemies.map(e => {
+        const d = BO.ENEMY_TYPES[e];
+        return `
+          <div class="asset-card" data-entity-type="enemy" data-enemy-kind="${e}">
+            <span class="asset-icon" style="color:${d.color}">${icons[e] || '💀'}</span>
+            <div class="asset-text">
+              <span class="asset-name" style="color:${d.color}">${e.toUpperCase()}</span>
+              <span class="asset-sub">${d.hp} HP • ${d.speed} px/s</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      container.querySelectorAll('.asset-card').forEach(card => {
+        card.addEventListener('click', () => {
+          container.querySelectorAll('.asset-card').forEach(c => c.classList.remove('active'));
+          card.classList.add('active');
+          editorState.activeTool = 'entity';
+          editorState.selectedEntity = { category: 'enemy', kind: card.dataset.enemyKind };
+          updateToolButtons();
+          showToast(`Selected Enemy: ${card.dataset.enemyKind}`);
+        });
+      });
+
+      // Bosses Grid
+      const bContainer = document.getElementById('bossesGridContainer');
+      const roster = (BO.LabBosses && BO.LabBosses.ROSTER) || {};
+      const order = (BO.LabBosses && BO.LabBosses.ORDER) || Object.keys(roster);
+
+      bContainer.innerHTML = order.map(k => {
+        const d = roster[k];
+        return `
+          <div class="asset-card" data-entity-type="boss" data-boss-key="${k}">
+            <span class="asset-icon" style="color:${d.pal.glow}">👑</span>
+            <div class="asset-text">
+              <span class="asset-name" style="color:${d.pal.glow}">${d.title}</span>
+              <span class="asset-sub">Tier ${d.tier} • ${d.epithet}</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      bContainer.querySelectorAll('.asset-card').forEach(card => {
+        card.addEventListener('click', () => {
+          bContainer.querySelectorAll('.asset-card').forEach(c => c.classList.remove('active'));
+          card.classList.add('active');
+          editorState.activeTool = 'entity';
+          editorState.selectedEntity = { category: 'boss', kind: card.dataset.bossKey };
+          updateToolButtons();
+          showToast(`Selected Boss: ${card.dataset.bossKey}`);
+        });
+      });
+    }
+
+    function populateWeaponsGrid() {
+      const container = document.getElementById('weaponsGridContainer');
+      const guns = Object.keys(BO.WEAPONS || {});
+
+      container.innerHTML = guns.map(g => {
+        const w = BO.WEAPONS[g];
+        return `
+          <div class="asset-card" data-entity-type="weapon" data-weapon-id="${g}">
+            <span class="asset-icon">🔫</span>
+            <div class="asset-text">
+              <span class="asset-name">${(w.name || g).toUpperCase()}</span>
+              <span class="asset-sub">${w.damage || 20} DMG • ${w.range || 500} RNG</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      container.querySelectorAll('.asset-card').forEach(card => {
+        card.addEventListener('click', () => {
+          container.querySelectorAll('.asset-card').forEach(c => c.classList.remove('active'));
+          card.classList.add('active');
+          editorState.activeTool = 'entity';
+          editorState.selectedEntity = { category: 'pickup', kind: 'weapon', weaponId: card.dataset.weaponId };
+          updateToolButtons();
+          showToast(`Selected Weapon Crate: ${card.dataset.weaponId}`);
+        });
+      });
+    }
+
+    function populateHazardsGrid() {
+      const container = document.getElementById('hazardsGridContainer');
+      const hazards = [
+        { kind: 'acid', name: 'Acid Puddle', icon: '☣️', color: '#3ddc84' },
+        { kind: 'lava', name: 'Magma Lava', icon: '🔥', color: '#ff6a1a' },
+        { kind: 'steam', name: 'Steam Vent', icon: '💨', color: '#00d4ff' },
+        { kind: 'cryo', name: 'Cryo Frost', icon: '❄️', color: '#9fe8ff' },
+        { kind: 'radiation', name: 'Fallout Zone', icon: '☢️', color: '#c6ff3d' },
+        { kind: 'spirit', name: 'Dark Flame', icon: '🔮', color: '#a68bff' }
+      ];
+
+      container.innerHTML = hazards.map(hz => `
+        <div class="asset-card" data-hazard-kind="${hz.kind}">
+          <span class="asset-icon">${hz.icon}</span>
+          <div class="asset-text">
+            <span class="asset-name" style="color:${hz.color}">${hz.name}</span>
+            <span class="asset-sub">2x2 Tiles</span>
+          </div>
+        </div>
+      `).join('');
+
+      container.querySelectorAll('.asset-card').forEach(card => {
+        card.addEventListener('click', () => {
+          container.querySelectorAll('.asset-card').forEach(c => c.classList.remove('active'));
+          card.classList.add('active');
+          editorState.activeTool = 'entity';
+          editorState.selectedEntity = { category: 'hazard', kind: card.dataset.hazardKind };
+          updateToolButtons();
+          showToast(`Selected Hazard: ${card.dataset.hazardKind}`);
+        });
+      });
+    }
+
+    function updateToolButtons() {
+      document.querySelectorAll('.tool-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.tool === editorState.activeTool);
+      });
+    }
+
+    /* -------------------------------------------------------------------------
+     * 10. Playtest Simulation Loop
+     * ------------------------------------------------------------------------- */
+    const ptCanvas = document.getElementById('playtestCanvas');
+    const ptCtx = ptCanvas.getContext('2d');
+    const playtestHud = document.getElementById('playtestHud');
+
+    function startPlaytest() {
+      editorState.playtest.active = true;
+      ptCanvas.style.display = 'block';
+      playtestHud.style.display = 'flex';
+
+      const rect = viewport.getBoundingClientRect();
+      const dpr = window.devicePixelRatio || 1;
+      ptCanvas.width = rect.width * dpr;
+      ptCanvas.height = rect.height * dpr;
+      ptCanvas.style.width = `${rect.width}px`;
+      ptCanvas.style.height = `${rect.height}px`;
+
+      // Spawn player at mapData.spawn
+      editorState.playtest.player.x = mapData.spawn.x * TILE + TILE / 2;
+      editorState.playtest.player.y = mapData.spawn.y * TILE + TILE / 2;
+      editorState.playtest.player.angle = 0;
+      editorState.playtest.flashlight = true;
+
+      showToast('Playtest started! Move with WASD, Aim with Mouse, Press ESC to Exit');
+      requestAnimationFrame(runPlaytestLoop);
+    }
+
+    function stopPlaytest() {
+      editorState.playtest.active = false;
+      ptCanvas.style.display = 'none';
+      playtestHud.style.display = 'none';
+      renderCanvas();
+      showToast('Exited playtest mode');
+    }
+
+    let lastPtTime = performance.now();
+    function runPlaytestLoop(now) {
+      if (!editorState.playtest.active) return;
+      requestAnimationFrame(runPlaytestLoop);
+
+      const dt = Math.min(0.1, (now - lastPtTime) / 1000);
+      lastPtTime = now;
+
+      const p = editorState.playtest.player;
+      const k = editorState.playtest.keys;
+      const theme = BO.THEMES[mapData.meta.theme] || BO.THEMES.blacksite;
+      const dpr = window.devicePixelRatio || 1;
+
+      // Movement input
+      let moveX = 0, moveY = 0;
+      if (k['KeyW'] || k['ArrowUp']) moveY -= 1;
+      if (k['KeyS'] || k['ArrowDown']) moveY += 1;
+      if (k['KeyA'] || k['ArrowLeft']) moveX -= 1;
+      if (k['KeyD'] || k['ArrowRight']) moveX += 1;
+
+      if (moveX !== 0 && moveY !== 0) {
+        moveX *= 0.7071;
+        moveY *= 0.7071;
+      }
+
+      // Simple collision against wall tiles
+      const newX = p.x + moveX * p.speed * dt;
+      const newY = p.y + moveY * p.speed * dt;
+
+      const tX = Math.floor(newX / TILE);
+      const tY = Math.floor(newY / TILE);
+      if (getTile(tX, Math.floor(p.y / TILE)) !== 1 && getTile(tX, Math.floor(p.y / TILE)) !== 3) p.x = newX;
+      if (getTile(Math.floor(p.x / TILE), tY) !== 1 && getTile(Math.floor(p.x / TILE), tY) !== 3) p.y = newY;
+
+      // Mouse Aim angle
+      const camX = ptCanvas.width / (2 * dpr) - p.x;
+      const camY = ptCanvas.height / (2 * dpr) - p.y;
+      p.angle = Math.atan2(editorState.playtest.mouse.y - ptCanvas.height / (2 * dpr), editorState.playtest.mouse.x - ptCanvas.width / (2 * dpr));
+
+      // RENDER SIMULATION
+      ptCtx.save();
+      ptCtx.clearRect(0, 0, ptCanvas.width, ptCanvas.height);
+      ptCtx.scale(dpr, dpr);
+      ptCtx.translate(camX, camY);
+
+      // 1. Draw World Tiles
+      const W = mapData.w;
+      const H = mapData.h;
+      for (let y = 0; y < H; y++) {
+        for (let x = 0; x < W; x++) {
+          const t = getTile(x, y);
+          const px = x * TILE, py = y * TILE;
+          if (t === 0) {
+            ptCtx.fillStyle = (x + y) % 2 === 0 ? theme.floor : theme.floorAlt;
+            ptCtx.fillRect(px, py, TILE, TILE);
+          } else if (t === 1) {
+            ptCtx.fillStyle = theme.wall;
+            ptCtx.fillRect(px, py, TILE, TILE);
+            ptCtx.fillStyle = theme.wallTop;
+            ptCtx.fillRect(px + 4, py + 4, TILE - 8, TILE - 8);
+          } else if (t === 2) {
+            ptCtx.fillStyle = '#ff8a1a';
+            ptCtx.fillRect(px + 8, py + TILE / 2 - 4, TILE - 16, 8);
+          }
+        }
+      }
+
+      // 2. Draw Props & Pickups & Enemies
+      mapData.props.forEach(pr => {
+        const px = pr.x * TILE + TILE / 2, py = pr.y * TILE + TILE / 2;
+        ptCtx.fillStyle = '#5a4630';
+        ptCtx.fillRect(px - 14, py - 14, 28, 28);
+      });
+      mapData.enemies.forEach(e => {
+        const ex = e.x * TILE + TILE / 2, ey = e.y * TILE + TILE / 2;
+        ptCtx.fillStyle = '#ff3355';
+        ptCtx.beginPath(); ptCtx.arc(ex, ey, 15, 0, TAU); ptCtx.fill();
+      });
+
+      // 3. Draw Player
+      ptCtx.save();
+      ptCtx.translate(p.x, p.y);
+      ptCtx.rotate(p.angle);
+      ptCtx.fillStyle = '#3ddc84';
+      ptCtx.beginPath(); ptCtx.arc(0, 0, p.r, 0, TAU); ptCtx.fill();
+      ptCtx.fillStyle = '#17181e';
+      ptCtx.fillRect(10, -3, 16, 6); // Gun barrel
+      ptCtx.restore();
+
+      // 4. Tactical Darkness & Flashlight Cone Overlay
+      const darkness = mapData.meta.darkness || 0.92;
+      ptCtx.restore(); // reset cam transform for screen overlay
+
+      ptCtx.save();
+      ptCtx.scale(dpr, dpr);
+      ptCtx.fillStyle = `rgba(5, 7, 12, ${darkness})`;
+      ptCtx.fillRect(0, 0, ptCanvas.width / dpr, ptCanvas.height / dpr);
+
+      // Cut out Flashlight beam
+      if (editorState.playtest.flashlight) {
+        ptCtx.globalCompositeOperation = 'destination-out';
+        const scrPx = ptCanvas.width / (2 * dpr);
+        const scrPy = ptCanvas.height / (2 * dpr);
+
+        // Flashlight beam
+        const flashGrad = ptCtx.createRadialGradient(scrPx, scrPy, 10, scrPx, scrPy, 380);
+        flashGrad.addColorStop(0, 'rgba(0,0,0,1)');
+        flashGrad.addColorStop(0.8, 'rgba(0,0,0,0.85)');
+        flashGrad.addColorStop(1, 'rgba(0,0,0,0)');
+        ptCtx.fillStyle = flashGrad;
+        ptCtx.beginPath();
+        ptCtx.moveTo(scrPx, scrPy);
+        ptCtx.arc(scrPx, scrPy, 380, p.angle - 0.45, p.angle + 0.45);
+        ptCtx.closePath();
+        ptCtx.fill();
+
+        // Ambient close ring
+        const ambGrad = ptCtx.createRadialGradient(scrPx, scrPy, 2, scrPx, scrPy, 110);
+        ambGrad.addColorStop(0, 'rgba(0,0,0,0.9)');
+        ambGrad.addColorStop(1, 'rgba(0,0,0,0)');
+        ptCtx.fillStyle = ambGrad;
+        ptCtx.beginPath(); ptCtx.arc(scrPx, scrPy, 110, 0, TAU); ptCtx.fill();
+
+        ptCtx.globalCompositeOperation = 'source-over';
+      }
+      ptCtx.restore();
+    }
+
+    window.addEventListener('keydown', (e) => {
+      if (editorState.playtest.active) {
+        editorState.playtest.keys[e.code] = true;
+        if (e.code === 'KeyF') editorState.playtest.flashlight = !editorState.playtest.flashlight;
+        if (e.code === 'Escape') stopPlaytest();
+        return;
+      }
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+      // Editor shortcuts
+      if (e.key === 'b' || e.key === 'B') selectTool('brush');
+      if (e.key === 'r' || e.key === 'R') selectTool('room');
+      if (e.key === 'f' || e.key === 'F') selectTool('floorbox');
+      if (e.key === 'w' || e.key === 'W') selectTool('wallbox');
+      if (e.key === 'd' || e.key === 'D') selectTool('door');
+      if (e.key === 'e' || e.key === 'E') selectTool('eraser');
+      if (e.key === 'g' || e.key === 'G') selectTool('bucket');
+      if (e.key === 'p' || e.key === 'P') startPlaytest();
+      if ((e.ctrlKey || e.metaKey) && e.key === 'z') { e.preventDefault(); undo(); }
+      if ((e.ctrlKey || e.metaKey) && (e.key === 'y' || (e.shiftKey && e.key === 'Z'))) { e.preventDefault(); redo(); }
+    });
+
+    window.addEventListener('keyup', (e) => {
+      if (editorState.playtest.active) {
+        editorState.playtest.keys[e.code] = false;
+      }
+    });
+
+    ptCanvas.addEventListener('mousemove', (e) => {
+      if (!editorState.playtest.active) return;
+      const rect = ptCanvas.getBoundingClientRect();
+      editorState.playtest.mouse.x = e.clientX - rect.left;
+      editorState.playtest.mouse.y = e.clientY - rect.top;
+    });
+
+    document.getElementById('btnExitPlaytest').addEventListener('click', stopPlaytest);
+    document.getElementById('btnPlaytest').addEventListener('click', startPlaytest);
+
+    /* -------------------------------------------------------------------------
+     * 11. Modal, Import & Export
+     * ------------------------------------------------------------------------- */
+    function exportMapJson() {
+      const data = {
+        format: 'blackout-map-v1',
+        meta: {
+          ...mapData.meta,
+          name: document.getElementById('mapNameInput').value,
+          darkness: (parseInt(document.getElementById('darknessSlider').value, 10) || 90) / 100,
+          weather: document.getElementById('weatherSelect').value,
+          difficulty: document.getElementById('diffSelect').value,
+          rewards: {
+            credits: parseInt(document.getElementById('rewardCredits').value, 10) || 1500,
+            xp: parseInt(document.getElementById('rewardXp').value, 10) || 1000
+          }
+        },
+        grid: {
+          w: mapData.w,
+          h: mapData.h,
+          tiles: Array.from(mapData.tiles)
+        },
+        rooms: mapData.rooms,
+        spawn: mapData.spawn,
+        extraction: mapData.extraction,
+        bossSpawn: mapData.bossSpawn,
+        arenaRect: mapData.arenaRect,
+        enemies: mapData.enemies,
+        props: mapData.props,
+        pickups: mapData.pickups,
+        lamps: mapData.lamps,
+        hazards: mapData.hazards
+      };
+      return JSON.stringify(data, null, 2);
+    }
+
+    function importMapJson(jsonString) {
+      try {
+        const data = JSON.parse(jsonString);
+        if (!data.grid || !data.grid.tiles) throw new Error('Invalid map JSON: missing grid');
+
+        mapData.w = data.grid.w;
+        mapData.h = data.grid.h;
+        mapData.tiles = new Uint8Array(data.grid.tiles);
+        mapData.meta = data.meta || mapData.meta;
+        mapData.rooms = data.rooms || [];
+        mapData.spawn = data.spawn || { x: 5, y: 5 };
+        mapData.extraction = data.extraction || { x: data.grid.w - 5, y: Math.floor(data.grid.h / 2), r: 2 };
+        mapData.bossSpawn = data.bossSpawn || null;
+        mapData.arenaRect = data.arenaRect || null;
+        mapData.enemies = data.enemies || [];
+        mapData.props = data.props || [];
+        mapData.pickups = data.pickups || [];
+        mapData.lamps = data.lamps || [];
+        mapData.hazards = data.hazards || [];
+
+        document.getElementById('mapNameInput').value = mapData.meta.name || 'Custom Map';
+        if (mapData.meta.theme) document.getElementById('themeSelect').value = mapData.meta.theme;
+
+        pushHistorySnapshot();
+        fitToScreen();
+        renderCanvas();
+        showToast('Map imported successfully!');
+        return true;
+      } catch (err) {
+        alert('Failed to import map JSON: ' + err.message);
+        return false;
+      }
+    }
+
+    // Modal UI Handlers
+    const exportModal = document.getElementById('exportModal');
+    const jsonArea = document.getElementById('jsonExportArea');
+
+    document.getElementById('btnExportModal').addEventListener('click', () => {
+      jsonArea.value = exportMapJson();
+      exportModal.classList.add('active');
+    });
+    document.getElementById('btnCloseModal').addEventListener('click', () => {
+      exportModal.classList.remove('active');
+    });
+    document.getElementById('btnCopyJson').addEventListener('click', () => {
+      navigator.clipboard.writeText(jsonArea.value);
+      showToast('Map JSON copied to clipboard!');
+    });
+    document.getElementById('btnDownloadJson').addEventListener('click', () => {
+      const blob = new Blob([jsonArea.value], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${(mapData.meta.name || 'blackout-map').toLowerCase().replace(/\s+/g, '-')}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      showToast('Map JSON file downloaded!');
+    });
+    document.getElementById('btnImportJson').addEventListener('click', () => {
+      if (importMapJson(jsonArea.value)) {
+        exportModal.classList.remove('active');
+      }
+    });
+
+    // Save Slots Modal
+    const slotsModal = document.getElementById('slotsModal');
+    document.getElementById('btnSaveSlots').addEventListener('click', () => {
+      renderSaveSlots();
+      slotsModal.classList.add('active');
+    });
+    document.getElementById('btnCloseSlotsModal').addEventListener('click', () => {
+      slotsModal.classList.remove('active');
+    });
+
+    function renderSaveSlots() {
+      const container = document.getElementById('slotsListContainer');
+      container.innerHTML = '';
+      for (let i = 1; i <= 5; i++) {
+        const key = `blackout_map_slot_${i}`;
+        const saved = localStorage.getItem(key);
+        const data = saved ? JSON.parse(saved) : null;
+        const row = document.createElement('div');
+        row.className = 'asset-card';
+        row.style.marginBottom = '8px';
+        row.innerHTML = `
+          <div style="font-size:18px;">💾</div>
+          <div class="asset-text" style="flex:1;">
+            <span class="asset-name">Slot ${i}: ${data ? data.meta.name : 'Empty Slot (خالی)'}</span>
+            <span class="asset-sub">${data ? `${data.grid.w}x${data.grid.h} • ${data.meta.theme}` : 'Unused'}</span>
+          </div>
+          <div style="display:flex; gap:6px;">
+            ${data ? `<button class="btn-header" data-load-slot="${i}">Load</button>` : ''}
+            <button class="btn-header primary" data-save-slot="${i}">Save Here</button>
+          </div>
+        `;
+        container.appendChild(row);
+
+        row.querySelector(`[data-save-slot="${i}"]`)?.addEventListener('click', () => {
+          localStorage.setItem(key, exportMapJson());
+          renderSaveSlots();
+          showToast(`Saved to Slot ${i}!`);
+        });
+        row.querySelector(`[data-load-slot="${i}"]`)?.addEventListener('click', () => {
+          if (importMapJson(saved)) {
+            slotsModal.classList.remove('active');
+          }
+        });
+      }
+    }
+    document.getElementById('btnSaveToCurrentSlot').addEventListener('click', () => {
+      localStorage.setItem('blackout_map_slot_1', exportMapJson());
+      renderSaveSlots();
+      showToast('Saved to Slot 1!');
+    });
+
+    /* -------------------------------------------------------------------------
+     * 12. Toolbar & UI Bindings
+     * ------------------------------------------------------------------------- */
+    function selectTool(toolName) {
+      editorState.activeTool = toolName;
+      editorState.linkingEnemyIndex = null;
+      updateToolButtons();
+      renderCanvas();
+    }
+
+    document.querySelectorAll('.tool-btn').forEach(btn => {
+      btn.addEventListener('click', () => selectTool(btn.dataset.tool));
+    });
+
+    // Brush Sizes
+    document.querySelectorAll('.brush-size-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.brush-size-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        editorState.brushSize = parseInt(btn.dataset.size, 10) || 1;
+      });
+    });
+
+    // Tile Selector Cards
+    document.querySelectorAll('[data-tile-type]').forEach(card => {
+      card.addEventListener('click', () => {
+        document.querySelectorAll('[data-tile-type]').forEach(c => c.classList.remove('active'));
+        card.classList.add('active');
+        editorState.selectedTileType = parseInt(card.dataset.tileType, 10);
+        selectTool('brush');
+      });
+    });
+
+    // Room Tag Cards
+    document.querySelectorAll('[data-room-tag]').forEach(card => {
+      card.addEventListener('click', () => {
+        document.querySelectorAll('[data-room-tag]').forEach(c => c.classList.remove('active'));
+        card.classList.add('active');
+        editorState.selectedRoomTag = card.dataset.roomTag;
+        selectTool('room');
+      });
+    });
+
+    // Drawer Tabs
+    document.querySelectorAll('.lib-tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.lib-tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.lib-tab-pane').forEach(p => p.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById(`pane-${btn.dataset.pane}`)?.classList.add('active');
+      });
+    });
+
+    // Light Tool
+    document.getElementById('btnPlaceLampTool').addEventListener('click', () => {
+      editorState.activeTool = 'entity';
+      editorState.selectedEntity = { category: 'lamp' };
+      updateToolButtons();
+      showToast('Click any tile to place Light Fixture');
+    });
+
+    document.getElementById('lampRadiusSlider').addEventListener('input', (e) => {
+      document.getElementById('lblLampRadius').textContent = `${e.target.value} px`;
+    });
+    document.getElementById('lampIntensitySlider').addEventListener('input', (e) => {
+      document.getElementById('lblLampIntensity').textContent = `${e.target.value}%`;
+    });
+    document.getElementById('btnLampThemeColor').addEventListener('click', () => {
+      const th = BO.THEMES[mapData.meta.theme] || BO.THEMES.blacksite;
+      if (th && th.lamps) {
+        document.getElementById('lampColorPicker').value = th.lamps[0];
+      }
+    });
+
+    document.getElementById('darknessSlider').addEventListener('input', (e) => {
+      document.getElementById('lblDarkness').textContent = `${e.target.value}%`;
+      mapData.meta.darkness = e.target.value / 100;
+    });
+
+    document.getElementById('btnGenBase').addEventListener('click', generateStarterProceduralBase);
+    document.getElementById('btnFitMap').addEventListener('click', fitToScreen);
+    document.getElementById('btnUndo').addEventListener('click', undo);
+    document.getElementById('btnRedo').addEventListener('click', redo);
+
+    // Grid Size Presets
+    document.getElementById('gridSizeSelect').addEventListener('change', (e) => {
+      if (e.target.value === 'custom') {
+        const w = parseInt(prompt('Grid Width (20-120):', mapData.w), 10);
+        const h = parseInt(prompt('Grid Height (20-90):', mapData.h), 10);
+        if (w >= 20 && w <= 120 && h >= 20 && h <= 90) {
+          initGrid(w, h);
+          fitToScreen();
+          showToast(`Grid resized to ${w}x${h}`);
+        }
+      } else {
+        const [w, h] = e.target.value.split(',').map(Number);
+        initGrid(w, h);
+        fitToScreen();
+        showToast(`Grid set to ${w}x${h}`);
+      }
+    });
+
+    // Language Toggle
+    function setLanguage(lang) {
+      editorState.lang = lang;
+      localStorage.setItem('blackout_map_maker_lang', lang);
+      document.documentElement.lang = lang;
+      document.documentElement.dir = lang === 'fa' ? 'rtl' : 'ltr';
+
+      const t = I18N[lang] || I18N.en;
+      document.getElementById('txtHeaderTitle').textContent = t.headerTitle;
+      document.getElementById('txtGenBase').textContent = t.genBase;
+      document.getElementById('txtPlaytest').textContent = t.playtest;
+      document.getElementById('txtSave').textContent = t.save;
+      document.getElementById('txtExport').textContent = t.export;
+      document.getElementById('txtHudTile').textContent = t.hudTile;
+      document.getElementById('txtHudZoom').textContent = t.hudZoom;
+      document.getElementById('txtBrushSize').textContent = t.brushSize;
+      document.getElementById('txtTabTiles').textContent = t.tabTiles;
+      document.getElementById('txtTabProps').textContent = t.tabProps;
+      document.getElementById('txtTabEnemies').textContent = t.tabEnemies;
+      document.getElementById('txtTabWeapons').textContent = t.tabWeapons;
+      document.getElementById('txtTabLights').textContent = t.tabLights;
+      document.getElementById('txtTabRules').textContent = t.tabRules;
+      document.getElementById('txtStructureTiles').textContent = t.structureTiles;
+      document.getElementById('txtTileFloor').textContent = t.tileFloor;
+      document.getElementById('txtTileWall').textContent = t.tileWall;
+      document.getElementById('txtTileDoor').textContent = t.tileDoor;
+      document.getElementById('txtTileArenaDoor').textContent = t.tileArenaDoor;
+      document.getElementById('txtRoomTags').textContent = t.roomTags;
+      document.getElementById('txtTagStart').textContent = t.tagStart;
+      document.getElementById('txtTagRoom').textContent = t.tagRoom;
+      document.getElementById('txtTagArena').textContent = t.tagArena;
+      document.getElementById('txtTagEvac').textContent = t.tagEvac;
+      document.getElementById('txtTacticalProps').textContent = t.tacticalProps;
+      document.getElementById('txtHostileArchetypes').textContent = t.hostileArchetypes;
+      document.getElementById('txtBossesPlacement').textContent = t.bossesPlacement;
+      document.getElementById('txtPickupsSupplies').textContent = t.pickupsSupplies;
+      document.getElementById('txtWeaponCrates').textContent = t.weaponCrates;
+      document.getElementById('txtLampsFixtures').textContent = t.lampsFixtures;
+      document.getElementById('txtHazardsFloor').textContent = t.hazardsFloor;
+      document.getElementById('txtMissionObjectives').textContent = t.missionObjectives;
+      document.getElementById('txtModalExportTitle').textContent = t.modalExportTitle;
+      document.getElementById('txtModalDesc').textContent = t.modalDesc;
+
+      document.getElementById('btnLangFa').style.background = lang === 'fa' ? 'rgba(255,255,255,0.15)' : 'transparent';
+      document.getElementById('btnLangEn').style.background = lang === 'en' ? 'rgba(255,255,255,0.15)' : 'transparent';
+    }
+
+    document.getElementById('btnLangFa').addEventListener('click', () => setLanguage('fa'));
+    document.getElementById('btnLangEn').addEventListener('click', () => setLanguage('en'));
+
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      clearTimeout(t._timer);
+      t._timer = setTimeout(() => t.classList.remove('show'), 2200);
+    }
+
+    /* -------------------------------------------------------------------------
+     * 13. Boot & Start
+     * ------------------------------------------------------------------------- */
+    populateThemesSelect();
+    populatePropsGrid();
+    populateEnemiesGrid();
+    populateWeaponsGrid();
+    populateHazardsGrid();
+
+    initGrid(60, 45, 1);
+    setLanguage(editorState.lang);
+
+    setTimeout(() => {
+      resizeCanvas();
+      fitToScreen();
+    }, 100);
+
+  })();
+  </script>
+</body>
+</html>
