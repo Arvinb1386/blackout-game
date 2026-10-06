@@ -56,8 +56,19 @@
       'wd.sniper': 'One shot, through two targets.', 'wd.launcher': 'Explosive rounds. Mind the blast.',
       'up.title': 'UPGRADES', 'up.maxHp': 'MAX HEALTH', 'up.armor': 'ARMOR PLATING', 'up.speed': 'MOBILITY',
       'up.reload': 'FAST HANDS', 'up.damage': 'HOLLOW POINTS', 'up.accuracy': 'STABILIZER', 'up.magazine': 'EXTENDED MAGS',
+      'up.stamina': 'ENDURANCE', 'up.dodge': 'REFLEXES', 'up.regen': 'BIO-REGEN',
+      'up.lifesteal': 'SECOND WIND', 'up.crit': 'PRECISION', 'up.scavenger': 'SCAVENGER', 'up.cooldown': 'TACTICAL CORE',
       'upd.maxHp': '+15 max health per level', 'upd.armor': '+15 max armor per level', 'upd.speed': '+5% movement speed',
       'upd.reload': '-8% reload time', 'upd.damage': '+8% weapon damage', 'upd.accuracy': '-10% weapon spread', 'upd.magazine': '+10% magazine size',
+      'upd.stamina': '-10% sprint drain, +12% stamina regen per level',
+      'upd.dodge': '-8% dodge cooldown, bonus invulnerability per level',
+      'upd.regen': 'Regenerates health after 4s without damage',
+      'upd.lifesteal': '+3 health restored per enemy elimination',
+      'upd.crit': '+2.5% critical strike chance per level',
+      'upd.scavenger': '+8% bonus credits earned per level',
+      'upd.cooldown': '-5% tactical skill cooldown per level',
+      'upc.survival': 'SURVIVAL', 'upc.mobility': 'MOBILITY', 'upc.weapons': 'WEAPONRY', 'upc.support': 'SUPPORT',
+      'up.new': 'NEW',
       'up.cost': 'COST', 'up.maxed': 'MAXED', 'up.buy': 'UPGRADE', 'up.lvl': 'LV {n}/{max}',
       'set.title': 'SETTINGS', 'set.master': 'MASTER VOLUME', 'set.music': 'MUSIC VOLUME', 'set.sfx': 'EFFECTS VOLUME',
       'set.sensitivity': 'MOUSE SENSITIVITY', 'set.shake': 'SCREEN SHAKE', 'set.particles': 'PARTICLE QUALITY',
@@ -145,8 +156,19 @@
       'wd.sniper': 'یک شلیک، از دو هدف عبور می‌کند.', 'wd.launcher': 'گلوله انفجاری. مراقب موج انفجار باش.',
       'up.title': 'ارتقا', 'up.maxHp': 'حداکثر سلامتی', 'up.armor': 'زره', 'up.speed': 'تحرک',
       'up.reload': 'دست‌های سریع', 'up.damage': 'گلوله توخالی', 'up.accuracy': 'پایدارساز', 'up.magazine': 'خشاب بزرگ',
+      'up.stamina': 'استقامت', 'up.dodge': 'چابکی', 'up.regen': 'بازسازی زیستی',
+      'up.lifesteal': 'نفس دوباره', 'up.crit': 'دقت مرگبار', 'up.scavenger': 'غنیمت‌گیر', 'up.cooldown': 'هسته تاکتیکی',
       'upd.maxHp': '+۱۵ سلامتی در هر سطح', 'upd.armor': '+۱۵ زره در هر سطح', 'upd.speed': '+۵٪ سرعت حرکت',
       'upd.reload': '-۸٪ زمان خشاب‌گذاری', 'upd.damage': '+۸٪ آسیب سلاح', 'upd.accuracy': '-۱۰٪ پراکندگی سلاح', 'upd.magazine': '+۱۰٪ ظرفیت خشاب',
+      'upd.stamina': '-۱۰٪ مصرف دویدن و +۱۲٪ بازیابی استقامت در هر سطح',
+      'upd.dodge': '-۸٪ زمان شارژ غلت و افزایش زمان مصونیت در هر سطح',
+      'upd.regen': 'بازیابی خودکار سلامتی پس از ۴ ثانیه بدون آسیب',
+      'upd.lifesteal': '+۳ سلامتی به ازای هر نابودی دشمن در هر سطح',
+      'upd.crit': '+۲٫۵٪ شانس ضربه مهلک (کریتیکال) در هر سطح',
+      'upd.scavenger': '+۸٪ دریافت سکه و اعتبار بیشتر در هر سطح',
+      'upd.cooldown': '-۵٪ زمان شارژ مجدد مهارت‌ها در هر سطح',
+      'upc.survival': 'بقا', 'upc.mobility': 'تحرک', 'upc.weapons': 'تسلیحات', 'upc.support': 'پشتیبانی',
+      'up.new': 'جدید',
       'up.cost': 'هزینه', 'up.maxed': 'حداکثر', 'up.buy': 'ارتقا', 'up.lvl': 'سطح {n}/{max}',
       'set.title': 'تنظیمات', 'set.master': 'صدای کلی', 'set.music': 'صدای موسیقی', 'set.sfx': 'صدای جلوه‌ها',
       'set.sensitivity': 'حساسیت ماوس', 'set.shake': 'لرزش صفحه', 'set.particles': 'کیفیت ذرات',
@@ -192,10 +214,16 @@
     lang: 'en',
     setLang(lang) {
       this.lang = STRINGS[lang] ? lang : 'en';
-      const root = document.documentElement;
-      root.lang = this.lang;
-      root.dir = this.isRTL() ? 'rtl' : 'ltr';
-      BO.events.emit('lang:changed', this.lang);
+      if (typeof document !== 'undefined' && document.documentElement) {
+        const root = document.documentElement;
+        root.lang = this.lang;
+        root.dir = this.isRTL() ? 'rtl' : 'ltr';
+      }
+      if (BO.events && BO.events.emit) BO.events.emit('lang:changed', this.lang);
+    },
+    extend(lang, table) {
+      if (!STRINGS[lang]) STRINGS[lang] = {};
+      Object.assign(STRINGS[lang], table);
     },
     isRTL() { return this.lang === 'fa'; },
     /** Translate a key, interpolating {placeholders}. Falls back to English, then to the key. */

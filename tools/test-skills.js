@@ -118,7 +118,8 @@ try {
     }
   };
 
-  // Run v9-skills.js in this mock environment
+  // Run i18n.js and v9-skills.js in this mock environment
+  eval(fs.readFileSync(path.join(root, 'js', 'i18n.js'), 'utf8'));
   const scriptCode = fs.readFileSync(path.join(root, 'js', 'v9-skills.js'), 'utf8');
   eval(scriptCode);
 
@@ -227,6 +228,24 @@ try {
   // Verify triggering during cooldown fails
   const reTrig = Skills.trigger(mockGame);
   assert.strictEqual(reTrig, false);
+
+  // 7. Verify all upgrades in UpgradeSystem.list have translations in en and fa
+  const expectedUpgrades = ['maxHp', 'armor', 'speed', 'reload', 'damage', 'accuracy', 'magazine', 'stamina', 'dodge', 'regen', 'lifesteal', 'crit', 'scavenger', 'cooldown'];
+  for (const id of expectedUpgrades) {
+    global.BO.I18N.setLang('en');
+    const enName = global.BO.t('up.' + id);
+    const enDesc = global.BO.t('upd.' + id);
+    assert(enName && !enName.startsWith('up.'), `Missing en translation for up.${id}: got ${enName}`);
+    assert(enDesc && !enDesc.startsWith('upd.'), `Missing en description for upd.${id}: got ${enDesc}`);
+
+    global.BO.I18N.setLang('fa');
+    const faName = global.BO.t('up.' + id);
+    const faDesc = global.BO.t('upd.' + id);
+    assert(faName && !faName.startsWith('up.'), `Missing fa translation for up.${id}: got ${faName}`);
+    assert(faDesc && !faDesc.startsWith('upd.'), `Missing fa description for upd.${id}: got ${faDesc}`);
+  }
+  global.BO.I18N.setLang('en');
+  pass('upgrades: all 14 upgrades have valid titles and descriptions in English and Persian');
 
   pass('skills: active engine time dilation (0.5x world, 0.8x player) & projectile simulation verified');
 

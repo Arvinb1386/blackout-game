@@ -148,8 +148,10 @@
       this.state.active = true;
       this.state.durationTimer = stats.duration;
       this.state.maxDuration = stats.duration;
-      this.state.cooldownTimer = stats.cooldown;
-      this.state.maxCooldown = stats.cooldown;
+      const cdMult = Math.max(0.5, 1 - 0.05 * up('cooldown'));
+      const effCd = stats.cooldown * cdMult;
+      this.state.cooldownTimer = effCd;
+      this.state.maxCooldown = effCd;
 
       this._playAudio(game.audio, true);
       game.ui.notify(BO.t('sk.slowmoActive'), '#00e5ff', 1.4);
@@ -347,7 +349,7 @@
     return origPlayerUpdate.call(this, dt, input, game);
   };
 
-  const omove = P._updateMovement, ododge = P._startDodge;
+  const omove = P._updateMovement, ododge = P._startDodge, otake = P.takeDamage;
   P._updateMovement = function (dt, i, g) {
     const l = up('stamina'), a = BO.CONFIG.STAMINA_DRAIN, b = BO.CONFIG.STAMINA_REGEN;
     let drain = a * (l ? (1 - 0.1 * l) : 1);
@@ -361,11 +363,27 @@
     BO.CONFIG.STAMINA_DRAIN = drain;
     BO.CONFIG.STAMINA_REGEN = regen;
     try {
-      return omove.apply(this, arguments);
+      const res = omove.apply(this, arguments);
+      // Health regen upgrade: after 4s without damage
+      const rLvl = up('regen');
+      if (rLvl > 0 && !this.dead && this.hp < this.maxHp && g && g.time) {
+        if (g.time - (this._v9lastHurt || 0) >= 4) {
+          this.heal(rLvl * 1.5 * dt);
+        }
+      }
+      return res;
     } finally {
       BO.CONFIG.STAMINA_DRAIN = a;
       BO.CONFIG.STAMINA_REGEN = b;
     }
+  };
+
+  P.takeDamage = function (amount, srcX, srcY, game) {
+    const r = otake.apply(this, arguments);
+    if (r > 0) {
+      this._v9lastHurt = (game && game.time) || 0;
+    }
+    return r;
   };
 
   P._startDodge = function () {
@@ -431,6 +449,127 @@
     if (!game || !game.player || game.player.dead || this.current === 'results' || this.current === 'death') return;
     SkillSystem.renderHUD(ctx, game, time);
   };
+
+  /* Localization */
+  BO.I18N.extend('en', {
+    'menu.skills': 'SKILLS',
+    'v9.dossier': 'OPERATOR DOSSIER',
+    'v9.nextOp': 'NEXT OPERATION',
+    'v9.xpTo': '{a} / {b} XP',
+    'v9.allDone': 'ALL OPERATIONS CLEARED',
+    'v9.tip1': 'Press [C] to activate Slow Motion in combat.',
+    'sk.title': 'TACTICAL SKILLS',
+    'sk.points': 'POINTS',
+    'sk.respec': 'RESPEC (FREE)',
+    'sk.respecConfirm': 'Reset Slow Motion to Level 1 and refund all spent points?',
+    'sk.slowmo': 'SLOW MOTION',
+    'sk.keyBadge': 'KEY [C]',
+    'sk.keyHint': '[C] SLOW-MO',
+    'sk.levelPill': 'LEVEL {cur} / {max}',
+    'sk.slowmoDesc': 'Press [C] during combat to bend time into tactical bullet-time. The entire world and hostiles slow down to 50% speed while you operate at 80% speed.',
+    'sk.worldSpeed': 'WORLD SPEED',
+    'sk.playerSpeed': 'OPERATOR SPEED',
+    'sk.duration': 'DURATION',
+    'sk.cooldown': 'COOLDOWN',
+    'sk.sec': 's',
+    'sk.perkCur': 'CURRENT FOCUS',
+    'sk.perkNext': 'NEXT LEVEL BONUS',
+    'sk.upgradeBtn': 'UPGRADE TO LEVEL {n}',
+    'sk.costBoth': '1 POINT + {c} CREDITS',
+    'sk.needPt': 'NEED 1 SKILL POINT',
+    'sk.needCr': 'NEED CREDITS',
+    'sk.notAfford': 'INSUFFICIENT FUNDS & POINTS',
+    'sk.costPt': '1 SKILL POINT',
+    'sk.costCr': '{c} CREDITS',
+    'sk.maxed': '★ MAX LEVEL REACHED (10/10) ★',
+    'sk.ready': 'READY',
+    'sk.slowmoActive': 'SLOW MOTION ACTIVATED',
+    'sk.slowmoEnded': 'TIME FLOW RESTORED',
+    'sk.slowmoCd': 'SLOW-MO READY IN {s}s',
+    'sk.futureTitle': 'FUTURE SKILLS',
+    'sk.futureDesc': 'Additional tactical operator abilities will be unlocked here in upcoming updates.',
+    'sk.perk.1': 'Tactical Focus: Slow world to 50%, operator to 80%.',
+    'sk.perk.2': 'Extended Flow: +0.25s duration, -1.0s cooldown.',
+    'sk.perk.3': 'Reflex Stance: +10% faster reload during slow motion.',
+    'sk.perk.4': 'Tuned Agility: Operator speed slightly tuned to 81%.',
+    'sk.perk.5': 'Adrenaline Surge: -25% sprint stamina drain during slow motion.',
+    'sk.perk.6': 'Heightened Senses: Operator speed tuned to 82%.',
+    'sk.perk.7': 'Momentum: Eliminations in slow motion cut cooldown by 0.5s.',
+    'sk.perk.8': 'Temporal Drift: Operator speed tuned to 83%.',
+    'sk.perk.9': 'Chrono Surge: Extended duration to 4.5s and 10.0s cooldown.',
+    'sk.perk.10': 'Chrono Mastery: 5.0s duration, 9.0s cooldown; eliminations extend duration by +0.25s.',
+    'up.stamina': 'ENDURANCE', 'up.dodge': 'REFLEXES', 'up.regen': 'BIO-REGEN',
+    'up.lifesteal': 'SECOND WIND', 'up.crit': 'PRECISION', 'up.scavenger': 'SCAVENGER', 'up.cooldown': 'TACTICAL CORE',
+    'upd.stamina': '-10% sprint drain, +12% stamina regen per level',
+    'upd.dodge': '-8% dodge cooldown, bonus invulnerability per level',
+    'upd.regen': 'Regenerates health after 4s without damage',
+    'upd.lifesteal': '+3 health restored per enemy elimination',
+    'upd.crit': '+2.5% critical strike chance per level',
+    'upd.scavenger': '+8% bonus credits earned per level',
+    'upd.cooldown': '-5% tactical skill cooldown per level',
+    'upc.survival': 'SURVIVAL', 'upc.mobility': 'MOBILITY', 'upc.weapons': 'WEAPONRY', 'upc.support': 'SUPPORT',
+    'up.new': 'NEW'
+  });
+
+  BO.I18N.extend('fa', {
+    'menu.skills': 'مهارت‌ها',
+    'v9.dossier': 'پرونده مأمور',
+    'v9.nextOp': 'مأموریت بعدی',
+    'v9.xpTo': '{a} / {b} تجربه',
+    'v9.allDone': 'تمام مأموریت‌ها انجام شدند',
+    'v9.tip1': 'در مبارزات با فشردن کلید [C] اسلو موشن را فعال کن.',
+    'sk.title': 'مهارت‌های تاکتیکی',
+    'sk.points': 'امتیاز مهارت',
+    'sk.respec': 'بازتنظیم امتیازها (رایگان)',
+    'sk.respecConfirm': 'مهارت اسلو موشن به سطح ۱ بازگردد و امتیازهای خرج‌شده برگشت داده شوند؟',
+    'sk.slowmo': 'اسلو موشن (حرکت آهسته)',
+    'sk.keyBadge': 'کلید [C]',
+    'sk.keyHint': '[C] اسلو موشن',
+    'sk.levelPill': 'سطح {cur} از {max}',
+    'sk.slowmoDesc': 'با فشردن کلید [C] در حین بازی زمان را بشکنید. سرعت جهان و تمامی دشمنان به ۵۰٪ (0.5x) کاهش می‌یابد در حالی که شما با سرعت ۸۰٪ (0.8x) حرکت و شلیک می‌کنید.',
+    'sk.worldSpeed': 'سرعت جهان',
+    'sk.playerSpeed': 'سرعت کاربر',
+    'sk.duration': 'زمان ماندگاری',
+    'sk.cooldown': 'شارژ مجدد',
+    'sk.sec': ' ثانیه',
+    'sk.perkCur': 'ویژگی تاکتیکی این سطح',
+    'sk.perkNext': 'پاداش سطح بعدی',
+    'sk.upgradeBtn': 'ارتقا به سطح {n}',
+    'sk.costBoth': '۱ امتیاز + {c} سکه',
+    'sk.needPt': 'نیاز به ۱ امتیاز مهارت',
+    'sk.needCr': 'نیاز به سکه',
+    'sk.notAfford': 'امتیاز و سکه ناکافی',
+    'sk.costPt': '۱ امتیاز مهارت',
+    'sk.costCr': '{c} سکه',
+    'sk.maxed': '★ حداکثر سطح (تکمیل شده ۱۰/۱۰) ★',
+    'sk.ready': 'آماده',
+    'sk.slowmoActive': 'اسلو موشن فعال شد',
+    'sk.slowmoEnded': 'زمان به حالت عادی برگشت',
+    'sk.slowmoCd': 'اسلو موشن تا {s} ثانیه دیگر آماده می‌شود',
+    'sk.futureTitle': 'مهارت‌های آینده',
+    'sk.futureDesc': 'توانایی‌های تاکتیکی جدید در به‌روزرسانی‌های بعدی در این بخش اضافه خواهند شد.',
+    'sk.perk.1': 'تمرکز تاکتیکی: سرعت جهان ۵۰٪ و سرعت کاربر ۸۰٪.',
+    'sk.perk.2': 'تداوم زمان: ۰٫۲۵+ ثانیه ماندگاری، ۱- ثانیه شارژ سریع‌تر.',
+    'sk.perk.3': 'واکنش سریع: ۱۰٪ بارگذاری سریع‌تر سلاح در حالت اسلو موشن.',
+    'sk.perk.4': 'چابکی تاکتیکی: تنظیم سرعت کاربر به ۸۱٪.',
+    'sk.perk.5': 'آدرنالین: ۲۵٪ مصرف کمتر استقامت هنگام دویدن در اسلو موشن.',
+    'sk.perk.6': 'حواس تقویت‌شده: تنظیم سرعت کاربر به ۸۲٪.',
+    'sk.perk.7': 'تکانه: هر حذف دشمن در اسلو موشن زمان شارژ را ۰٫۵ ثانیه کم می‌کند.',
+    'sk.perk.8': 'رانش زمانی: تنظیم سرعت کاربر به ۸۳٪.',
+    'sk.perk.9': 'موج زمان: ماندگاری ۴٫۵ ثانیه و شارژ سریع‌تر تا ۱۰ ثانیه.',
+    'sk.perk.10': 'تسلط بر زمان: ۵٫۰ ثانیه ماندگاری، شارژ ۹ ثانیه‌ای و افزایش مدت با هر حذف.',
+    'up.stamina': 'استقامت', 'up.dodge': 'چابکی', 'up.regen': 'بازسازی زیستی',
+    'up.lifesteal': 'نفس دوباره', 'up.crit': 'دقت مرگبار', 'up.scavenger': 'غنیمت‌گیر', 'up.cooldown': 'هسته تاکتیکی',
+    'upd.stamina': '-۱۰٪ مصرف دویدن و +۱۲٪ بازیابی استقامت در هر سطح',
+    'upd.dodge': '-۸٪ زمان شارژ غلت و افزایش زمان مصونیت در هر سطح',
+    'upd.regen': 'بازیابی خودکار سلامتی پس از ۴ ثانیه بدون آسیب',
+    'upd.lifesteal': '+۳ سلامتی به ازای هر نابودی دشمن در هر سطح',
+    'upd.crit': '+۲٫۵٪ شانس ضربه مهلک (کریتیکال) در هر سطح',
+    'upd.scavenger': '+۸٪ دریافت سکه و اعتبار بیشتر در هر سطح',
+    'upd.cooldown': '-۵٪ زمان شارژ مجدد مهارت‌ها در هر سطح',
+    'upc.survival': 'بقا', 'upc.mobility': 'تحرک', 'upc.weapons': 'تسلیحات', 'upc.support': 'پشتیبانی',
+    'up.new': 'جدید'
+  });
 
   /* UI & Styles Injection */
   if (typeof document === 'undefined') return;
@@ -922,105 +1061,6 @@
         renderSkillsView(u);
       });
     }
-  });
-
-  /* Localization */
-  BO.I18N.extend('en', {
-    'menu.skills': 'SKILLS',
-    'v9.dossier': 'OPERATOR DOSSIER',
-    'v9.nextOp': 'NEXT OPERATION',
-    'v9.xpTo': '{a} / {b} XP',
-    'v9.allDone': 'ALL OPERATIONS CLEARED',
-    'v9.tip1': 'Press [C] to activate Slow Motion in combat.',
-    'sk.title': 'TACTICAL SKILLS',
-    'sk.points': 'POINTS',
-    'sk.respec': 'RESPEC (FREE)',
-    'sk.respecConfirm': 'Reset Slow Motion to Level 1 and refund all spent points?',
-    'sk.slowmo': 'SLOW MOTION',
-    'sk.keyBadge': 'KEY [C]',
-    'sk.keyHint': '[C] SLOW-MO',
-    'sk.levelPill': 'LEVEL {cur} / {max}',
-    'sk.slowmoDesc': 'Press [C] during combat to bend time into tactical bullet-time. The entire world and hostiles slow down to 50% speed while you operate at 80% speed.',
-    'sk.worldSpeed': 'WORLD SPEED',
-    'sk.playerSpeed': 'OPERATOR SPEED',
-    'sk.duration': 'DURATION',
-    'sk.cooldown': 'COOLDOWN',
-    'sk.sec': 's',
-    'sk.perkCur': 'CURRENT FOCUS',
-    'sk.perkNext': 'NEXT LEVEL BONUS',
-    'sk.upgradeBtn': 'UPGRADE TO LEVEL {n}',
-    'sk.costBoth': '1 POINT + {c} CREDITS',
-    'sk.needPt': 'NEED 1 SKILL POINT',
-    'sk.needCr': 'NEED CREDITS',
-    'sk.notAfford': 'INSUFFICIENT FUNDS & POINTS',
-    'sk.costPt': '1 SKILL POINT',
-    'sk.costCr': '{c} CREDITS',
-    'sk.maxed': '★ MAX LEVEL REACHED (10/10) ★',
-    'sk.ready': 'READY',
-    'sk.slowmoActive': 'SLOW MOTION ACTIVATED',
-    'sk.slowmoEnded': 'TIME FLOW RESTORED',
-    'sk.slowmoCd': 'SLOW-MO READY IN {s}s',
-    'sk.futureTitle': 'FUTURE SKILLS',
-    'sk.futureDesc': 'Additional tactical operator abilities will be unlocked here in upcoming updates.',
-    'sk.perk.1': 'Tactical Focus: Slow world to 50%, operator to 80%.',
-    'sk.perk.2': 'Extended Flow: +0.25s duration, -1.0s cooldown.',
-    'sk.perk.3': 'Reflex Stance: +10% faster reload during slow motion.',
-    'sk.perk.4': 'Tuned Agility: Operator speed slightly tuned to 81%.',
-    'sk.perk.5': 'Adrenaline Surge: -25% sprint stamina drain during slow motion.',
-    'sk.perk.6': 'Heightened Senses: Operator speed tuned to 82%.',
-    'sk.perk.7': 'Momentum: Eliminations in slow motion cut cooldown by 0.5s.',
-    'sk.perk.8': 'Temporal Drift: Operator speed tuned to 83%.',
-    'sk.perk.9': 'Chrono Surge: Extended duration to 4.5s and 10.0s cooldown.',
-    'sk.perk.10': 'Chrono Mastery: 5.0s duration, 9.0s cooldown; eliminations extend duration by +0.25s.'
-  });
-
-  BO.I18N.extend('fa', {
-    'menu.skills': 'مهارت‌ها',
-    'v9.dossier': 'پرونده مأمور',
-    'v9.nextOp': 'مأموریت بعدی',
-    'v9.xpTo': '{a} / {b} تجربه',
-    'v9.allDone': 'تمام مأموریت‌ها انجام شدند',
-    'v9.tip1': 'در مبارزات با فشردن کلید [C] اسلو موشن را فعال کن.',
-    'sk.title': 'مهارت‌های تاکتیکی',
-    'sk.points': 'امتیاز مهارت',
-    'sk.respec': 'بازتنظیم امتیازها (رایگان)',
-    'sk.respecConfirm': 'مهارت اسلو موشن به سطح ۱ بازگردد و امتیازهای خرج‌شده برگشت داده شوند؟',
-    'sk.slowmo': 'اسلو موشن (حرکت آهسته)',
-    'sk.keyBadge': 'کلید [C]',
-    'sk.keyHint': '[C] اسلو موشن',
-    'sk.levelPill': 'سطح {cur} از {max}',
-    'sk.slowmoDesc': 'با فشردن کلید [C] در حین بازی زمان را بشکنید. سرعت جهان و تمامی دشمنان به ۵۰٪ (0.5x) کاهش می‌یابد در حالی که شما با سرعت ۸۰٪ (0.8x) حرکت و شلیک می‌کنید.',
-    'sk.worldSpeed': 'سرعت جهان',
-    'sk.playerSpeed': 'سرعت کاربر',
-    'sk.duration': 'زمان ماندگاری',
-    'sk.cooldown': 'شارژ مجدد',
-    'sk.sec': ' ثانیه',
-    'sk.perkCur': 'ویژگی تاکتیکی این سطح',
-    'sk.perkNext': 'پاداش سطح بعدی',
-    'sk.upgradeBtn': 'ارتقا به سطح {n}',
-    'sk.costBoth': '۱ امتیاز + {c} سکه',
-    'sk.needPt': 'نیاز به ۱ امتیاز مهارت',
-    'sk.needCr': 'نیاز به سکه',
-    'sk.notAfford': 'امتیاز و سکه ناکافی',
-    'sk.costPt': '۱ امتیاز مهارت',
-    'sk.costCr': '{c} سکه',
-    'sk.maxed': '★ حداکثر سطح (تکمیل شده ۱۰/۱۰) ★',
-    'sk.ready': 'آماده',
-    'sk.slowmoActive': 'اسلو موشن فعال شد',
-    'sk.slowmoEnded': 'زمان به حالت عادی برگشت',
-    'sk.slowmoCd': 'اسلو موشن تا {s} ثانیه دیگر آماده می‌شود',
-    'sk.futureTitle': 'مهارت‌های آینده',
-    'sk.futureDesc': 'توانایی‌های تاکتیکی جدید در به‌روزرسانی‌های بعدی در این بخش اضافه خواهند شد.',
-    'sk.perk.1': 'تمرکز تاکتیکی: سرعت جهان ۵۰٪ و سرعت کاربر ۸۰٪.',
-    'sk.perk.2': 'تداوم زمان: ۰٫۲۵+ ثانیه ماندگاری، ۱- ثانیه شارژ سریع‌تر.',
-    'sk.perk.3': 'واکنش سریع: ۱۰٪ بارگذاری سریع‌تر سلاح در حالت اسلو موشن.',
-    'sk.perk.4': 'چابکی تاکتیکی: تنظیم سرعت کاربر به ۸۱٪.',
-    'sk.perk.5': 'آدرنالین: ۲۵٪ مصرف کمتر استقامت هنگام دویدن در اسلو موشن.',
-    'sk.perk.6': 'حواس تقویت‌شده: تنظیم سرعت کاربر به ۸۲٪.',
-    'sk.perk.7': 'تکانه: هر حذف دشمن در اسلو موشن زمان شارژ را ۰٫۵ ثانیه کم می‌کند.',
-    'sk.perk.8': 'رانش زمانی: تنظیم سرعت کاربر به ۸۳٪.',
-    'sk.perk.9': 'موج زمان: ماندگاری ۴٫۵ ثانیه و شارژ سریع‌تر تا ۱۰ ثانیه.',
-    'sk.perk.10': 'تسلط بر زمان: ۵٫۰ ثانیه ماندگاری، شارژ ۹ ثانیه‌ای و افزایش مدت با هر حذف.'
   });
 
 })(window.BO);
