@@ -1815,10 +1815,12 @@
   /* --------------------------- UI Sync --------------------------- */
   function refreshVariantUI() {
     const v = lab.boss && lab.boss.v11 ? lab.boss.v11 : null;
+    const desc = (BO.LabBosses && BO.LabBosses.describe) ? BO.LabBosses.describe(prefs.variant) : null;
     if (v) {
       $('#cfg-editor').value = JSON.stringify(v, null, 2);
-      $('#cfg-tag').textContent = (v.name || 'Warden').toUpperCase();
-      $('#lab-source').textContent = 'Variant: ' + prefs.variant + ' · ' + (v.name || 'Warden');
+      const title = (desc && desc.title) ? desc.title : (v.name || 'Warden').toUpperCase();
+      $('#cfg-tag').textContent = title + (v.tier ? ` (T${v.tier})` : '');
+      $('#lab-source').textContent = 'Variant: ' + prefs.variant + ' · ' + title + (desc && desc.fa ? ` — ${desc.fa}` : '');
     } else {
       $('#cfg-tag').textContent = 'CLASSIC';
       $('#lab-source').textContent = 'Classic Base Warden';
@@ -1836,11 +1838,16 @@
       return;
     }
     const v = lab.boss.v11;
+    const phases = (lab.boss && lab.boss.ascendant) ? [1, 2, 3, 4] : [1, 2, 3];
+    const allAtks = new Set(Object.keys(ATTACKS));
+    if (v.pools) {
+      v.pools.forEach(p => { if (Array.isArray(p)) p.forEach(a => allAtks.add(a)); });
+    }
     let html = '';
-    [1, 2, 3].forEach(phase => {
+    phases.forEach(phase => {
       const pool = v.pools[phase] || [];
-      html += '<div style="margin-bottom:10px;"><b style="color:var(--c-accent-2); font-size:11px;">PHASE ' + phase + '</b><div style="display:flex; flex-wrap:wrap; gap:4px; margin-top:4px;">';
-      Object.keys(ATTACKS).forEach(atk => {
+      html += '<div style="margin-bottom:10px;"><b style="color:var(--c-accent-2); font-size:11px;">PHASE ' + phase + (phase === 4 ? ' [CATACLYSM]' : '') + '</b><div style="display:flex; flex-wrap:wrap; gap:4px; margin-top:4px;">';
+      Array.from(allAtks).forEach(atk => {
         const inPool = pool.includes(atk);
         html += '<button class="btn" style="font-size:10px; padding:4px 8px; ' +
           (inPool
@@ -1903,13 +1910,31 @@
     const selVariant = $('#sel-variant');
     if (selVariant) {
       selVariant.innerHTML = '';
+      const legacyGroup = document.createElement('optgroup');
+      legacyGroup.label = '—— LEGACY WARDENS (TIERS 1..10) ——';
       VARIANTS.forEach(v => {
         const opt = document.createElement('option');
         opt.value = v.key;
         opt.textContent = v.name;
         if (v.key === prefs.variant) opt.selected = true;
-        selVariant.appendChild(opt);
+        legacyGroup.appendChild(opt);
       });
+      selVariant.appendChild(legacyGroup);
+
+      if (BO.AscendantLab && BO.AscendantLab.roster) {
+        const ascGroup = document.createElement('optgroup');
+        ascGroup.label = '—— ASCENDANT (4-PHASE TIERS 11..20) ——';
+        Object.keys(BO.AscendantLab.roster).forEach(k => {
+          const item = BO.AscendantLab.roster[k];
+          const opt = document.createElement('option');
+          opt.value = k;
+          opt.textContent = `T${item.tier}: ${item.title} (${item.fa || ''})`;
+          if (k === prefs.variant) opt.selected = true;
+          ascGroup.appendChild(opt);
+        });
+        selVariant.appendChild(ascGroup);
+      }
+
       selVariant.addEventListener('change', () => {
         const v = selVariant.value;
         if (v) {
