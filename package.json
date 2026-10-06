@@ -12,129 +12,31 @@
     "weapons:resync": "node tools/extract-weapons.js --js",
     "weapons:test": "node tools/test-weapon-config.js",
     "bosses:test": "node tools/test-lab-bosses.js",
+    "ascendant:test": "node tools/test-ascendant-lab.js",
     "render:test": "node tools/test-texture-cache.js",
     "desktop:test": "node tools/test-desktop-build.js",
     "render2:test": "node tools/test-floor-and-resolution.js",
     "updater:test": "node tools/test-updater.js",
     "skills:test": "node tools/test-skills.js",
     "cover:test": "node tools/test-destructible-cover.js",
-    "test": "npm run weapons:test && npm run bosses:test && npm run render:test && npm run desktop:test && npm run render2:test && npm run updater:test && npm run skills:test && npm run cover:test",
+    "test": "npm run weapons:test && npm run bosses:test && npm run ascendant:test && npm run render:test && npm run desktop:test && npm run render2:test && npm run updater:test && npm run skills:test && npm run cover:test",
     "dist": "electron-builder --win",
     "dist:nsis": "electron-builder --win nsis",
     "dist:portable": "electron-builder --win portable",
     "dist:linux": "electron-builder --linux AppImage",
     "dist:deb": "electron-builder --linux deb"
   },
-  "dependencies": {
-    "electron-updater": "^6.8.9",
-    "ws": "^8.18.0"
-  },
-  "devDependencies": {
-    "electron": "^44.5.1",
-    "electron-builder": "^26.15.3"
-  },
+  "dependencies": { "electron-updater": "^6.8.9", "ws": "^8.18.0" },
+  "devDependencies": { "electron": "^44.5.1", "electron-builder": "^26.15.3" },
   "build": {
-    "appId": "com.blackout.game",
-    "productName": "Blackout",
-    "copyright": "Copyright © 2026",
-    "directories": {
-      "output": "dist"
-    },
-    "publish": [
-      {
-        "provider": "github",
-        "owner": "Arvinb1386",
-        "repo": "blackout-game"
-      }
-    ],
-    "win": {
-      "target": [
-        {
-          "target": "nsis",
-          "arch": [
-            "x64"
-          ]
-        },
-        {
-          "target": "portable",
-          "arch": [
-            "x64"
-          ]
-        }
-      ],
-      "icon": "assets/icon.ico"
-    },
-    "linux": {
-      "target": [
-        {
-          "target": "deb",
-          "arch": [
-            "x64"
-          ]
-        },
-        {
-          "target": "AppImage",
-          "arch": [
-            "x64"
-          ]
-        }
-      ],
-      "icon": "assets",
-      "category": "Game",
-      "synopsis": "BLACKOUT - a top-down tactical shooter played in the dark",
-      "description": "A top-down tactical shooter played in the dark. Pure HTML5 Canvas and vanilla JavaScript. Stealth, breach, extract. Thirty tunable weapons.",
-      "desktop": {
-        "entry": {
-          "Name": "BLACKOUT",
-          "Comment": "Tactical top-down shooter",
-          "Categories": "Game;ActionGame;"
-        }
-      },
-      "maintainer": "Arvin",
-      "vendor": "Blackout",
-      "artifactName": "${productName}-${version}-${arch}.${ext}"
-    },
-    "deb": {
-      "depends": [
-        "libgtk-3-0",
-        "libnotify4",
-        "libnss3",
-        "libxss1",
-        "libxtst6",
-        "xdg-utils",
-        "libatspi2.0-0",
-        "libuuid1",
-        "libsecret-1-0"
-      ],
-      "priority": "optional"
-    },
-    "nsis": {
-      "oneClick": false,
-      "allowToChangeInstallationDirectory": true,
-      "createDesktopShortcut": true,
-      "createStartMenuShortcut": true,
-      "shortcutName": "Blackout",
-      "uninstallDisplayName": "Blackout Game",
-      "runAfterFinish": true
-    },
-    "portable": {
-      "artifactName": "${productName}-Portable-${version}.${ext}"
-    },
-    "files": [
-      "assets/**/*",
-      "css/**/*",
-      "data/**/*",
-      "docs/**/*",
-      "js/**/*",
-      "index.html",
-      "boss-lab.html",
-      "inspector.html",
-      "map-maker.html",
-      "blackout-single.html",
-      "main.js",
-      "preload.js",
-      "server.js",
-      "package.json"
-    ]
+    "appId": "com.blackout.game", "productName": "Blackout", "copyright": "Copyright © 2026",
+    "directories": { "output": "dist" },
+    "publish": [{ "provider": "github", "owner": "Arvinb1386", "repo": "blackout-game" }],
+    "win": { "target": [{ "target": "nsis", "arch": ["x64"] }, { "target": "portable", "arch": ["x64"] }], "icon": "assets/icon.ico" },
+    "linux": { "target": [{ "target": "deb", "arch": ["x64"] }, { "target": "AppImage", "arch": ["x64"] }], "icon": "assets", "category": "Game", "synopsis": "BLACKOUT - a top-down tactical shooter played in the dark", "description": "A top-down tactical shooter played in the dark. Pure HTML5 Canvas and vanilla JavaScript. Stealth, breach, extract. Thirty tunable weapons.", "desktop": { "entry": { "Name": "BLACKOUT", "Comment": "Tactical top-down shooter", "Categories": "Game;ActionGame;" } }, "maintainer": "Arvin", "vendor": "Blackout", "artifactName": "${productName}-${version}-${arch}.${ext}" },
+    "deb": { "depends": ["libgtk-3-0", "libnotify4", "libnss3", "libxss1", "libxtst6", "xdg-utils", "libatspi2.0-0", "libuuid1", "libsecret-1-0"], "priority": "optional" },
+    "nsis": { "oneClick": false, "allowToChangeInstallationDirectory": true, "createDesktopShortcut": true, "createStartMenuShortcut": true, "shortcutName": "Blackout", "uninstallDisplayName": "Blackout Game", "runAfterFinish": true },
+    "portable": { "artifactName": "${productName}-Portable-${version}.${ext}" },
+    "files": ["assets/**/*", "css/**/*", "data/**/*", "docs/**/*", "js/**/*", "index.html", "boss-lab.html", "inspector.html", "map-maker.html", "blackout-single.html", "main.js", "preload.js", "server.js", "package.json"]
   }
 }
