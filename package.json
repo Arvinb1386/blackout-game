@@ -127,6 +127,7 @@
       "js/**/*",
       "index.html",
       "boss-lab.html",
+      "inspector.html",
       "blackout-single.html",
       "main.js",
       "preload.js",

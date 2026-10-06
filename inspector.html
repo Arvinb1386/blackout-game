@@ -1,0 +1,2476 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#07080d">
+  <meta name="description" content="BLACKOUT // پایگاه داده و بازرس تاکتیکی بلک‌اوت - بررسی جامع تمام دشمنان، باس‌ها و نقشه‌های بازی به همراه رندر سه‌بعدی و مولد نقشه رویدادی">
+  <title>BLACKOUT // COMPENDIUM & TACTICAL INSPECTOR | پایگاه داده و بازرس تاکتیکی بلک‌اوت</title>
+  <link rel="stylesheet" href="css/fonts.css">
+  <style>
+    :root {
+      --ink: #07080d;
+      --ink-2: #0d101a;
+      --ink-3: #141824;
+      --ink-card: rgba(16, 20, 32, 0.82);
+      --ink-panel: rgba(11, 14, 22, 0.94);
+      --line: rgba(238, 240, 246, 0.10);
+      --line-bright: rgba(238, 240, 246, 0.22);
+      --text: #eef0f6;
+      --muted: #9aa0b4;
+      --dim: #60667a;
+      
+      --blaze: #ff8a1a;
+      --blaze-glow: rgba(255, 138, 26, 0.35);
+      --blaze-dim: rgba(255, 138, 26, 0.14);
+      --hostile: #ff3355;
+      --hostile-glow: rgba(255, 51, 85, 0.4);
+      --hostile-dim: rgba(255, 51, 85, 0.15);
+      --tech: #00d4ff;
+      --tech-glow: rgba(0, 212, 255, 0.35);
+      --tech-dim: rgba(0, 212, 255, 0.12);
+      --ok: #3ddc84;
+      --ok-glow: rgba(61, 220, 132, 0.35);
+      --violet: #a68bff;
+      --gold: #ffd27a;
+      
+      --font-display: 'Khand', 'Chakra Petch', sans-serif;
+      --font-ui: 'Chakra Petch', 'Khand', sans-serif;
+      --font-fa: 'Vazirmatn', Tahoma, sans-serif;
+      --ease: cubic-bezier(.16, 1, .3, 1);
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 16px;
+      --shadow-panel: 0 16px 40px rgba(0, 0, 0, 0.7);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      width: 100%; height: 100%;
+      background: var(--ink);
+      color: var(--text);
+      font-family: var(--font-fa);
+      font-size: 15px;
+      line-height: 1.5;
+      overflow: hidden;
+      user-select: none;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    html[lang="en"] { direction: ltr; }
+    html[lang="en"] body { font-family: var(--font-ui); }
+
+    /* Background Ambient Grid */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: 
+        radial-gradient(circle at 15% 15%, rgba(255, 138, 26, 0.04) 0%, transparent 40%),
+        radial-gradient(circle at 85% 85%, rgba(0, 212, 255, 0.04) 0%, transparent 40%),
+        linear-gradient(rgba(238, 240, 246, 0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(238, 240, 246, 0.02) 1px, transparent 1px);
+      background-size: 100% 100%, 100% 100%, 48px 48px, 48px 48px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Scrollbars */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.2); }
+    ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.15); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--blaze); }
+
+    /* App Shell */
+    #app {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* Top Navigation Bar */
+    header.app-bar {
+      height: 64px;
+      min-height: 64px;
+      background: var(--ink-panel);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      gap: 16px;
+    }
+
+    .brand-group {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .brand-title {
+      display: flex;
+      flex-direction: column;
+    }
+    .brand-title h1 {
+      font-family: var(--font-display);
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      line-height: 1;
+    }
+    .brand-title h1 span.highlight { color: var(--blaze); }
+    .brand-title .tagline {
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      font-family: var(--font-ui);
+    }
+    .brand-badge {
+      font-family: var(--font-ui);
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 4px;
+      background: var(--blaze-dim);
+      border: 1px solid var(--blaze-glow);
+      color: var(--blaze);
+      letter-spacing: 0.5px;
+    }
+
+    /* Main Navigation Tabs */
+    nav.nav-tabs {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      background: rgba(0, 0, 0, 0.35);
+      padding: 4px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--line);
+    }
+    .tab-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 600;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-family: inherit;
+    }
+    .tab-btn:hover {
+      color: #fff;
+      background: rgba(255, 255, 255, 0.05);
+    }
+    .tab-btn.active {
+      color: #fff;
+      background: var(--blaze);
+      box-shadow: 0 2px 12px var(--blaze-glow);
+    }
+    .tab-btn .badge {
+      font-size: 10px;
+      padding: 1px 6px;
+      border-radius: 10px;
+      background: rgba(0, 0, 0, 0.3);
+      color: #fff;
+    }
+    .tab-btn.active .badge {
+      background: rgba(255, 255, 255, 0.25);
+    }
+
+    /* Top Controls (Language & Back to Game) */
+    .top-controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .lang-switcher {
+      display: flex;
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+    }
+    .lang-btn {
+      padding: 6px 12px;
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      font-family: inherit;
+    }
+    .lang-btn:hover { color: #fff; }
+    .lang-btn.active {
+      background: rgba(255, 255, 255, 0.12);
+      color: #fff;
+      font-weight: 700;
+    }
+    .btn-return {
+      padding: 7px 14px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--line-bright);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-size: 12px;
+      font-weight: 600;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .btn-return:hover {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: #fff;
+      color: #fff;
+    }
+
+    /* Content Area */
+    main.content-area {
+      flex: 1;
+      overflow: hidden;
+      display: flex;
+      position: relative;
+    }
+    .tab-panel {
+      position: absolute;
+      inset: 0;
+      display: none;
+      opacity: 0;
+      transition: opacity 0.25s var(--ease);
+      overflow: hidden;
+    }
+    .tab-panel.active {
+      display: flex;
+      opacity: 1;
+    }
+
+    /* 2-Column Split Layout */
+    .split-layout {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      overflow: hidden;
+    }
+    .side-list {
+      width: 340px;
+      min-width: 340px;
+      background: var(--ink-panel);
+      border-inline-end: 1px solid var(--line);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .list-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .list-header h2 {
+      font-size: 14px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .list-header .count-tag {
+      font-size: 11px;
+      color: var(--blaze);
+      background: var(--blaze-dim);
+      padding: 2px 7px;
+      border-radius: 4px;
+      border: 1px solid var(--blaze-glow);
+    }
+    .list-search {
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(0, 0, 0, 0.2);
+    }
+    .list-search input {
+      width: 100%;
+      padding: 8px 12px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-sm);
+      color: #fff;
+      font-size: 12px;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .list-search input:focus {
+      border-color: var(--blaze);
+      background: rgba(255, 255, 255, 0.07);
+    }
+    .items-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    /* List Item Cards */
+    .item-card {
+      padding: 12px 14px;
+      background: var(--ink-card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      transition: all 0.2s ease;
+    }
+    .item-card:hover {
+      background: rgba(255, 255, 255, 0.05);
+      border-color: var(--line-bright);
+      transform: translateY(-1px);
+    }
+    .item-card.selected {
+      background: rgba(255, 138, 26, 0.08);
+      border-color: var(--blaze);
+      box-shadow: 0 4px 16px rgba(255, 138, 26, 0.15);
+    }
+    .item-card.selected-boss {
+      background: rgba(166, 139, 255, 0.08);
+      border-color: var(--violet);
+      box-shadow: 0 4px 16px rgba(166, 139, 255, 0.15);
+    }
+    .card-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .card-icon-pip {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      box-shadow: 0 0 8px currentColor;
+    }
+    .card-text {
+      display: flex;
+      flex-direction: column;
+    }
+    .card-name {
+      font-weight: 700;
+      font-size: 14px;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .card-sub {
+      font-size: 11px;
+      color: var(--muted);
+    }
+    .card-meta {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 2px;
+    }
+    .card-hp {
+      font-family: var(--font-ui);
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--hostile);
+    }
+    .card-tier-badge {
+      font-family: var(--font-ui);
+      font-size: 10px;
+      font-weight: 700;
+      padding: 1px 6px;
+      border-radius: 3px;
+      text-transform: uppercase;
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--muted);
+    }
+
+    /* Detail Inspector View */
+    .detail-view {
+      flex: 1;
+      height: 100%;
+      overflow-y: auto;
+      padding: 24px 30px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      background: radial-gradient(circle at 60% 20%, rgba(255, 255, 255, 0.01) 0%, transparent 70%);
+    }
+
+    /* Inspector Header Card */
+    .inspector-header-card {
+      background: var(--ink-card);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
+      padding: 20px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      box-shadow: var(--shadow-panel);
+    }
+    .inspector-title-area {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .entity-emblem {
+      width: 56px;
+      height: 56px;
+      border-radius: var(--radius-md);
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid var(--line-bright);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+    }
+    .inspector-headings h2 {
+      font-size: 22px;
+      font-weight: 800;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .inspector-headings p {
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .header-badges {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .h-badge {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: var(--radius-sm);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-family: var(--font-ui);
+    }
+    .h-badge.danger { background: var(--hostile-dim); border: 1px solid var(--hostile-glow); color: var(--hostile); }
+    .h-badge.boss { background: rgba(166, 139, 255, 0.15); border: 1px solid var(--violet); color: var(--violet); }
+    .h-badge.gold { background: rgba(255, 210, 122, 0.15); border: 1px solid var(--gold); color: var(--gold); }
+    .h-badge.tech { background: var(--tech-dim); border: 1px solid var(--tech-glow); color: var(--tech); }
+
+    /* Interactive Showcase Section (Canvas + Controls) */
+    .showcase-grid {
+      display: grid;
+      grid-template-columns: minmax(360px, 440px) 1fr;
+      gap: 20px;
+    }
+    .canvas-panel {
+      background: var(--ink-card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      align-items: center;
+      box-shadow: var(--shadow-panel);
+    }
+    .canvas-stage-wrapper {
+      width: 100%;
+      height: 320px;
+      background: radial-gradient(circle at center, rgba(17, 24, 39, 0.6) 0%, rgba(5, 7, 12, 0.95) 100%);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: var(--radius-sm);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .canvas-stage-wrapper canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+    .stage-hud-overlay {
+      position: absolute;
+      top: 10px;
+      inset-inline-start: 12px;
+      font-size: 11px;
+      font-family: var(--font-ui);
+      color: rgba(255, 255, 255, 0.4);
+      letter-spacing: 0.5px;
+      pointer-events: none;
+    }
+    .stage-hud-angle {
+      position: absolute;
+      bottom: 10px;
+      inset-inline-end: 12px;
+      font-size: 11px;
+      font-family: var(--font-ui);
+      color: var(--blaze);
+      pointer-events: none;
+    }
+
+    /* Stage Controls Bar */
+    .stage-controls {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .ctrl-btn {
+      padding: 6px 12px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+      font-family: inherit;
+    }
+    .ctrl-btn:hover {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: var(--line-bright);
+      color: #fff;
+    }
+    .ctrl-btn.active {
+      background: var(--blaze);
+      border-color: var(--blaze);
+      color: #fff;
+    }
+    .ctrl-btn.danger:hover {
+      background: var(--hostile);
+      border-color: var(--hostile);
+      color: #fff;
+    }
+
+    /* Stats Grid */
+    .stats-card-panel {
+      background: var(--ink-card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      box-shadow: var(--shadow-panel);
+    }
+    .section-title {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .stats-matrix {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      gap: 10px;
+    }
+    .stat-box {
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-sm);
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .stat-label {
+      font-size: 11px;
+      color: var(--muted);
+    }
+    .stat-value {
+      font-family: var(--font-ui);
+      font-size: 18px;
+      font-weight: 700;
+      color: #fff;
+    }
+    .stat-value.highlight { color: var(--blaze); }
+    .stat-value.danger { color: var(--hostile); }
+    .stat-value.tech { color: var(--tech); }
+    .stat-value.ok { color: var(--ok); }
+
+    /* Dossier & Intelligence Tabs */
+    .dossier-card {
+      background: var(--ink-card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
+      padding: 20px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      box-shadow: var(--shadow-panel);
+    }
+    .dossier-text {
+      color: #cbd2e1;
+      font-size: 14px;
+      line-height: 1.7;
+    }
+    .tactical-tips-box {
+      background: rgba(0, 212, 255, 0.05);
+      border-inline-start: 3px solid var(--tech);
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+      padding: 12px 16px;
+      color: #d8efff;
+      font-size: 13px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .tactical-tips-box strong { color: var(--tech); }
+
+    /* Attack Pool Tags */
+    .attack-pool-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .atk-badge {
+      padding: 4px 10px;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--line-bright);
+      font-size: 12px;
+      font-family: var(--font-ui);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .atk-badge.sig {
+      background: rgba(255, 138, 26, 0.15);
+      border-color: var(--blaze);
+      color: var(--blaze);
+      font-weight: 700;
+    }
+
+    /* Map Blueprint Stage & Toolbar */
+    .map-blueprint-wrapper {
+      flex: 1;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative;
+    }
+    .blueprint-toolbar {
+      height: 52px;
+      min-height: 52px;
+      background: var(--ink-panel);
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      gap: 16px;
+      z-index: 2;
+    }
+    .map-canvas-container {
+      flex: 1;
+      position: relative;
+      background: #090c14;
+      overflow: hidden;
+      cursor: grab;
+    }
+    .map-canvas-container:active { cursor: grabbing; }
+    #blueprintCanvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    /* Blueprint Floating HUD & Controls */
+    .blueprint-hud-panel {
+      position: absolute;
+      top: 16px;
+      inset-inline-start: 16px;
+      background: rgba(10, 14, 23, 0.9);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      font-size: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      pointer-events: none;
+      z-index: 5;
+    }
+    .blueprint-hud-panel .b-title {
+      font-weight: 700;
+      color: var(--blaze);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .blueprint-hud-panel .b-coords {
+      font-family: var(--font-ui);
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    /* Layers Toggle Box */
+    .layers-toggle-bar {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .layer-chip {
+      padding: 4px 10px;
+      border-radius: 4px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--muted);
+      font-size: 11px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+      font-family: inherit;
+    }
+    .layer-chip:hover { color: #fff; background: rgba(255, 255, 255, 0.08); }
+    .layer-chip.active {
+      background: var(--tech-dim);
+      border-color: var(--tech);
+      color: #fff;
+    }
+
+    /* Seed Stepper Toolbar */
+    .seed-stepper-box {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(0, 0, 0, 0.3);
+      padding: 2px 6px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--line);
+    }
+    .seed-stepper-box span { font-size: 11px; color: var(--muted); }
+    .seed-stepper-box input {
+      width: 70px;
+      background: transparent;
+      border: none;
+      color: var(--blaze);
+      font-family: var(--font-ui);
+      font-weight: 700;
+      font-size: 13px;
+      outline: none;
+      text-align: center;
+    }
+
+    /* Map Tooltip */
+    #mapTooltip {
+      position: absolute;
+      display: none;
+      pointer-events: none;
+      background: rgba(7, 10, 18, 0.95);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--tech);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.8);
+      border-radius: 6px;
+      padding: 8px 12px;
+      font-size: 11px;
+      color: #fff;
+      z-index: 100;
+      max-width: 260px;
+    }
+
+    /* Matrix Table Layout */
+    .matrix-panel {
+      width: 100%;
+      height: 100%;
+      overflow-y: auto;
+      padding: 24px 30px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+    .matrix-card {
+      background: var(--ink-card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
+      padding: 20px;
+      box-shadow: var(--shadow-panel);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    table.tactical-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      text-align: start;
+    }
+    table.tactical-table th {
+      padding: 10px 14px;
+      background: rgba(0, 0, 0, 0.4);
+      color: var(--muted);
+      font-weight: 700;
+      text-transform: uppercase;
+      font-size: 11px;
+      border-bottom: 1px solid var(--line-bright);
+      cursor: pointer;
+    }
+    table.tactical-table th:hover { color: #fff; }
+    table.tactical-table td {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--line);
+      color: #e2e7f3;
+    }
+    table.tactical-table tr:hover td {
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 1080px) {
+      .showcase-grid { grid-template-columns: 1fr; }
+      .side-list { width: 280px; min-width: 280px; }
+    }
+    @media (max-width: 768px) {
+      header.app-bar { padding: 0 12px; }
+      .brand-title .tagline { display: none; }
+      .side-list { width: 100%; }
+      .split-layout { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <!-- Header Navigation -->
+    <header class="app-bar">
+      <div class="brand-group">
+        <div class="brand-title">
+          <h1><span>BLACK</span><span class="highlight">O</span><span>UT</span> // <span id="txtAppTitle">COMPENDIUM</span></h1>
+          <span class="tagline" id="txtAppSubtitle">TACTICAL OPERATING DATABASE & THREAT INSPECTOR</span>
+        </div>
+        <span class="brand-badge" id="lblEngineVer">ENGINE v1.2</span>
+      </div>
+
+      <nav class="nav-tabs" role="tablist">
+        <button class="tab-btn active" data-tab="enemies" role="tab" id="tabEnemies">
+          <span class="icon">🎯</span>
+          <span id="txtTabEnemies">Hostiles</span>
+          <span class="badge">8</span>
+        </button>
+        <button class="tab-btn" data-tab="bosses" role="tab" id="tabBosses">
+          <span class="icon">👑</span>
+          <span id="txtTabBosses">Bosses</span>
+          <span class="badge">12</span>
+        </button>
+        <button class="tab-btn" data-tab="maps" role="tab" id="tabMaps">
+          <span class="icon">🗺️</span>
+          <span id="txtTabMaps">Operations & Maps</span>
+          <span class="badge">24</span>
+        </button>
+        <button class="tab-btn" data-tab="matrix" role="tab" id="tabMatrix">
+          <span class="icon">📊</span>
+          <span id="txtTabMatrix">Threat Matrix</span>
+        </button>
+      </nav>
+
+      <div class="top-controls">
+        <div class="lang-switcher">
+          <button class="lang-btn" data-lang="fa" id="btnLangFa">فارسی</button>
+          <button class="lang-btn active" data-lang="en" id="btnLangEn">EN</button>
+        </div>
+        <a href="index.html" class="btn-return" id="btnLaunchGame" title="Play Blackout">
+          <span>🎮</span>
+          <span id="txtPlayGame">Launch Game</span>
+        </a>
+      </div>
+    </header>
+
+    <!-- Main Content Tabs -->
+    <main class="content-area">
+      <!-- TAB 1: HOSTILES / ENEMIES -->
+      <section class="tab-panel active" id="panel-enemies" role="tabpanel">
+        <div class="split-layout">
+          <!-- Sidebar Hostile List -->
+          <aside class="side-list">
+            <div class="list-header">
+              <h2><span id="txtHostilesListTitle">Hostile Archetypes</span></h2>
+              <span class="count-tag">8 / 8</span>
+            </div>
+            <div class="list-search">
+              <input type="text" id="enemySearch" placeholder="Search hostiles / جستجوی دشمنان...">
+            </div>
+            <div class="items-container" id="enemiesListContainer"></div>
+          </aside>
+
+          <!-- Detail View -->
+          <section class="detail-view" id="enemyDetailView">
+            <!-- Header Card -->
+            <div class="inspector-header-card">
+              <div class="inspector-title-area">
+                <div class="entity-emblem" id="enemyEmblem">💀</div>
+                <div class="inspector-headings">
+                  <h2 id="enemyTitle">GRUNT <span class="h-badge danger" id="enemyThreatBadge">MEDIUM</span></h2>
+                  <p id="enemySubTitle">Standard Patrol Unit • Assault Trooper</p>
+                </div>
+              </div>
+              <div class="header-badges">
+                <span class="h-badge danger" id="enemyHpBadge">100 HP</span>
+                <span class="h-badge tech" id="enemySpeedBadge">125 PX/S</span>
+              </div>
+            </div>
+
+            <!-- Showcase Grid -->
+            <div class="showcase-grid">
+              <!-- Left: Live Render Canvas & Stage Controls -->
+              <div class="canvas-panel">
+                <div class="canvas-stage-wrapper">
+                  <canvas id="enemyCanvas" width="400" height="320"></canvas>
+                  <div class="stage-hud-overlay">SIMULATED 60FPS FIELD SENSOR</div>
+                  <div class="stage-hud-angle" id="enemyAngleHud">ANGLE: 0°</div>
+                </div>
+                <div class="stage-controls">
+                  <button class="ctrl-btn" id="btnEnemyAttack">
+                    <span>🔥</span> <span id="txtEnemyAtkBtn">Test Fire</span>
+                  </button>
+                  <button class="ctrl-btn danger" id="btnEnemyHit">
+                    <span>💥</span> <span id="txtEnemyHitBtn">Hit Flash</span>
+                  </button>
+                  <button class="ctrl-btn active" id="btnEnemyAutoRotate">
+                    <span>🔄</span> <span id="txtEnemyRotateBtn">Auto Rotate</span>
+                  </button>
+                  <button class="ctrl-btn" id="btnEnemyFovToggle">
+                    <span>👁️</span> <span id="txtEnemyFovBtn">FOV Cone</span>
+                  </button>
+                </div>
+              </div>
+
+              <!-- Right: Combat Metrics Matrix -->
+              <div class="stats-card-panel">
+                <div class="section-title">
+                  <span>📊</span> <span id="txtCombatMetrics">Combat Metrics & Specifications</span>
+                </div>
+                <div class="stats-matrix" id="enemyStatsMatrix"></div>
+              </div>
+            </div>
+
+            <!-- Tactical Dossier & Behavior -->
+            <div class="dossier-card">
+              <div class="section-title">
+                <span>📑</span> <span id="txtTacticalAnalysis">Tactical Analysis & AI Loop</span>
+              </div>
+              <p class="dossier-text" id="enemyDossierText"></p>
+              <div class="tactical-tips-box" id="enemyTipsBox"></div>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <!-- TAB 2: BOSSES -->
+      <section class="tab-panel" id="panel-bosses" role="tabpanel">
+        <div class="split-layout">
+          <!-- Sidebar Boss List -->
+          <aside class="side-list">
+            <div class="list-header">
+              <h2><span id="txtBossesListTitle">Boss Roster</span></h2>
+              <span class="count-tag">10 Tiers + 2 Classics</span>
+            </div>
+            <div class="list-search">
+              <input type="text" id="bossSearch" placeholder="Search bosses / جستجوی باس‌ها...">
+            </div>
+            <div class="items-container" id="bossesListContainer"></div>
+          </aside>
+
+          <!-- Detail View -->
+          <section class="detail-view" id="bossDetailView">
+            <!-- Header Card -->
+            <div class="inspector-header-card">
+              <div class="inspector-title-area">
+                <div class="entity-emblem" id="bossEmblem">👑</div>
+                <div class="inspector-headings">
+                  <h2 id="bossTitle">THE WARDEN <span class="h-badge boss" id="bossTierBadge">TIER 1</span></h2>
+                  <p id="bossSubTitle">Sentinel Eye • Facility Overseer</p>
+                </div>
+              </div>
+              <div class="header-badges">
+                <span class="h-badge danger" id="bossHpBadge">8,775 HP</span>
+                <span class="h-badge gold" id="bossScaleBadge">1.35x SCALE</span>
+              </div>
+            </div>
+
+            <!-- Showcase Grid -->
+            <div class="showcase-grid">
+              <!-- Left: Live Render Canvas & Stage Controls -->
+              <div class="canvas-panel">
+                <div class="canvas-stage-wrapper">
+                  <canvas id="bossCanvas" width="440" height="340"></canvas>
+                  <div class="stage-hud-overlay">ACTIVE BOSS CORE SIMULATOR</div>
+                  <div class="stage-hud-angle" id="bossPhaseHud">PHASE: 1</div>
+                </div>
+                <div class="stage-controls">
+                  <div class="layers-toggle-bar">
+                    <button class="ctrl-btn active" data-phase="1" id="btnBossPhase1">Phase 1</button>
+                    <button class="ctrl-btn" data-phase="2" id="btnBossPhase2">Phase 2</button>
+                    <button class="ctrl-btn" data-phase="3" id="btnBossPhase3">Phase 3</button>
+                  </div>
+                  <div class="layers-toggle-bar">
+                    <button class="ctrl-btn danger" id="btnBossHit">
+                      <span>💥</span> Hit Flash
+                    </button>
+                    <button class="ctrl-btn active" id="btnBossRotate">
+                      <span>🔄</span> Spin Core
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Right: Vitals & Scaling Profile -->
+              <div class="stats-card-panel">
+                <div class="section-title">
+                  <span>⚡</span> <span id="txtBossVitalsTitle">Vitals & Difficulty Scaling Profile</span>
+                </div>
+                <div class="stats-matrix" id="bossStatsMatrix"></div>
+              </div>
+            </div>
+
+            <!-- Attack Pools & Signatures -->
+            <div class="dossier-card">
+              <div class="section-title">
+                <span>⚔️</span> <span id="txtAttackArsenalTitle">Attack Pools & Signature Mechanics</span>
+              </div>
+              <div class="attack-pool-list" id="bossAttacksContainer"></div>
+              <div class="tactical-tips-box" id="bossSignatureBox"></div>
+              <p class="dossier-text" id="bossTacticsText"></p>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <!-- TAB 3: OPERATIONS & BLUEPRINT MAPS -->
+      <section class="tab-panel" id="panel-maps" role="tabpanel">
+        <div class="split-layout">
+          <!-- Sidebar Operations List -->
+          <aside class="side-list">
+            <div class="list-header">
+              <h2><span id="txtOperationsListTitle">Campaign Operations</span></h2>
+              <span class="count-tag">24 Missions</span>
+            </div>
+            <div class="list-search">
+              <input type="text" id="missionSearch" placeholder="Search operations / جستجوی مراحل...">
+            </div>
+            <div class="items-container" id="missionsListContainer"></div>
+          </aside>
+
+          <!-- Blueprint Canvas & Dossier Section -->
+          <section class="map-blueprint-wrapper">
+            <!-- Toolbar -->
+            <div class="blueprint-toolbar">
+              <!-- Seed Stepper -->
+              <div class="seed-stepper-box">
+                <span id="txtSeedLabel">Seed:</span>
+                <input type="number" id="mapSeedInput" value="4127">
+                <button class="ctrl-btn" id="btnRandomizeSeed" title="Generate New Procedural Seed">🎲</button>
+                <button class="ctrl-btn" id="btnResetSeed" title="Reset Default Seed">↺</button>
+              </div>
+
+              <!-- Layer Toggles -->
+              <div class="layers-toggle-bar">
+                <button class="layer-chip active" data-layer="rooms" id="layerRooms">🏠 Rooms</button>
+                <button class="layer-chip active" data-layer="walls" id="layerWalls">🧱 Grid</button>
+                <button class="layer-chip active" data-layer="lamps" id="layerLamps">💡 Lights</button>
+                <button class="layer-chip active" data-layer="props" id="layerProps">📦 Cover</button>
+                <button class="layer-chip active" data-layer="objectives" id="layerObjectives">⭐ Goals</button>
+                <button class="layer-chip active" data-layer="enemies" id="layerEnemies">💀 Hostiles</button>
+                <button class="layer-chip active" data-layer="pickups" id="layerPickups">🎁 Loot</button>
+                <button class="layer-chip active" data-layer="hazards" id="layerHazards">⚠️ Hazards</button>
+              </div>
+
+              <!-- Zoom & Fit -->
+              <div class="layers-toggle-bar">
+                <button class="ctrl-btn" id="btnMapZoomIn" title="Zoom In">➕</button>
+                <button class="ctrl-btn" id="btnMapZoomOut" title="Zoom Out">➖</button>
+                <button class="ctrl-btn" id="btnMapFit" title="Fit to View">⛶ Fit</button>
+              </div>
+            </div>
+
+            <!-- Canvas Viewport -->
+            <div class="map-canvas-container" id="mapCanvasContainer">
+              <canvas id="blueprintCanvas"></canvas>
+              
+              <!-- Floating Info HUD -->
+              <div class="blueprint-hud-panel" id="blueprintHudPanel">
+                <div class="b-title" id="hudMissionTitle">M1: FIRST LIGHT</div>
+                <div class="b-coords" id="hudMapSize">SIZE: 58x42 TILES • THEME: OUTPOST</div>
+                <div class="b-coords" id="hudMouseCoords">X: 0, Y: 0</div>
+              </div>
+
+              <!-- Hover Tooltip -->
+              <div id="mapTooltip"></div>
+            </div>
+
+            <!-- Bottom Operation Intelligence Drawer -->
+            <div class="inspector-header-card" style="margin: 12px 16px; border-radius: 8px;">
+              <div class="inspector-title-area">
+                <div class="entity-emblem" id="opThemeIcon">🛰️</div>
+                <div class="inspector-headings">
+                  <h2 id="opHeaderTitle">M1: FIRST LIGHT</h2>
+                  <p id="opHeaderDesc">Eliminate initial scouts and secure the extraction coordinates.</p>
+                </div>
+              </div>
+              <div class="header-badges" id="opBadgesGroup">
+                <span class="h-badge tech" id="opDifficultyBadge">EASY</span>
+                <span class="h-badge gold" id="opRewardsBadge">400 CR • 250 XP</span>
+              </div>
+            </div>
+          </section>
+        </div>
+      </section>
+
+      <!-- TAB 4: THREAT MATRIX / COMPARISON -->
+      <section class="tab-panel" id="panel-matrix" role="tabpanel">
+        <div class="matrix-panel">
+          <!-- Enemies Matrix Card -->
+          <div class="matrix-card">
+            <div class="section-title">
+              <span>🎯</span> <span id="txtHostilesMatrixTitle">Hostile Archetypes Comparative Matrix</span>
+            </div>
+            <table class="tactical-table" id="enemiesMatrixTable">
+              <thead>
+                <tr>
+                  <th data-sort="name">Archetype</th>
+                  <th data-sort="role">Role</th>
+                  <th data-sort="hp">HP (Health)</th>
+                  <th data-sort="speed">Speed (px/s)</th>
+                  <th data-sort="damage">Damage / Attack</th>
+                  <th data-sort="range">Range</th>
+                  <th data-sort="fov">FOV</th>
+                  <th data-sort="bounty">XP / Credits</th>
+                </tr>
+              </thead>
+              <tbody id="enemiesMatrixBody"></tbody>
+            </table>
+          </div>
+
+          <!-- Bosses Progression Matrix Card -->
+          <div class="matrix-card">
+            <div class="section-title">
+              <span>👑</span> <span id="txtBossesMatrixTitle">Boss Scaling & Tiers Hierarchy</span>
+            </div>
+            <table class="tactical-table" id="bossesMatrixTable">
+              <thead>
+                <tr>
+                  <th>Tier</th>
+                  <th>Codename</th>
+                  <th>Look & Title</th>
+                  <th>Mission</th>
+                  <th>Scaled HP</th>
+                  <th>Dmg Multiplier</th>
+                  <th>Speed Mult</th>
+                  <th>Signature Mechanics</th>
+                </tr>
+              </thead>
+              <tbody id="bossesMatrixBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Game Engine Dependencies -->
+  <script src="js/utils.js"></script>
+  <script src="js/i18n.js"></script>
+  <script src="js/collision.js"></script>
+  <script src="js/particles.js"></script>
+  <script src="js/weapons.js"></script>
+  <script src="js/projectiles.js"></script>
+  <script src="js/player.js"></script>
+  <script src="js/enemies.js"></script>
+  <script src="js/ai.js"></script>
+  <script src="js/boss.js"></script>
+  <script src="js/hazards.js"></script>
+  <script src="js/pickups.js"></script>
+  <script src="js/objectives.js"></script>
+  <script src="js/missions.js"></script>
+  <script src="js/level.js"></script>
+  <script src="js/upgrades.js"></script>
+  <script src="js/i18n-extra.js"></script>
+  <script src="js/campaign.js"></script>
+  <script src="js/characters-plus.js"></script>
+  <script src="js/v4-core.js"></script>
+  <script src="js/v4-enemies.js"></script>
+  <script src="js/v4-campaign.js"></script>
+  <script src="js/v7-campaign.js"></script>
+  <script src="js/v11-tactics.js"></script>
+  <script src="js/v12-enhanced-bosses.js"></script>
+  <script src="js/lab-bosses.js"></script>
+
+  <!-- Inspector Application Core Logic -->
+  <script>
+  'use strict';
+  (function () {
+    const BO = window.BO || {};
+    const U = BO.U;
+    const TAU = Math.PI * 2;
+    const TILE = (BO.CONFIG && BO.CONFIG.TILE) || 48;
+
+    /* -------------------------------------------------------------------------
+     * 1. Bilingual Database (English & Persian)
+     * ------------------------------------------------------------------------- */
+    const TEXTS = {
+      en: {
+        appTitle: 'COMPENDIUM',
+        appSubtitle: 'TACTICAL OPERATING DATABASE & THREAT INSPECTOR',
+        tabEnemies: 'Hostiles',
+        tabBosses: 'Bosses',
+        tabMaps: 'Operations & Maps',
+        tabMatrix: 'Threat Matrix',
+        playGame: 'Launch Game',
+        hostilesListTitle: 'Hostile Archetypes',
+        bossesListTitle: 'Boss Roster',
+        operationsListTitle: 'Campaign Operations',
+        combatMetrics: 'Combat Metrics & Specifications',
+        tacticalAnalysis: 'Tactical Analysis & AI Loop',
+        bossVitalsTitle: 'Vitals & Difficulty Scaling Profile',
+        attackArsenalTitle: 'Attack Pools & Signature Mechanics',
+        hostilesMatrixTitle: 'Hostile Archetypes Comparative Matrix',
+        bossesMatrixTitle: 'Boss Scaling & Tiers Hierarchy',
+        testFire: 'Test Fire',
+        hitFlash: 'Hit Flash',
+        autoRotate: 'Auto Rotate',
+        fovCone: 'FOV Cone',
+        seedLabel: 'Seed:'
+      },
+      fa: {
+        appTitle: 'پایگاه داده تاکتیکی',
+        appSubtitle: 'بررسی جامع و هوشمند دشمنان، باس‌ها و نقشه‌های عملیاتی',
+        tabEnemies: 'دشمنان',
+        tabBosses: 'باس‌ها',
+        tabMaps: 'مأموریت‌ها و نقشه‌ها',
+        tabMatrix: 'جدول مقایسه تهدیدات',
+        playGame: 'ورود به بازی',
+        hostilesListTitle: 'انواع دشمنان میدانی',
+        bossesListTitle: 'فهرست کامل باس‌ها',
+        operationsListTitle: 'عملیات‌های کمپین (۲۴ مرحله)',
+        combatMetrics: 'مشخصات رزمی و پارامترها',
+        tacticalAnalysis: 'تحلیل تاکتیکی و هوش مصنوعی',
+        bossVitalsTitle: 'شاخص‌های حیاتی و مقیاس سختی',
+        attackArsenalTitle: 'مجموعه حملات و قابلیت‌های ویژه',
+        hostilesMatrixTitle: 'جدول مقایسه تمام دشمنان',
+        bossesMatrixTitle: 'سلسله‌مراتب و مقیاس ۱۰ باس نهایی',
+        testFire: 'شلیک آزمایشی',
+        hitFlash: 'افکت ضربه',
+        autoRotate: 'چرخش خودکار',
+        fovCone: 'مخروط دید',
+        seedLabel: 'بذر تولید:'
+      }
+    };
+
+    const ENEMY_INTEL = {
+      grunt: {
+        name_en: 'Grunt', name_fa: 'تفنگدار سبک (Grunt)',
+        role_en: 'Assault Trooper', role_fa: 'نیروی خط‌شکن و پشتیبان',
+        threat: 'LOW',
+        desc_en: 'Standard frontline security guard armed with an automatic burst rifle. Maintains combat distance, strafes between bursts, and retreats to cover when health drops below 30%.',
+        desc_fa: 'نیروی پیاده‌نظام استاندارد گشت مجهز به تفنگ رگباری سه‌تیر. در نبردها فاصله ایمن را حفظ کرده و هنگام شلیک حرکت عرضی می‌کند. در صورتی که سلامتی‌اش به زیر ۳۰٪ برسد به پشت موانع عقب‌نشینی می‌کند.',
+        tips_en: 'Fragile on their own, but dangerous when supporting heavies. Close the gap quickly or catch them during their 1.2s burst pause.',
+        tips_fa: 'نقطه ضعف: در فواصل نزدیک آسیب‌پذیر است. هنگام استراحت بین شلیک‌های رگباری (وقفه ۱.۲ ثانیه‌ای) بهترین زمان برای یورش و نابودی آن‌هاست.'
+      },
+      rusher: {
+        name_en: 'Rusher', name_fa: 'مهاجم سرعتی (Rusher)',
+        role_en: 'Melee Ambusher', role_fa: 'مهاجم تن‌به‌تن با تیغه‌های پرسرعت',
+        threat: 'MEDIUM',
+        desc_en: 'Extreme speed shock unit wielding dual vibro-blades. Sprints at 290 px/s with instantaneous turn rate. Does not retreat and commits to reckless melee lunges.',
+        desc_fa: 'واحد شوک بسیار سریع با سرعت ۲۹۰ پیکسل بر ثانیه مجهز به تیغه‌های برنده. بدون هیچ ترسی مستقیماً به سمت پلیر می‌دود و جهش‌های ناگهانی انجام می‌دهد.',
+        tips_en: 'High danger in the dark! Backpedal while firing shotgun or burst rifle. Do not let them flank or trap you in narrow doorways.',
+        tips_fa: 'نقطه ضعف: مقاومت و جان کمی دارد (۵۵ واحد). شاتگان یا سلاح‌های با ناک‌بک بالا حرکتش را متوقف کرده و قبل از رسیدن نابودش می‌کند.'
+      },
+      heavy: {
+        name_en: 'Heavy Gunner', name_fa: 'نیروی سنگین (Heavy Gunner)',
+        role_en: 'Suppression Tank', role_fa: 'تانک انسانی با مسلسل سنگین',
+        threat: 'HIGH',
+        desc_en: 'Heavily armored juggernaut carrying a rotary minigun. Boasts 480 HP and 80% knockback resistance. Spins up for 0.7s before unleashing a devastating 2.2s bullet storm.',
+        desc_fa: 'سنگین‌ترین نیروی پیاده‌نظام با ۴۸۰ واحد جان و مقاومت ۸۰ درصدی در برابر پس‌زدگی. پس از ۰.۷ ثانیه چرخش اولیه لوله‌ها، به مدت ۲.۲ ثانیه رگبار سنگین پیوسته شلیک می‌کند.',
+        tips_en: 'Impenetrable in head-to-head firefights. Break line of sight behind solid pillars during its firing phase, then attack during its 1.5s cool-down or spin-up window.',
+        tips_fa: 'نقطه ضعف: بسیار کند (۶۸ پیکسل بر ثانیه). پشت ستون‌ها پناه بگیرید تا گلوله‌هایش تمام شود؛ سپس در زمان ۱.۵ ثانیه‌ای خنک شدن اسلحه به او شلیک کنید.'
+      },
+      sniper: {
+        name_en: 'Sniper', name_fa: 'تک‌تیرانداز لیزری (Sniper)',
+        role_en: 'Marksman Assassin', role_fa: 'تک‌تیرانداز مخفی با لیزر ردیاب',
+        threat: 'HIGH',
+        desc_en: 'Long-range marksman armed with a hyper-velocity rail sniper (2600 px/s). Projects a visible red targeting laser, locks on for 0.22s, and deals 42 lethal burst damage.',
+        desc_fa: 'تیرانداز دوربرد با دید استثنایی ۱۱۵۰ پیکسل و سرعت تیر ۲۶۰۰. با پرتو لیزر قرمز روی پلیر قفل کرده و آسیب ویرانگر ۴۲ واحدی وارد می‌آورد. در صورت نزدیک شدن سریعاً فرار می‌کند.',
+        tips_en: 'Watch for the red targeting line! Dodge perpendicular when the beam turns solid. Rush directly into them to trigger their panic retreat.',
+        tips_fa: 'نقطه ضعف: زاویه دید باریک (۶۶ درجه) و جان پایین (۶۵ واحد). با دیدن خط قرمز لیزر به صورت عمودی جاخالی داده و به سمتش یورش ببرید تا فرار کند.'
+      },
+      breacher: {
+        name_en: 'Breacher', name_fa: 'رخنه‌گر شاتگان (Breacher)',
+        role_en: 'Close-Quarters Shotgunner', role_fa: 'متخصص پاکسازی اتاق با شاتگان سنگین',
+        threat: 'HIGH',
+        desc_en: 'Aggressive CQB breacher that violently pushes into doorways and rooms. Fires heavy 6-pellet buckshot blasts dealing up to 66 burst damage point-blank.',
+        desc_fa: 'واحد ضربت ویژه پاکسازی اتاق‌ها. با سرعت ۱۵۰ پیکسل به سمت درها هجوم می‌آورد و با شاتگان ۶ ساچمه‌ای خود در فاصله نزدیک شلیک‌های مهلکی انجام می‌دهد.',
+        tips_en: 'Devastating inside small rooms and corridors. Keep outside their 150px preferred range and engage from wide angles before they pump their shotgun.',
+        tips_fa: 'نقطه ضعف: برد موثر کوتاه (۳۸۰ پیکسل). در اتاق‌های کوچک نمانید و از فواصل دور با اسلحه کمری، رایفل یا اسنایپر کارشان را تمام کنید.'
+      },
+      grenadier: {
+        name_en: 'Grenadier', name_fa: 'پرتابگر نارنجک (Grenadier)',
+        role_en: 'Indirect Artillery', role_fa: 'پرتابگر نارنجک‌های خوشه‌ای و انفجاری',
+        threat: 'EXTREME',
+        desc_en: 'Artillery infantry that lobs telegraphed high-explosive grenades over obstacles. Blast deals 55 damage across a 100px radius. Flees if targets get closer than 190px.',
+        desc_fa: 'شلیک‌کننده نارنجک‌های انفجاری سنگین از پشت دیوارها و موانع با شعاع انفجار ۱۰۰ پیکسل و ۵۵ آسیب. پلیرهای ساکن در سنگر را به سرعت مجبور به حرکت می‌کند.',
+        tips_en: 'Sprint out of the red blast circle immediately! Rush them down inside their 190px deadzone where they cannot fire grenades.',
+        tips_fa: 'نقطه ضعف: در فواصل کمتر از ۱۹۰ پیکسل نمی‌تواند نارنجک پرتاب کند. به محض دیدن پرتابه به سمت خودش بدوید و در فاصله نزدیک از پا درآوریدش.'
+      },
+      shield: {
+        name_en: 'Riot Shield', name_fa: 'سپر بالستیک (Riot Shield)',
+        role_en: 'Ballistic Wall & Basher', role_fa: 'دیوار دفاعی متحرک با ضربه کوبنده',
+        threat: 'EXTREME',
+        desc_en: 'Heavy assault unit with an impenetrable frontal ballistic shield (420 Shield HP). Blocks all forward bullets, fires pistol bursts, and unleashes a heavy melee shield bash.',
+        desc_fa: 'مجهز به سپر ضدگلوله با ۴۲۰ واحد جان که تمام گلوله‌های روبه‌رو را مهار می‌کند. با پیستول شلیک کرده و در صورت نزدیک شدن با ضربه سنگین سپر ۲۲ آسیب وارد می‌کند.',
+        tips_en: 'Bullets bounce right off the shield! Flank their sides, throw fragmentation grenades behind them, or crack their shield with explosive launchers.',
+        tips_fa: 'نقطه ضعف: از پهلو و پشت کاملاً بی‌دفاع است! با دور زدن سریع یا پرتاب نارنجک به پشت سرشان، بدون شلیک به سپر به راحتی نابود می‌شوند.'
+      },
+      drone: {
+        name_en: 'Kamikaze Drone', name_fa: 'پهپاد انتحاری (Kamikaze Drone)',
+        role_en: 'Explosive Swarmer', role_fa: 'کوادکوپتر انتحاری سریع با کلاهک انفجاری',
+        threat: 'HIGH',
+        desc_en: 'Agile quadcopter hovering at 330 px/s with wide 195° vision. Detects targets, begins an audible 0.5s proximity countdown, and violently detonates on contact.',
+        desc_fa: 'سریع‌ترین دشمن بازی با سرعت ۳۳۰ پیکسل بر ثانیه. در پرواز معلق مانده، با دیدن پلیر صدای بوق هشدار داده و پس از ۰.۵ ثانیه انفجاری با ۴۶ آسیب و ۹۵ شعاع ایجاد می‌کند.',
+        tips_en: 'Listen closely for the high-pitched rotors and beeping. Shoot them down from afar—destroying one triggers a chain explosion that wipes nearby enemies!',
+        tips_fa: 'نقطه ضعف: جان بسیار پایین (فقط ۳۸ واحد). با شلیک زودهنگام در هوا منفجر شده و انفجارش دشمنان اطراف را هم نابود می‌کند.'
+      }
+    };
+
+    const BOSS_HP_TABLE = {
+      m3:  { tier: 1,  scaledHp: 8775,  classicHp: 6500, mult: 1.35 },
+      m5:  { tier: 2,  scaledHp: 6045,  classicHp: 6500, mult: 0.93 },
+      m8:  { tier: 3,  scaledHp: 6890,  classicHp: 6500, mult: 1.06 },
+      m10: { tier: 4,  scaledHp: 7735,  classicHp: 6500, mult: 1.19 },
+      m13: { tier: 5,  scaledHp: 8580,  classicHp: 6500, mult: 1.32 },
+      m14: { tier: 6,  scaledHp: 9425,  classicHp: 6500, mult: 1.45 },
+      m18: { tier: 7,  scaledHp: 10270, classicHp: 6500, mult: 1.58 },
+      c3:  { tier: 8,  scaledHp: 11115, classicHp: 6500, mult: 1.71 },
+      m23: { tier: 9,  scaledHp: 11960, classicHp: 6500, mult: 1.84 },
+      m24: { tier: 10, scaledHp: 12805, classicHp: 6500, mult: 1.97 }
+    };
+
+    /* -------------------------------------------------------------------------
+     * 2. Application State
+     * ------------------------------------------------------------------------- */
+    const state = {
+      lang: localStorage.getItem('blackout_inspector_lang') || 'fa',
+      activeTab: 'enemies',
+      selectedEnemy: 'grunt',
+      selectedBoss: 'm3',
+      selectedMission: 'm1',
+      
+      // Enemy Stage
+      enemyAngle: 0,
+      enemyAutoRotate: true,
+      enemyShowFov: true,
+      enemyMuzzle: 0,
+      enemyHitFlash: 0,
+      
+      // Boss Stage
+      bossPhase: 1,
+      bossSpin: true,
+      bossHitFlash: 0,
+      
+      // Map Blueprint Stage
+      mapSeed: 4127,
+      currentLevel: null,
+      mapPan: { x: 0, y: 0 },
+      mapZoom: 1.0,
+      isPanning: false,
+      panStart: { x: 0, y: 0 },
+      hoverTile: null,
+      mapLayers: {
+        rooms: true,
+        walls: true,
+        lamps: true,
+        props: true,
+        objectives: true,
+        enemies: true,
+        pickups: true,
+        hazards: true
+      }
+    };
+
+    /* -------------------------------------------------------------------------
+     * 3. DOM Elements Cache
+     * ------------------------------------------------------------------------- */
+    const DOM = {
+      html: document.documentElement,
+      tabBtns: document.querySelectorAll('.tab-btn'),
+      tabPanels: document.querySelectorAll('.tab-panel'),
+      langBtns: document.querySelectorAll('.lang-btn'),
+      
+      // Enemies
+      enemiesList: document.getElementById('enemiesListContainer'),
+      enemySearch: document.getElementById('enemySearch'),
+      enemyCanvas: document.getElementById('enemyCanvas'),
+      enemyTitle: document.getElementById('enemyTitle'),
+      enemySubTitle: document.getElementById('enemySubTitle'),
+      enemyEmblem: document.getElementById('enemyEmblem'),
+      enemyThreatBadge: document.getElementById('enemyThreatBadge'),
+      enemyHpBadge: document.getElementById('enemyHpBadge'),
+      enemySpeedBadge: document.getElementById('enemySpeedBadge'),
+      enemyStatsMatrix: document.getElementById('enemyStatsMatrix'),
+      enemyDossierText: document.getElementById('enemyDossierText'),
+      enemyTipsBox: document.getElementById('enemyTipsBox'),
+      enemyAngleHud: document.getElementById('enemyAngleHud'),
+      btnEnemyAttack: document.getElementById('btnEnemyAttack'),
+      btnEnemyHit: document.getElementById('btnEnemyHit'),
+      btnEnemyAutoRotate: document.getElementById('btnEnemyAutoRotate'),
+      btnEnemyFovToggle: document.getElementById('btnEnemyFovToggle'),
+      
+      // Bosses
+      bossesList: document.getElementById('bossesListContainer'),
+      bossSearch: document.getElementById('bossSearch'),
+      bossCanvas: document.getElementById('bossCanvas'),
+      bossTitle: document.getElementById('bossTitle'),
+      bossSubTitle: document.getElementById('bossSubTitle'),
+      bossEmblem: document.getElementById('bossEmblem'),
+      bossTierBadge: document.getElementById('bossTierBadge'),
+      bossHpBadge: document.getElementById('bossHpBadge'),
+      bossScaleBadge: document.getElementById('bossScaleBadge'),
+      bossStatsMatrix: document.getElementById('bossStatsMatrix'),
+      bossAttacksContainer: document.getElementById('bossAttacksContainer'),
+      bossSignatureBox: document.getElementById('bossSignatureBox'),
+      bossTacticsText: document.getElementById('bossTacticsText'),
+      bossPhaseHud: document.getElementById('bossPhaseHud'),
+      btnBossPhase1: document.getElementById('btnBossPhase1'),
+      btnBossPhase2: document.getElementById('btnBossPhase2'),
+      btnBossPhase3: document.getElementById('btnBossPhase3'),
+      btnBossHit: document.getElementById('btnBossHit'),
+      btnBossRotate: document.getElementById('btnBossRotate'),
+      
+      // Maps
+      missionsList: document.getElementById('missionsListContainer'),
+      missionSearch: document.getElementById('missionSearch'),
+      blueprintCanvas: document.getElementById('blueprintCanvas'),
+      mapCanvasContainer: document.getElementById('mapCanvasContainer'),
+      mapSeedInput: document.getElementById('mapSeedInput'),
+      btnRandomizeSeed: document.getElementById('btnRandomizeSeed'),
+      btnResetSeed: document.getElementById('btnResetSeed'),
+      btnMapZoomIn: document.getElementById('btnMapZoomIn'),
+      btnMapZoomOut: document.getElementById('btnMapZoomOut'),
+      btnMapFit: document.getElementById('btnMapFit'),
+      hudMissionTitle: document.getElementById('hudMissionTitle'),
+      hudMapSize: document.getElementById('hudMapSize'),
+      hudMouseCoords: document.getElementById('hudMouseCoords'),
+      mapTooltip: document.getElementById('mapTooltip'),
+      opHeaderTitle: document.getElementById('opHeaderTitle'),
+      opHeaderDesc: document.getElementById('opHeaderDesc'),
+      opDifficultyBadge: document.getElementById('opDifficultyBadge'),
+      opRewardsBadge: document.getElementById('opRewardsBadge'),
+      opThemeIcon: document.getElementById('opThemeIcon'),
+      
+      // Matrix
+      enemiesMatrixBody: document.getElementById('enemiesMatrixBody'),
+      bossesMatrixBody: document.getElementById('bossesMatrixBody')
+    };
+
+    /* -------------------------------------------------------------------------
+     * 4. Internationalization & Language Switcher
+     * ------------------------------------------------------------------------- */
+    function setLanguage(lang) {
+      state.lang = lang;
+      localStorage.setItem('blackout_inspector_lang', lang);
+      DOM.html.lang = lang;
+      DOM.html.dir = lang === 'fa' ? 'rtl' : 'ltr';
+
+      DOM.langBtns.forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.lang === lang);
+      });
+
+      const t = TEXTS[lang];
+      document.getElementById('txtAppTitle').textContent = t.appTitle;
+      document.getElementById('txtAppSubtitle').textContent = t.appSubtitle;
+      document.getElementById('txtTabEnemies').textContent = t.tabEnemies;
+      document.getElementById('txtTabBosses').textContent = t.tabBosses;
+      document.getElementById('txtTabMaps').textContent = t.tabMaps;
+      document.getElementById('txtTabMatrix').textContent = t.tabMatrix;
+      document.getElementById('txtPlayGame').textContent = t.playGame;
+      document.getElementById('txtHostilesListTitle').textContent = t.hostilesListTitle;
+      document.getElementById('txtBossesListTitle').textContent = t.bossesListTitle;
+      document.getElementById('txtOperationsListTitle').textContent = t.operationsListTitle;
+      document.getElementById('txtCombatMetrics').textContent = t.combatMetrics;
+      document.getElementById('txtTacticalAnalysis').textContent = t.tacticalAnalysis;
+      document.getElementById('txtBossVitalsTitle').textContent = t.bossVitalsTitle;
+      document.getElementById('txtAttackArsenalTitle').textContent = t.attackArsenalTitle;
+      document.getElementById('txtHostilesMatrixTitle').textContent = t.hostilesMatrixTitle;
+      document.getElementById('txtBossesMatrixTitle').textContent = t.bossesMatrixTitle;
+      document.getElementById('txtEnemyAtkBtn').textContent = t.testFire;
+      document.getElementById('txtEnemyHitBtn').textContent = t.hitFlash;
+      document.getElementById('txtEnemyRotateBtn').textContent = t.autoRotate;
+      document.getElementById('txtEnemyFovBtn').textContent = t.fovCone;
+      document.getElementById('txtSeedLabel').textContent = t.seedLabel;
+
+      renderEnemiesList();
+      selectEnemy(state.selectedEnemy);
+      renderBossesList();
+      selectBoss(state.selectedBoss);
+      renderMissionsList();
+      selectMission(state.selectedMission);
+      renderMatrix();
+    }
+
+    /* -------------------------------------------------------------------------
+     * 5. Enemies (Hostiles) Module
+     * ------------------------------------------------------------------------- */
+    let enemyInstance = null;
+
+    function renderEnemiesList(filter = '') {
+      DOM.enemiesList.innerHTML = '';
+      const types = Object.keys(BO.ENEMY_TYPES || {});
+      const query = filter.trim().toLowerCase();
+
+      types.forEach(type => {
+        const def = BO.ENEMY_TYPES[type];
+        const intel = ENEMY_INTEL[type] || {};
+        const name = state.lang === 'fa' ? (intel.name_fa || type) : (intel.name_en || type);
+        const sub = state.lang === 'fa' ? (intel.role_fa || '') : (intel.role_en || '');
+
+        if (query && !name.toLowerCase().includes(query) && !sub.toLowerCase().includes(query)) return;
+
+        const card = document.createElement('div');
+        card.className = `item-card ${state.selectedEnemy === type ? 'selected' : ''}`;
+        card.dataset.enemy = type;
+        card.innerHTML = `
+          <div class="card-info">
+            <div class="card-icon-pip" style="color: ${def.color}; background: ${def.color};"></div>
+            <div class="card-text">
+              <span class="card-name">${name}</span>
+              <span class="card-sub">${sub}</span>
+            </div>
+          </div>
+          <div class="card-meta">
+            <span class="card-hp">${def.hp} HP</span>
+            <span class="card-tier-badge" style="color: ${def.color}; border: 1px solid ${def.color}40;">${intel.threat || 'MED'}</span>
+          </div>
+        `;
+        card.addEventListener('click', () => selectEnemy(type));
+        DOM.enemiesList.appendChild(card);
+      });
+    }
+
+    function selectEnemy(type) {
+      state.selectedEnemy = type;
+      document.querySelectorAll('#enemiesListContainer .item-card').forEach(c => {
+        c.classList.toggle('selected', c.dataset.enemy === type);
+      });
+
+      const def = BO.ENEMY_TYPES[type];
+      const intel = ENEMY_INTEL[type] || {};
+      if (!def) return;
+
+      // Instantiate enemy
+      enemyInstance = new BO.Enemy(type, 0, 0);
+      if (BO.v4PrepEnemy) BO.v4PrepEnemy(enemyInstance);
+
+      // Emblems & Titles
+      const icons = { grunt: '🎯', rusher: '⚡', heavy: '🛡️', sniper: '🔭', breacher: '💥', grenadier: '💣', shield: '🛡️', drone: '🛸' };
+      DOM.enemyEmblem.textContent = icons[type] || '💀';
+      DOM.enemyEmblem.style.borderColor = def.color;
+      DOM.enemyTitle.innerHTML = `${state.lang === 'fa' ? intel.name_fa : intel.name_en} <span class="h-badge danger" style="background: ${def.color}20; border-color: ${def.color}; color: ${def.color};">${intel.threat || 'MEDIUM'}</span>`;
+      DOM.enemySubTitle.textContent = state.lang === 'fa' ? intel.role_fa : intel.role_en;
+      DOM.enemyHpBadge.textContent = `${def.hp} HP ${def.shieldHp ? `(+${def.shieldHp} SHIELD)` : ''}`;
+      DOM.enemyHpBadge.style.color = def.color;
+      DOM.enemySpeedBadge.textContent = `${def.speed} PX/S`;
+
+      // Metrics Matrix
+      const stats = [
+        { label: state.lang === 'fa' ? 'سلامتی (HP)' : 'Max Health', val: def.hp, cls: 'danger' },
+        { label: state.lang === 'fa' ? 'سرعت دویدن' : 'Move Speed', val: `${def.speed} px/s`, cls: 'tech' },
+        { label: state.lang === 'fa' ? 'قدرت آسیب' : 'Damage', val: def.damage || def.meleeDamage || def.blastDamage || 0, cls: 'highlight' },
+        { label: state.lang === 'fa' ? 'نوع شلیک / سلاح' : 'Attack Type', val: def.pellets ? `${def.pellets} Pellets` : (def.burst ? `${def.burst}-Burst` : (def.meleeDamage ? 'Melee Blade' : (def.blast ? 'Detonation' : 'Single Rail'))), cls: '' },
+        { label: state.lang === 'fa' ? 'برد دیداری' : 'Sight Range', val: `${def.view} px`, cls: '' },
+        { label: state.lang === 'fa' ? 'زاویه دید (FOV)' : 'FOV Angle', val: `${Math.round(def.fov * 180 / Math.PI)}°`, cls: '' },
+        { label: state.lang === 'fa' ? 'برد درگیری' : 'Combat Range', val: `${def.range} px`, cls: '' },
+        { label: state.lang === 'fa' ? 'پاداش حذف' : 'Bounty Reward', val: `${def.xp} XP / ${def.credits ? def.credits[1] : 10} CR`, cls: 'ok' },
+        { label: state.lang === 'fa' ? 'مقاومت ناک‌بک' : 'Knock Resist', val: `${Math.round((1 - (def.knockResist > 1 ? 0.2 : def.knockResist)) * 100)}%`, cls: '' },
+        { label: state.lang === 'fa' ? 'سرعت چرخش' : 'Turn Rate', val: `${def.turn} rad/s`, cls: '' }
+      ];
+
+      DOM.enemyStatsMatrix.innerHTML = stats.map(s => `
+        <div class="stat-box">
+          <span class="stat-label">${s.label}</span>
+          <span class="stat-value ${s.cls}">${s.val}</span>
+        </div>
+      `).join('');
+
+      DOM.enemyDossierText.textContent = state.lang === 'fa' ? intel.desc_fa : intel.desc_en;
+      DOM.enemyTipsBox.innerHTML = `<strong>${state.lang === 'fa' ? 'راهنمای ضدحمله و نقاط ضعف تاکتیکی:' : 'Tactical Countermeasures & Weaknesses:'}</strong><span>${state.lang === 'fa' ? intel.tips_fa : intel.tips_en}</span>`;
+    }
+
+    // Enemy Stage Animation
+    const eCtx = DOM.enemyCanvas.getContext('2d');
+    let lastEnemyTime = performance.now();
+
+    function animateEnemyStage(now) {
+      requestAnimationFrame(animateEnemyStage);
+      const dt = Math.min(0.1, (now - lastEnemyTime) / 1000);
+      lastEnemyTime = now;
+
+      if (!enemyInstance || DOM.panelEnemies?.offsetParent === null) return;
+
+      const w = DOM.enemyCanvas.width;
+      const h = DOM.enemyCanvas.height;
+      const cx = w / 2;
+      const cy = h / 2;
+
+      eCtx.clearRect(0, 0, w, h);
+
+      // Target containment grid
+      eCtx.save();
+      eCtx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+      eCtx.lineWidth = 1;
+      eCtx.beginPath();
+      eCtx.arc(cx, cy, 110, 0, TAU);
+      eCtx.arc(cx, cy, 70, 0, TAU);
+      eCtx.stroke();
+      eCtx.beginPath();
+      eCtx.moveTo(cx - 120, cy); eCtx.lineTo(cx + 120, cy);
+      eCtx.moveTo(cx, cy - 120); eCtx.lineTo(cx, cy + 120);
+      eCtx.stroke();
+      eCtx.restore();
+
+      // Rotation
+      if (state.enemyAutoRotate) {
+        state.enemyAngle = (state.enemyAngle + dt * 0.8) % TAU;
+      }
+      DOM.enemyAngleHud.textContent = `ANGLE: ${Math.round(state.enemyAngle * 180 / Math.PI)}°`;
+
+      enemyInstance.x = cx;
+      enemyInstance.y = cy;
+      enemyInstance.angle = state.enemyAngle;
+      enemyInstance.walk = (enemyInstance.walk || 0) + dt * 3;
+
+      // Handle muzzle & hit flash decay
+      if (state.enemyMuzzle > 0) {
+        enemyInstance.muzzle = Math.min(1, state.enemyMuzzle * 3);
+        state.enemyMuzzle -= dt;
+      } else {
+        enemyInstance.muzzle = 0;
+      }
+
+      if (state.enemyHitFlash > 0) {
+        enemyInstance.hitFlash = state.enemyHitFlash;
+        state.enemyHitFlash -= dt;
+      } else {
+        enemyInstance.hitFlash = 0;
+      }
+
+      // Draw FOV cone
+      if (state.enemyShowFov) {
+        const def = enemyInstance.def;
+        eCtx.save();
+        eCtx.fillStyle = `${def.color}12`;
+        eCtx.strokeStyle = `${def.color}40`;
+        eCtx.lineWidth = 1.5;
+        eCtx.beginPath();
+        eCtx.moveTo(cx, cy);
+        eCtx.arc(cx, cy, Math.min(130, def.view * 0.25), state.enemyAngle - def.fov / 2, state.enemyAngle + def.fov / 2);
+        eCtx.closePath();
+        eCtx.fill();
+        eCtx.stroke();
+        eCtx.restore();
+      }
+
+      // Draw Enemy using Blackout game engine!
+      try {
+        enemyInstance.draw(eCtx, now / 1000);
+      } catch (err) {
+        console.warn('Error rendering enemy:', err);
+      }
+    }
+    requestAnimationFrame(animateEnemyStage);
+
+    // Enemy Controls
+    DOM.btnEnemyAttack.addEventListener('click', () => {
+      state.enemyMuzzle = 0.35;
+      if (enemyInstance) {
+        if (enemyInstance.type === 'rusher') enemyInstance.lunge = 1;
+        if (enemyInstance.type === 'breacher') enemyInstance.pump = 0.4;
+        if (enemyInstance.type === 'shield') enemyInstance.bash = 0.5;
+        if (enemyInstance.type === 'drone') enemyInstance.fuse = 0.5;
+      }
+    });
+    DOM.btnEnemyHit.addEventListener('click', () => { state.enemyHitFlash = 0.25; });
+    DOM.btnEnemyAutoRotate.addEventListener('click', () => {
+      state.enemyAutoRotate = !state.enemyAutoRotate;
+      DOM.btnEnemyAutoRotate.classList.toggle('active', state.enemyAutoRotate);
+    });
+    DOM.btnEnemyFovToggle.addEventListener('click', () => {
+      state.enemyShowFov = !state.enemyShowFov;
+      DOM.btnEnemyFovToggle.classList.toggle('active', state.enemyShowFov);
+    });
+    DOM.enemySearch.addEventListener('input', (e) => renderEnemiesList(e.target.value));
+
+    /* -------------------------------------------------------------------------
+     * 6. Bosses Module
+     * ------------------------------------------------------------------------- */
+    let bossInstance = null;
+
+    function renderBossesList(filter = '') {
+      DOM.bossesList.innerHTML = '';
+      const roster = (BO.LabBosses && BO.LabBosses.ROSTER) || {};
+      const order = (BO.LabBosses && BO.LabBosses.ORDER) || Object.keys(roster);
+      const query = filter.trim().toLowerCase();
+
+      order.forEach(k => {
+        const d = roster[k];
+        const hpInfo = BOSS_HP_TABLE[k] || { scaledHp: 8775, mult: 1.35 };
+        const name = d.title;
+        const sub = state.lang === 'fa' ? d.fa.split(':')[0] : d.epithet;
+
+        if (query && !name.toLowerCase().includes(query) && !sub.toLowerCase().includes(query)) return;
+
+        const card = document.createElement('div');
+        card.className = `item-card ${state.selectedBoss === k ? 'selected-boss' : ''}`;
+        card.dataset.boss = k;
+        card.innerHTML = `
+          <div class="card-info">
+            <div class="card-icon-pip" style="color: ${d.pal.glow}; background: ${d.pal.glow};"></div>
+            <div class="card-text">
+              <span class="card-name">${name}</span>
+              <span class="card-sub">Tier ${d.tier} • ${sub}</span>
+            </div>
+          </div>
+          <div class="card-meta">
+            <span class="card-hp" style="color: ${d.pal.glow};">${hpInfo.scaledHp.toLocaleString()} HP</span>
+            <span class="card-tier-badge" style="color: ${d.pal.glow}; border: 1px solid ${d.pal.glow}40;">T${d.tier}</span>
+          </div>
+        `;
+        card.addEventListener('click', () => selectBoss(k));
+        DOM.bossesList.appendChild(card);
+      });
+
+      // Also append Classic Mk1 and Mk2
+      ['classic_mk1', 'classic_mk2'].forEach(cId => {
+        const isMk2 = cId === 'classic_mk2';
+        const name = isMk2 ? 'WARDEN MK-II (CLASSIC)' : 'THE WARDEN (CLASSIC MK-I)';
+        const hp = isMk2 ? 9500 : 6500;
+        const card = document.createElement('div');
+        card.className = `item-card ${state.selectedBoss === cId ? 'selected-boss' : ''}`;
+        card.dataset.boss = cId;
+        card.innerHTML = `
+          <div class="card-info">
+            <div class="card-icon-pip" style="color: #ff2d55; background: #ff2d55;"></div>
+            <div class="card-text">
+              <span class="card-name">${name}</span>
+              <span class="card-sub">${isMk2 ? 'Overcharged Base' : 'Base Prototype'}</span>
+            </div>
+          </div>
+          <div class="card-meta">
+            <span class="card-hp" style="color: #ff2d55;">${hp.toLocaleString()} HP</span>
+            <span class="card-tier-badge">PROTOTYPE</span>
+          </div>
+        `;
+        card.addEventListener('click', () => selectBoss(cId));
+        DOM.bossesList.appendChild(card);
+      });
+    }
+
+    function selectBoss(key) {
+      state.selectedBoss = key;
+      document.querySelectorAll('#bossesListContainer .item-card').forEach(c => {
+        c.classList.toggle('selected-boss', c.dataset.boss === key);
+      });
+
+      const arena = { x: -200, y: -200, w: 400, h: 400 };
+
+      if (key === 'classic_mk1' || key === 'classic_mk2') {
+        const mk2 = key === 'classic_mk2';
+        bossInstance = new BO.Boss(0, 0, arena, mk2);
+        DOM.bossTitle.innerHTML = `${mk2 ? 'WARDEN MK-II' : 'THE WARDEN MK-I'} <span class="h-badge boss">CLASSIC PROTOTYPE</span>`;
+        DOM.bossSubTitle.textContent = mk2 ? 'Overcharged Combat Platform' : 'Facility Prototype Core';
+        DOM.bossHpBadge.textContent = `${mk2 ? '9,500' : '6,500'} HP`;
+        DOM.bossScaleBadge.textContent = '1.00x BASE';
+        DOM.bossEmblem.style.borderColor = '#ff2d55';
+
+        const stats = [
+          { label: state.lang === 'fa' ? 'سلامتی پایه' : 'Base Health', val: mk2 ? '9,500 HP' : '6,500 HP', cls: 'danger' },
+          { label: state.lang === 'fa' ? 'شعاع برخورد' : 'Collision Radius', val: '40 px', cls: '' },
+          { label: state.lang === 'fa' ? 'فازهای نبرد' : 'Fight Phases', val: '3 Phases', cls: 'highlight' },
+          { label: state.lang === 'fa' ? 'سرعت چرخش زره' : 'Armor Spin', val: 'Variable RPM', cls: 'tech' }
+        ];
+        DOM.bossStatsMatrix.innerHTML = stats.map(s => `
+          <div class="stat-box"><span class="stat-label">${s.label}</span><span class="stat-value ${s.cls}">${s.val}</span></div>
+        `).join('');
+
+        DOM.bossAttacksContainer.innerHTML = ['fan', 'stream', 'mortar', 'nova', 'charge', 'summon'].map(a => `
+          <span class="atk-badge">⚔️ ${a.toUpperCase()}</span>
+        `).join('');
+        DOM.bossSignatureBox.innerHTML = `<strong>Classic Twin-Cannon & Shield Ring:</strong> <span>Rotates an impenetrable cog array while charging nova blasts and summoning assault trooper squads.</span>`;
+        DOM.bossTacticsText.textContent = state.lang === 'fa' ? 'باس کلاسیک بازی. برای شکست دادن آن پشت دیواره‌ها سنگر بگیرید و در حین شلیک لیزری یا بعد از پایان شارژ شلیک کنید.' : 'The classic Blackout boss. Take cover behind arena pillars during the laser stream and mortar barrage.';
+        return;
+      }
+
+      // Lab Variant
+      const LB = BO.LabBosses;
+      const d = LB.ROSTER[key];
+      const scale = LB.tierScale(d.tier);
+      const hpInfo = BOSS_HP_TABLE[key] || { scaledHp: 8775, mult: 1.35 };
+
+      bossInstance = LB.create(key, 0, 0, arena, false);
+      DOM.bossTitle.innerHTML = `${d.title} <span class="h-badge boss" style="border-color: ${d.pal.glow}; color: ${d.pal.glow};">TIER ${d.tier}</span>`;
+      DOM.bossSubTitle.textContent = state.lang === 'fa' ? d.fa : `${d.epithet} • Specialized Laboratory Variant`;
+      DOM.bossHpBadge.textContent = `${hpInfo.scaledHp.toLocaleString()} HP`;
+      DOM.bossHpBadge.style.color = d.pal.glow;
+      DOM.bossScaleBadge.textContent = `${scale.hp}x SCALED`;
+      DOM.bossEmblem.style.borderColor = d.pal.glow;
+
+      const stats = [
+        { label: state.lang === 'fa' ? 'سلامتی مقیاس‌بندی شده' : 'Scaled Health', val: `${hpInfo.scaledHp.toLocaleString()} HP`, cls: 'danger' },
+        { label: state.lang === 'fa' ? 'ضریب سختی (Tier)' : 'Tier Rating', val: `Tier ${d.tier} / 10`, cls: 'highlight' },
+        { label: state.lang === 'fa' ? 'ضریب آسیب (Damage)' : 'Damage Scale', val: `${Math.round(scale.dmg * 100)}%`, cls: '' },
+        { label: state.lang === 'fa' ? 'سرعت شلیک و تلگراف' : 'Telegraph Window', val: `${Math.round(scale.tele * 100)}% (${scale.tele < 1 ? 'Faster' : 'Standard'})`, cls: 'tech' },
+        { label: state.lang === 'fa' ? 'سرعت پرتابه‌ها' : 'Shot Speed', val: `${Math.round(scale.shot * 100)}%`, cls: '' },
+        { label: state.lang === 'fa' ? 'زمان آسیب‌پذیری روزنه‌ها' : 'Vent Window', val: `${Math.round(scale.vent * 100)}%`, cls: 'ok' },
+        { label: state.lang === 'fa' ? 'شعاع برخورد (Radius)' : 'Hitbox Radius', val: `${d.r} px`, cls: '' },
+        { label: state.lang === 'fa' ? 'شدت قابلیت امضا' : 'Signature Scale', val: `${Math.round(scale.sig * 100)}%`, cls: 'highlight' }
+      ];
+
+      DOM.bossStatsMatrix.innerHTML = stats.map(s => `
+        <div class="stat-box"><span class="stat-label">${s.label}</span><span class="stat-value ${s.cls}">${s.val}</span></div>
+      `).join('');
+
+      // Attack pool list
+      const allAttacks = new Set();
+      (d.pools || []).forEach(pool => { if (pool) pool.forEach(a => allAttacks.add(a)); });
+      DOM.bossAttacksContainer.innerHTML = Array.from(allAttacks).map(a => {
+        const isSig = (d.sigs || []).includes(a);
+        return `<span class="atk-badge ${isSig ? 'sig' : ''}">⚔️ ${a.toUpperCase()} ${isSig ? '★ (SIGNATURE)' : ''}</span>`;
+      }).join('');
+
+      DOM.bossSignatureBox.innerHTML = `<strong>${state.lang === 'fa' ? 'مکانیک امضا و قابلیت منحصر‌به‌فرد:' : 'Signature Mechanics:'}</strong> <span>${state.lang === 'fa' ? d.fa : `Signature: ${d.sigs.join(', ')}. Scaled at ${Math.round(scale.sig * 100)}% effectiveness.`}</span>`;
+      DOM.bossTacticsText.textContent = state.lang === 'fa' ? `استراتژی نبرد: در فاز ۱ روی جاخالی دادن از حملات مقدماتی تمرکز کنید. در فاز ۲ سرعت پرتابه‌ها افزایش می‌یابد. در فاز ۳ قابلیت‌های امضا به صورت زنجیره‌ای فعال شده و نیازمند مانور دائمی در آرنا هستند.` : `Survival Guide: Phase 1 establishes telegraph rhythms. Phase 2 accelerates projectile velocity. Phase 3 activates enraged signatures and summons escort reinforcements.`;
+    }
+
+    // Boss Stage Animation
+    const bCtx = DOM.bossCanvas.getContext('2d');
+    let lastBossTime = performance.now();
+
+    function animateBossStage(now) {
+      requestAnimationFrame(animateBossStage);
+      const dt = Math.min(0.1, (now - lastBossTime) / 1000);
+      lastBossTime = now;
+
+      if (!bossInstance || DOM.panelBosses?.offsetParent === null) return;
+
+      const w = DOM.bossCanvas.width;
+      const h = DOM.bossCanvas.height;
+      const cx = w / 2;
+      const cy = h / 2;
+
+      bCtx.clearRect(0, 0, w, h);
+
+      // Arena containment circle
+      bCtx.save();
+      bCtx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+      bCtx.lineWidth = 1;
+      bCtx.setLineDash([6, 6]);
+      bCtx.beginPath();
+      bCtx.arc(cx, cy, 140, 0, TAU);
+      bCtx.stroke();
+      bCtx.restore();
+
+      bossInstance.x = cx;
+      bossInstance.y = cy;
+      bossInstance.phase = state.bossPhase;
+      bossInstance.labClock = now / 1000;
+      bossInstance.labLook = Math.sin(now / 1000 * 1.5) * 0.8;
+      bossInstance.labHeading = Math.sin(now / 1000 * 0.6) * 0.4;
+      bossInstance.labGait = (now / 1000 * 4) % TAU;
+      bossInstance.labTread = (now / 1000 * 50) % 20;
+
+      if (state.bossSpin) {
+        bossInstance.ringSpin = (bossInstance.ringSpin || 0) + dt * (0.8 + state.bossPhase * 0.5);
+        bossInstance.angle = (bossInstance.angle || 0) + dt * 0.2;
+      }
+
+      if (state.bossHitFlash > 0) {
+        bossInstance.hitFlash = state.bossHitFlash;
+        state.bossHitFlash -= dt;
+      } else {
+        bossInstance.hitFlash = 0;
+      }
+
+      // Draw Boss via Engine
+      try {
+        bossInstance.draw(bCtx, now / 1000);
+        if (bossInstance.drawOverlay) {
+          bossInstance.drawOverlay(bCtx, now / 1000, { player: { x: cx + 150, y: cy + 150 } });
+        }
+      } catch (err) {
+        console.warn('Error rendering boss:', err);
+      }
+    }
+    requestAnimationFrame(animateBossStage);
+
+    // Boss Controls
+    [DOM.btnBossPhase1, DOM.btnBossPhase2, DOM.btnBossPhase3].forEach((btn, idx) => {
+      btn.addEventListener('click', () => {
+        state.bossPhase = idx + 1;
+        DOM.btnBossPhase1.classList.toggle('active', state.bossPhase === 1);
+        DOM.btnBossPhase2.classList.toggle('active', state.bossPhase === 2);
+        DOM.btnBossPhase3.classList.toggle('active', state.bossPhase === 3);
+        DOM.bossPhaseHud.textContent = `PHASE: ${state.bossPhase}`;
+      });
+    });
+    DOM.btnBossHit.addEventListener('click', () => { state.bossHitFlash = 0.25; });
+    DOM.btnBossRotate.addEventListener('click', () => {
+      state.bossSpin = !state.bossSpin;
+      DOM.btnBossRotate.classList.toggle('active', state.bossSpin);
+    });
+    DOM.bossSearch.addEventListener('input', (e) => renderBossesList(e.target.value));
+
+    /* -------------------------------------------------------------------------
+     * 7. Operations & Maps Module
+     * ------------------------------------------------------------------------- */
+    const THEME_ICONS = {
+      outpost: '🏕️', industrial: '🏭', blacksite: '🔬', tower: '🗼', lastlight: '🌋',
+      harbor: '⚓', metro: '🚇', datacore: '💾', frost: '❄️', citadel: '🏰',
+      bazaar: '🎪', refinery: '⛽', reactor: '⚛️', skyline: '🏙️', dunes: '🏜️',
+      jungle: '🌴', abyss: '🌊', magma: '🔥', orbital: '🛰️', fallout: '☢️',
+      shrine: '⛩️', sewer: '☣️', crypt: '⚰️', rig: '⚡'
+    };
+
+    function renderMissionsList(filter = '') {
+      DOM.missionsList.innerHTML = '';
+      const list = BO.MISSIONS || [];
+      const query = filter.trim().toLowerCase();
+
+      list.forEach(m => {
+        const theme = BO.THEMES[m.theme] || {};
+        const titleEn = BO.I18N._dict?.en?.[m.nameKey] || m.id.toUpperCase();
+        const titleFa = BO.I18N._dict?.fa?.[m.nameKey] || titleEn;
+        const name = state.lang === 'fa' ? `${m.id.toUpperCase()}: ${titleFa}` : `${m.id.toUpperCase()}: ${titleEn}`;
+
+        if (query && !name.toLowerCase().includes(query) && !m.theme.toLowerCase().includes(query)) return;
+
+        const card = document.createElement('div');
+        card.className = `item-card ${state.selectedMission === m.id ? 'selected' : ''}`;
+        card.dataset.mission = m.id;
+        card.innerHTML = `
+          <div class="card-info">
+            <div style="font-size: 16px;">${THEME_ICONS[m.theme] || '📍'}</div>
+            <div class="card-text">
+              <span class="card-name">${name}</span>
+              <span class="card-sub">${m.theme.toUpperCase()} • ${m.difficulty.toUpperCase()}</span>
+            </div>
+          </div>
+          <div class="card-meta">
+            <span class="card-hp" style="color: var(--ok);">${m.enemies.count} HOSTILES</span>
+            <span class="card-tier-badge">${m.roomCount} ROOMS</span>
+          </div>
+        `;
+        card.addEventListener('click', () => selectMission(m.id));
+        DOM.missionsList.appendChild(card);
+      });
+    }
+
+    function selectMission(mId) {
+      state.selectedMission = mId;
+      document.querySelectorAll('#missionsListContainer .item-card').forEach(c => {
+        c.classList.toggle('selected', c.dataset.mission === mId);
+      });
+
+      const m = (BO.MISSIONS || []).find(x => x.id === mId) || BO.MISSIONS[0];
+      if (!m) return;
+
+      state.mapSeed = m.seed;
+      DOM.mapSeedInput.value = m.seed;
+
+      // Update operation info drawer
+      const titleEn = BO.I18N._dict?.en?.[m.nameKey] || m.id.toUpperCase();
+      const titleFa = BO.I18N._dict?.fa?.[m.nameKey] || titleEn;
+      const descEn = BO.I18N._dict?.en?.[m.descKey] || '';
+      const descFa = BO.I18N._dict?.fa?.[m.descKey] || descEn;
+
+      DOM.opHeaderTitle.textContent = state.lang === 'fa' ? `${m.id.toUpperCase()}: ${titleFa}` : `${m.id.toUpperCase()}: ${titleEn}`;
+      DOM.opHeaderDesc.textContent = state.lang === 'fa' ? descFa : descEn;
+      DOM.opDifficultyBadge.textContent = m.difficulty.toUpperCase();
+      DOM.opRewardsBadge.textContent = `${m.rewards.credits} CREDITS • ${m.rewards.xp} XP • PAR: ${Math.floor(m.parTime / 60)}M`;
+      DOM.opThemeIcon.textContent = THEME_ICONS[m.theme] || '🗺️';
+
+      DOM.hudMissionTitle.textContent = `${m.id.toUpperCase()}: ${titleEn}`;
+      DOM.hudMapSize.textContent = `SIZE: ${m.size[0]}x${m.size[1]} TILES • THEME: ${m.theme.toUpperCase()}`;
+
+      buildAndFitLevel(m, state.mapSeed);
+    }
+
+    function buildAndFitLevel(missionDef, seed) {
+      try {
+        state.currentLevel = BO.LevelManager.generate({ ...missionDef, seed });
+        fitMapToViewport();
+        renderBlueprint();
+      } catch (err) {
+        console.error('Failed to generate level:', err);
+      }
+    }
+
+    function fitMapToViewport() {
+      if (!state.currentLevel) return;
+      const m = state.currentLevel.map;
+      const cw = DOM.mapCanvasContainer.clientWidth;
+      const ch = DOM.mapCanvasContainer.clientHeight;
+      const worldW = m.w * TILE;
+      const worldH = m.h * TILE;
+
+      const scaleX = (cw - 60) / worldW;
+      const scaleY = (ch - 60) / worldH;
+      state.mapZoom = Math.min(scaleX, scaleY, 0.45);
+      state.mapPan.x = (cw - worldW * state.mapZoom) / 2;
+      state.mapPan.y = (ch - worldH * state.mapZoom) / 2;
+    }
+
+    // Blueprint Canvas Rendering
+    const bpCanvas = DOM.blueprintCanvas;
+    const bpCtx = bpCanvas.getContext('2d');
+
+    function resizeBlueprintCanvas() {
+      const rect = DOM.mapCanvasContainer.getBoundingClientRect();
+      bpCanvas.width = rect.width * window.devicePixelRatio;
+      bpCanvas.height = rect.height * window.devicePixelRatio;
+      bpCanvas.style.width = `${rect.width}px`;
+      bpCanvas.style.height = `${rect.height}px`;
+      renderBlueprint();
+    }
+    window.addEventListener('resize', resizeBlueprintCanvas);
+
+    function renderBlueprint() {
+      if (!state.currentLevel) return;
+      const lvl = state.currentLevel;
+      const map = lvl.map;
+      const theme = lvl.theme || {};
+      const dpr = window.devicePixelRatio || 1;
+
+      bpCtx.save();
+      bpCtx.clearRect(0, 0, bpCanvas.width, bpCanvas.height);
+      bpCtx.scale(dpr, dpr);
+
+      // Pan & Zoom Transform
+      bpCtx.translate(state.mapPan.x, state.mapPan.y);
+      bpCtx.scale(state.mapZoom, state.mapZoom);
+
+      const W = map.w;
+      const H = map.h;
+
+      // 1. Floor & Corridors
+      if (state.mapLayers.walls) {
+        for (let y = 0; y < H; y++) {
+          for (let x = 0; x < W; x++) {
+            const idx = map.idx(x, y);
+            const tile = map.tiles[idx];
+            const px = x * TILE;
+            const py = y * TILE;
+
+            if (tile === 0) { // Floor
+              const isCorridor = map.roomId[idx] < 0;
+              bpCtx.fillStyle = isCorridor ? (theme.corridor || '#14161d') : ((x + y) % 2 === 0 ? (theme.floor || '#1a1c24') : (theme.floorAlt || '#1e212b'));
+              bpCtx.fillRect(px, py, TILE, TILE);
+            } else if (tile === 1) { // Wall
+              bpCtx.fillStyle = theme.wall || '#2a2f3a';
+              bpCtx.fillRect(px, py, TILE, TILE);
+              bpCtx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+              bpCtx.lineWidth = 1;
+              bpCtx.strokeRect(px, py, TILE, TILE);
+            }
+          }
+        }
+      }
+
+      // 2. Room Outlines & Labels
+      if (state.mapLayers.rooms) {
+        lvl.rooms.forEach(r => {
+          const rx = r.x * TILE;
+          const ry = r.y * TILE;
+          const rw = r.w * TILE;
+          const rh = r.h * TILE;
+
+          bpCtx.save();
+          if (r.tag === 'arena') {
+            bpCtx.strokeStyle = '#ff2d55';
+            bpCtx.lineWidth = 3;
+            bpCtx.fillStyle = 'rgba(255, 45, 85, 0.08)';
+          } else if (r.tag === 'start') {
+            bpCtx.strokeStyle = '#3ddc84';
+            bpCtx.lineWidth = 2;
+            bpCtx.fillStyle = 'rgba(61, 220, 132, 0.06)';
+          } else if (r.tag === 'extraction') {
+            bpCtx.strokeStyle = '#00d4ff';
+            bpCtx.lineWidth = 2;
+            bpCtx.fillStyle = 'rgba(0, 212, 255, 0.06)';
+          } else {
+            bpCtx.strokeStyle = theme.trim || 'rgba(255, 138, 26, 0.4)';
+            bpCtx.lineWidth = 1.5;
+            bpCtx.fillStyle = 'transparent';
+          }
+
+          bpCtx.fillRect(rx, ry, rw, rh);
+          bpCtx.strokeRect(rx, ry, rw, rh);
+
+          // Room Label
+          bpCtx.fillStyle = r.tag === 'arena' ? '#ff2d55' : (r.tag === 'start' ? '#3ddc84' : '#ffffff80');
+          bpCtx.font = 'bold 14px Chakra Petch, sans-serif';
+          bpCtx.fillText(`${r.tag.toUpperCase()} [${r.w}x${r.h}]`, rx + 10, ry + 22);
+          bpCtx.restore();
+        });
+      }
+
+      // 3. Environmental Hazards
+      if (state.mapLayers.hazards && lvl.panels) {
+        lvl.panels.forEach(p => {
+          bpCtx.save();
+          bpCtx.fillStyle = 'rgba(255, 75, 55, 0.25)';
+          bpCtx.strokeStyle = '#ff4b37';
+          bpCtx.lineWidth = 2;
+          bpCtx.fillRect(p.x, p.y, p.w, p.h);
+          bpCtx.strokeRect(p.x, p.y, p.w, p.h);
+          bpCtx.fillStyle = '#ff4b37';
+          bpCtx.font = '16px sans-serif';
+          bpCtx.fillText('⚠️ HAZARD', p.x + 8, p.y + p.h / 2 + 5);
+          bpCtx.restore();
+        });
+      }
+
+      // 4. Lighting Halos
+      if (state.mapLayers.lamps && lvl.lamps) {
+        lvl.lamps.forEach(l => {
+          bpCtx.save();
+          const rad = bpCtx.createRadialGradient(l.x, l.y, 2, l.x, l.y, l.radius);
+          rad.addColorStop(0, `${l.color}35`);
+          rad.addColorStop(1, 'transparent');
+          bpCtx.fillStyle = rad;
+          bpCtx.beginPath();
+          bpCtx.arc(l.x, l.y, l.radius, 0, TAU);
+          bpCtx.fill();
+          bpCtx.fillStyle = l.color;
+          bpCtx.beginPath();
+          bpCtx.arc(l.x, l.y, 3, 0, TAU);
+          bpCtx.fill();
+          bpCtx.restore();
+        });
+      }
+
+      // 5. Props & Cover
+      if (state.mapLayers.props && lvl.props) {
+        lvl.props.forEach(p => {
+          bpCtx.save();
+          bpCtx.fillStyle = p.def?.color || '#5a4630';
+          bpCtx.fillRect(p.x - 14, p.y - 14, 28, 28);
+          bpCtx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+          bpCtx.lineWidth = 1;
+          bpCtx.strokeRect(p.x - 14, p.y - 14, 28, 28);
+          if (p.kind === 'barrel') {
+            bpCtx.fillStyle = '#ff2d55';
+            bpCtx.beginPath(); bpCtx.arc(p.x, p.y, 4, 0, TAU); bpCtx.fill();
+          }
+          bpCtx.restore();
+        });
+      }
+
+      // 6. Objectives
+      if (state.mapLayers.objectives) {
+        // Player Start Spawn
+        if (lvl.spawn) {
+          bpCtx.save();
+          bpCtx.fillStyle = '#3ddc84';
+          bpCtx.beginPath(); bpCtx.arc(lvl.spawn.x, lvl.spawn.y, 16, 0, TAU); bpCtx.fill();
+          bpCtx.strokeStyle = '#fff'; bpCtx.lineWidth = 2; bpCtx.stroke();
+          bpCtx.fillStyle = '#000'; bpCtx.font = 'bold 11px sans-serif';
+          bpCtx.fillText('START', lvl.spawn.x - 18, lvl.spawn.y - 20);
+          bpCtx.restore();
+        }
+        // Boss Spawn
+        if (lvl.bossSpawn) {
+          bpCtx.save();
+          bpCtx.fillStyle = '#ff2d55';
+          bpCtx.beginPath(); bpCtx.arc(lvl.bossSpawn.x, lvl.bossSpawn.y, 24, 0, TAU); bpCtx.fill();
+          bpCtx.strokeStyle = '#ffd27a'; bpCtx.lineWidth = 3; bpCtx.stroke();
+          bpCtx.fillStyle = '#fff'; bpCtx.font = 'bold 12px sans-serif';
+          bpCtx.fillText('👑 BOSS', lvl.bossSpawn.x - 22, lvl.bossSpawn.y - 30);
+          bpCtx.restore();
+        }
+        // Extraction
+        if (lvl.extraction) {
+          bpCtx.save();
+          bpCtx.fillStyle = '#00d4ff';
+          bpCtx.beginPath(); bpCtx.arc(lvl.extraction.x, lvl.extraction.y, 18, 0, TAU); bpCtx.fill();
+          bpCtx.fillStyle = '#000'; bpCtx.font = 'bold 10px sans-serif';
+          bpCtx.fillText('EVAC', lvl.extraction.x - 14, lvl.extraction.y + 4);
+          bpCtx.restore();
+        }
+        // Intel
+        (lvl.intel || []).forEach(it => {
+          bpCtx.save();
+          bpCtx.fillStyle = '#ffd27a';
+          bpCtx.fillRect(it.x - 10, it.y - 12, 20, 24);
+          bpCtx.fillStyle = '#000'; bpCtx.font = 'bold 10px sans-serif';
+          bpCtx.fillText('📂', it.x - 7, it.y + 4);
+          bpCtx.restore();
+        });
+      }
+
+      // 7. Enemy Patrols & Spawns
+      if (state.mapLayers.enemies && lvl.enemies) {
+        lvl.enemies.forEach(e => {
+          const eDef = BO.ENEMY_TYPES[e.type] || { color: '#ff3355' };
+          bpCtx.save();
+
+          // Patrol paths
+          if (e.patrol && e.patrol.length > 0) {
+            bpCtx.strokeStyle = `${eDef.color}60`;
+            bpCtx.lineWidth = 1.5;
+            bpCtx.setLineDash([4, 4]);
+            bpCtx.beginPath();
+            bpCtx.moveTo(e.x, e.y);
+            e.patrol.forEach(pt => bpCtx.lineTo(pt.x, pt.y));
+            bpCtx.stroke();
+          }
+
+          // Enemy marker
+          bpCtx.fillStyle = eDef.color;
+          bpCtx.beginPath(); bpCtx.arc(e.x, e.y, 12, 0, TAU); bpCtx.fill();
+          bpCtx.strokeStyle = '#ffffff90'; bpCtx.lineWidth = 1.5; bpCtx.stroke();
+          bpCtx.restore();
+        });
+      }
+
+      // 8. Loot & Pickups
+      if (state.mapLayers.pickups && lvl.pickups) {
+        lvl.pickups.forEach(p => {
+          bpCtx.save();
+          const pColor = p.type === 'health' ? '#3ddc84' : (p.type === 'ammo' ? '#ffd27a' : (p.type === 'armor' ? '#00d4ff' : '#ff8a1a'));
+          bpCtx.fillStyle = pColor;
+          bpCtx.beginPath(); bpCtx.arc(p.x, p.y, 8, 0, TAU); bpCtx.fill();
+          bpCtx.restore();
+        });
+      }
+
+      bpCtx.restore();
+    }
+
+    // Blueprint Canvas Pan & Zoom Mouse Events
+    DOM.mapCanvasContainer.addEventListener('mousedown', (e) => {
+      state.isPanning = true;
+      state.panStart.x = e.clientX - state.mapPan.x;
+      state.panStart.y = e.clientY - state.mapPan.y;
+    });
+    window.addEventListener('mousemove', (e) => {
+      if (state.isPanning) {
+        state.mapPan.x = e.clientX - state.panStart.x;
+        state.mapPan.y = e.clientY - state.panStart.y;
+        renderBlueprint();
+      }
+
+      // Mouse Hover Tile Tracking
+      if (state.currentLevel) {
+        const rect = DOM.mapCanvasContainer.getBoundingClientRect();
+        const mouseCanvasX = e.clientX - rect.left;
+        const mouseCanvasY = e.clientY - rect.top;
+        const worldX = (mouseCanvasX - state.mapPan.x) / state.mapZoom;
+        const worldY = (mouseCanvasY - state.mapPan.y) / state.mapZoom;
+        const tileX = Math.floor(worldX / TILE);
+        const tileY = Math.floor(worldY / TILE);
+
+        DOM.hudMouseCoords.textContent = `TILE: X=${tileX}, Y=${tileY}`;
+
+        // Check if inside room
+        const room = state.currentLevel.rooms.find(r => tileX >= r.x && tileX < r.x + r.w && tileY >= r.y && tileY < r.y + r.h);
+        if (room && e.target === DOM.blueprintCanvas) {
+          DOM.mapTooltip.style.display = 'block';
+          DOM.mapTooltip.style.left = `${mouseCanvasX + 16}px`;
+          DOM.mapTooltip.style.top = `${mouseCanvasY + 16}px`;
+          DOM.mapTooltip.innerHTML = `
+            <strong>${room.tag.toUpperCase()} Sector [${room.w}x${room.h}]</strong><br>
+            Coords: (${tileX}, ${tileY})<br>
+            Lit: ${state.currentLevel.roomLit?.[room.index] ? 'Yes (Normal Light)' : 'Darkness / Emergency'}
+          `;
+        } else {
+          DOM.mapTooltip.style.display = 'none';
+        }
+      }
+    });
+    window.addEventListener('mouseup', () => { state.isPanning = false; });
+
+    DOM.mapCanvasContainer.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const zoomFactor = e.deltaY < 0 ? 1.15 : 0.85;
+      const rect = DOM.mapCanvasContainer.getBoundingClientRect();
+      const mouseX = e.clientX - rect.left;
+      const mouseY = e.clientY - rect.top;
+
+      state.mapPan.x = mouseX - (mouseX - state.mapPan.x) * zoomFactor;
+      state.mapPan.y = mouseY - (mouseY - state.mapPan.y) * zoomFactor;
+      state.mapZoom *= zoomFactor;
+      renderBlueprint();
+    });
+
+    // Map Controls
+    DOM.btnMapZoomIn.addEventListener('click', () => { state.mapZoom *= 1.25; renderBlueprint(); });
+    DOM.btnMapZoomOut.addEventListener('click', () => { state.mapZoom *= 0.8; renderBlueprint(); });
+    DOM.btnMapFit.addEventListener('click', () => { fitMapToViewport(); renderBlueprint(); });
+    DOM.btnRandomizeSeed.addEventListener('click', () => {
+      const newSeed = Math.floor(Math.random() * 900000) + 1000;
+      DOM.mapSeedInput.value = newSeed;
+      const m = (BO.MISSIONS || []).find(x => x.id === state.selectedMission);
+      if (m) buildAndFitLevel(m, newSeed);
+    });
+    DOM.btnResetSeed.addEventListener('click', () => {
+      const m = (BO.MISSIONS || []).find(x => x.id === state.selectedMission);
+      if (m) {
+        DOM.mapSeedInput.value = m.seed;
+        buildAndFitLevel(m, m.seed);
+      }
+    });
+    DOM.mapSeedInput.addEventListener('change', () => {
+      const s = parseInt(DOM.mapSeedInput.value, 10) || 1234;
+      const m = (BO.MISSIONS || []).find(x => x.id === state.selectedMission);
+      if (m) buildAndFitLevel(m, s);
+    });
+
+    // Layer Toggle Buttons
+    document.querySelectorAll('.layer-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        const layer = chip.dataset.layer;
+        state.mapLayers[layer] = !state.mapLayers[layer];
+        chip.classList.toggle('active', state.mapLayers[layer]);
+        renderBlueprint();
+      });
+    });
+    DOM.missionSearch.addEventListener('input', (e) => renderMissionsList(e.target.value));
+
+    /* -------------------------------------------------------------------------
+     * 8. Threat Matrix Module
+     * ------------------------------------------------------------------------- */
+    function renderMatrix() {
+      // 1. Hostiles Table
+      const types = Object.keys(BO.ENEMY_TYPES || {});
+      DOM.enemiesMatrixBody.innerHTML = types.map(t => {
+        const def = BO.ENEMY_TYPES[t];
+        const intel = ENEMY_INTEL[t] || {};
+        const name = state.lang === 'fa' ? intel.name_fa : intel.name_en;
+        const role = state.lang === 'fa' ? intel.role_fa : intel.role_en;
+        return `
+          <tr>
+            <td><strong style="color: ${def.color};">● ${name}</strong></td>
+            <td>${role}</td>
+            <td style="color: var(--hostile); font-weight: 700;">${def.hp} HP</td>
+            <td>${def.speed} px/s</td>
+            <td>${def.damage || def.meleeDamage || def.blastDamage} DMG</td>
+            <td>${def.range} px</td>
+            <td>${Math.round(def.fov * 180 / Math.PI)}°</td>
+            <td style="color: var(--ok);">${def.xp} XP / ${def.credits ? def.credits[1] : 10} CR</td>
+          </tr>
+        `;
+      }).join('');
+
+      // 2. Bosses Progression Table
+      const roster = (BO.LabBosses && BO.LabBosses.ROSTER) || {};
+      const order = (BO.LabBosses && BO.LabBosses.ORDER) || Object.keys(roster);
+      DOM.bossesMatrixBody.innerHTML = order.map(k => {
+        const d = roster[k];
+        const scale = BO.LabBosses.tierScale(d.tier);
+        const hpInfo = BOSS_HP_TABLE[k] || { scaledHp: 8775 };
+        return `
+          <tr>
+            <td><span class="h-badge boss" style="border-color: ${d.pal.glow}; color: ${d.pal.glow};">T${d.tier}</span></td>
+            <td><strong style="color: ${d.pal.glow};">${d.title}</strong></td>
+            <td>${d.epithet} (${d.look})</td>
+            <td>${k.toUpperCase()}</td>
+            <td style="color: var(--hostile); font-weight: 800;">${hpInfo.scaledHp.toLocaleString()} HP</td>
+            <td>${Math.round(scale.dmg * 100)}%</td>
+            <td>${Math.round(scale.shot * 100)}%</td>
+            <td style="color: var(--blaze); font-weight: 600;">${(d.sigs || []).join(', ').toUpperCase()}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    /* -------------------------------------------------------------------------
+     * 9. Main Navigation & Init
+     * ------------------------------------------------------------------------- */
+    DOM.tabBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const tab = btn.dataset.tab;
+        state.activeTab = tab;
+
+        DOM.tabBtns.forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+        DOM.tabPanels.forEach(p => p.classList.toggle('active', p.id === `panel-${tab}`));
+
+        if (tab === 'maps') {
+          setTimeout(() => {
+            resizeBlueprintCanvas();
+            fitMapToViewport();
+            renderBlueprint();
+          }, 50);
+        }
+      });
+    });
+
+    DOM.langBtns.forEach(btn => {
+      btn.addEventListener('click', () => setLanguage(btn.dataset.lang));
+    });
+
+    // Global Key Shortcuts (1: Hostiles, 2: Bosses, 3: Maps, 4: Matrix, L: Lang)
+    window.addEventListener('keydown', (e) => {
+      if (e.target.tagName === 'INPUT') return;
+      if (e.key === '1') DOM.tabBtns[0].click();
+      if (e.key === '2') DOM.tabBtns[1].click();
+      if (e.key === '3') DOM.tabBtns[2].click();
+      if (e.key === '4') DOM.tabBtns[3].click();
+      if (e.key.toLowerCase() === 'l') setLanguage(state.lang === 'fa' ? 'en' : 'fa');
+    });
+
+    // Boot App
+    setLanguage(state.lang);
+    setTimeout(() => {
+      resizeBlueprintCanvas();
+      selectMission('m1');
+    }, 100);
+
+  })();
+  </script>
+</body>
+</html>
