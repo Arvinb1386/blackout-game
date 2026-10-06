@@ -13,11 +13,11 @@
 
   const PROP_DEFS = {
     crate:    { hp: 60,  destructible: true,  tall: false, color: '#5a4630', debris: '#7a5c3a', drop: 0.45 },
-    barrier:  { hp: 0,   destructible: false, tall: false, color: '#4a4e5a' },
+    barrier:  { hp: 140, destructible: true,  tall: false, color: '#4a4e5a', debris: '#6c717e' },
     barrel:   { hp: 28,  destructible: true,  tall: false, color: '#b8352a', debris: '#5a1d18', explosive: 125, blastDamage: 85 },
     computer: { hp: 40,  destructible: true,  tall: false, color: '#20262f', debris: '#3a4250', drop: 0.25 },
-    pillar:   { hp: 0,   destructible: false, tall: true,  color: '#2a2e38' },
-    locker:   { hp: 0,   destructible: false, tall: true,  color: '#343a46' },
+    pillar:   { hp: 220, destructible: true,  tall: true,  color: '#2a2e38', debris: '#4e5563' },
+    locker:   { hp: 120, destructible: true,  tall: true,  color: '#343a46', debris: '#4a5160' },
     cache:    { hp: 260, destructible: true,  tall: false, color: '#3d4a2c', debris: '#5c6b3d', objective: 'cache', explosive: 110, blastDamage: 40, drop: 1 },
     core:     { hp: 650, destructible: true,  tall: true,  color: '#3a1e2a', debris: '#ff2d55', objective: 'core', explosive: 150, blastDamage: 50, drop: 1 },
     terminal: { hp: 0,   destructible: false, tall: false, color: '#1b2430', interact: true }

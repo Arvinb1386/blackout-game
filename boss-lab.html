@@ -396,6 +396,10 @@
             <label>VARIANT</label>
             <select id="sel-variant"><option value="">—— Select ——</option></select>
           </div>
+          <div class="control-row">
+            <label>ARENA</label>
+            <div id="boss-arena-tag" style="font-size: 11px; color: var(--c-accent-2); font-weight: 600; padding: 4px 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Auto (Panopticon)</div>
+          </div>
           <button class="btn" data-act="variant-load" style="width: 100%;">Load Variant</button>
         </div>
 
@@ -523,10 +527,51 @@
 
       <div class="lab-section" data-section="arena">
         <div class="card">
-          <h4>Arena Generation</h4>
+          <h4>Signature Arena (آرنای اختصاصی)</h4>
+          <div class="control-row">
+            <label>ARENA</label>
+            <select id="sel-arena">
+              <option value="auto">Auto (Match Boss) / خودکار</option>
+              <optgroup label="Boss Signature Arenas (آرناهای اختصاصی باس‌ها)">
+                <option value="m3">Panopticon (سراچه‌ی رصد) - Warden</option>
+                <option value="m5">Crash Yard (محوطه‌ی تصادف) - Iron Ram</option>
+                <option value="m8">No Man's Land (سرزمین بی‌صاحب) - Siege Crawler</option>
+                <option value="m10">Event Horizon (افق رویداد) - Vortex Warden</option>
+                <option value="m13">Hunting Ground (شکارگاه) - Hunter Warden</option>
+                <option value="m14">Throne Hall (تالار تخت) - Warden Prime</option>
+                <option value="m18">Caldera (دهانه‌ی آتشفشان) - Forge Titan</option>
+                <option value="c3">Twin Reactor (راکتور دوقلو) - Twin-Core</option>
+                <option value="m23">Ossuary Crypt (سردابه‌ی استخوان) - Ossuary Wraith</option>
+                <option value="m24">Storm Spire (قله‌ی طوفان) - Tempest Warden</option>
+              </optgroup>
+              <optgroup label="Special Signature Arenas (آرناهای ویژه اضافی)">
+                <option value="x1">Clocktower (برج ساعت) - Chronophage</option>
+                <option value="x2">Brood Nest (لانه‌ی تخم‌ها) - Hive Matriarch</option>
+                <option value="x3">Crystal Gallery (تالار بلور) - Prism Archon</option>
+                <option value="x4">Flooded Cistern (آب‌انبار سیل‌زده) - Abyssal Maw</option>
+                <option value="x5">Corrupted Core (هسته‌ی آلوده) - Null Herald</option>
+              </optgroup>
+              <optgroup label="Classic Fallback (حالت کلاسیک)">
+                <option value="classic">Classic Box (36×26 Pillar Box)</option>
+              </optgroup>
+            </select>
+          </div>
+
+          <div id="arena-info-card" style="margin: 10px 0; padding: 10px; background: rgba(0, 0, 0, 0.4); border: 1px solid var(--c-border); border-radius: 8px; font-size: 11px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+              <span id="arena-info-title" style="font-weight: 700; color: var(--c-accent-2); font-size: 12px;">Panopticon (سراچه‌ی رصد)</span>
+              <span id="arena-info-badge" style="font-size: 9px; padding: 2px 6px; border-radius: 4px; background: rgba(0, 212, 255, 0.15); color: var(--c-accent-2); border: 1px solid rgba(0, 212, 255, 0.3);">SIGNATURE</span>
+            </div>
+            <div id="arena-info-desc" style="color: var(--c-fg-dim); line-height: 1.4; margin-bottom: 6px;">تالار بیضوی دیده‌بانی با ستون‌های حلقوی برای پناه از نورافکن نگهبان.</div>
+            <div style="display: flex; gap: 12px; font-size: 10px; color: var(--c-fg-dim); border-top: 1px solid rgba(255,255,255,0.06); padding-top: 6px;">
+              <span>ابعاد: <b id="arena-info-size" style="color: var(--c-fg);">36×28</b></span>
+              <span>تم پایه: <b id="arena-info-theme" style="color: var(--c-fg);">blacksite</b></span>
+            </div>
+          </div>
+
           <div class="control-row"><label>SEED</label><input type="number" id="inp-seed" value="31337"></div>
-          <div class="control-row"><label>THEME</label><select id="sel-theme"><option value="blacksite">Blacksite</option><option value="outpost">Outpost</option><option value="industrial">Industrial</option><option value="datacore">Datacore</option><option value="jungle">Jungle</option><option value="citadel">Citadel</option><option value="frost">Frost</option><option value="magma">Magma</option><option value="orbital">Orbital</option></select></div>
-          <button class="btn" data-act="arena-build" style="width: 100%;">Rebuild Arena</button>
+          <div class="control-row"><label>THEME</label><select id="sel-theme"><option value="auto">Arena Default (پیش‌فرض آرنا)</option><option value="blacksite">Blacksite</option><option value="outpost">Outpost</option><option value="industrial">Industrial</option><option value="datacore">Datacore</option><option value="jungle">Jungle</option><option value="citadel">Citadel</option><option value="frost">Frost</option><option value="magma">Magma</option><option value="orbital">Orbital</option></select></div>
+          <button class="btn" data-act="arena-build" style="width: 100%;">Rebuild / Apply Arena</button>
         </div>
 
         <div class="card">
@@ -666,6 +711,9 @@
   <script src="js/v11-tactics.js"></script>
   <script src="js/v12-enhanced-bosses.js"></script>
   <script src="js/lab-bosses.js"></script>
+  <script src="js/lab-arenas.js"></script>
+  <script src="js/v13-synth.js"></script>
+  <script src="js/v13-chrono-fx.js"></script>
   <script src="js/profiles.js"></script>
 
 <script>
@@ -725,7 +773,8 @@
     open: true,
     tab: 'boss',
     variant: 'm3',
-    theme: 'blacksite',
+    arena: 'auto',
+    theme: 'auto',
     seed: 31337,
     autoEngage: true,
     skipIntro: false,
@@ -1039,8 +1088,43 @@
     ];
   }
 
+  const ARENA_DESCRIPTIONS = {
+    m3:  { en: 'Elliptical watch hall, pillar ring to break the searchlight.', fa: 'تالار بیضوی دیده‌بانی با ستون‌های حلقوی برای پناه از نورافکن نگهبان.' },
+    m5:  { en: 'Long drag lanes for the ram, concrete barriers, oil & skid marks.', fa: 'باندهای مستقیم، موانع بتنی سنگین و خطوط ترمز و روغن برای قوچ آهنین.' },
+    m8:  { en: 'Trench lines, shell craters, distant artillery flashes.', fa: 'خطوط سنگر و خندق جنگی، دهانه‌های انفجار و نور توپخانه‌های دوردست.' },
+    m10: { en: 'Octagon platform over a starfield, accretion spiral pulling to core.', fa: 'سکوی هشت‌ضلعی روی ژرفای فضا با مارپیچ قرص برافزایشی به سوی مرکز.' },
+    m13: { en: 'Overgrown cave, scattered trees, drifting fireflies.', fa: 'غار پوشیده از خزه و گیاهان با درختان پراکنده و کرم‌های شب‌تاب.' },
+    m14: { en: 'Grand colonnade, royal red carpet, braziers, throne dais.', fa: 'ستون‌های باشکوه، فرش قرمز سلطنتی، آتشدان‌ها و سکوی تخت فرمانروا.' },
+    m18: { en: 'Cross-shaped basalt island in a molten lava lake, rising embers.', fa: 'جزیره صلیبی بازالتی در میان دریاچه ماگما با اخگرهای معلق در هوا.' },
+    c3:  { en: 'Two reactor lobes (cyan / crimson) connected by a central bridge.', fa: 'دو نیم‌کره راکتور (فیروزه‌ای و زرشکی) متصل با یک پل میانی.' },
+    m23: { en: 'Ossuary alcoves, stone sarcophagi, ritual circle, drifting fog.', fa: 'سردابه با طاقچه‌های اسکلت، تابوت‌های سنگی، دایره مناسک و مه رونده.' },
+    m24: { en: 'Diamond rooftop above the storm clouds, lightning rods, rain puddles.', fa: 'پشت‌بام لوزی‌شکل بالای ابرها با میله‌های صاعقه‌گیر، چاله‌های آب و باران.' },
+    x1:  { en: 'Tower hall with a giant clock face and rotating hands under the glass floor.', fa: 'تالار برج با صفحه ساعت غول‌پیکر و عقربه‌های متحرک زیر شیشه کف.' },
+    x2:  { en: 'Organic alien hive, glowing egg clusters, honeycomb and spores.', fa: 'کندوی زنده، خوشه‌های تخم درخشان، لانه‌های شش‌ضلعی و هاگ‌ها.' },
+    x3:  { en: 'Hexagonal hall of mirrors, giant crystal formations, light caustics.', fa: 'تالار آینه‌ها و ساختارهای بلورین با شکست نور و پرتوهای کریستالی.' },
+    x4:  { en: 'Flooded vaulted reservoir, shallow channels with live water ripples.', fa: 'آب‌انبار طاق‌دار سیل‌زده با کانال‌های کم‌عمق و امواج زنده آب.' },
+    x5:  { en: 'Neon digital grid with missing glitch tiles over a binary void.', fa: 'شبکه نئونی دیجیتال با کاشی‌های گم‌شده و گلیچ روی خلأ باینری.' },
+    classic: { en: 'Classic 36×26 arena with 4 symmetrical concrete pillars.', fa: 'آرنای کلاسیک ۳۶ در ۲۶ با ۴ ستون بتنی متقارن.' }
+  };
+
+  function resolveArenaKey(arenaPref, variantPref) {
+    if (arenaPref && arenaPref !== 'auto') {
+      return arenaPref;
+    }
+    // Auto mode: match current boss variant
+    if (variantPref === 'classic') return 'classic';
+    if (BO.LabArenas && BO.LabArenas.STYLES && BO.LabArenas.STYLES[variantPref]) {
+      return variantPref;
+    }
+    return 'm3';
+  }
+
   function updateArenaLamps(count) {
     if (!lab.game || !lab.game.level) return;
+    if (BO.LabArenas && lab.game.level.labArena) {
+      BO.LabArenas.applyLamps(lab.game.level, count);
+      return;
+    }
     const TILE = BO.CONFIG.TILE || 64;
     const tpls = getArenaLampTemplates(TILE);
     const lamps = [];
@@ -1051,12 +1135,12 @@
   }
 
   /* ----------------------- Arena Procedural Gen ----------------------- */
-  function createLabArena(themeName, seed) {
+  function createClassicLabArena(themeName, seed) {
     const W = 36, H = 26;
     const TILE = BO.CONFIG.TILE || 64;
     const map = new BO.TileMap(W, H);
-    const baseTheme = BO.THEMES[themeName] || BO.THEMES.blacksite;
-    const theme = Object.assign({}, baseTheme);
+    const actualTheme = (themeName && themeName !== 'auto' && BO.THEMES[themeName]) ? BO.THEMES[themeName] : BO.THEMES.blacksite;
+    const theme = Object.assign({}, actualTheme);
     const dVal = parseFloat(prefs.darkness);
     if (!isNaN(dVal) && dVal >= 0) {
       theme.darkness = dVal;
@@ -1079,8 +1163,12 @@
     [[9, 8], [9, 16], [25, 8], [25, 16]].forEach(([px, py]) => {
       for (let dx = 0; dx < 2; dx++) {
         for (let dy = 0; dy < 2; dy++) {
-          map.tiles[map.idx(px + dx, py + dy)] = BO.TILE_TYPE.SOLID;
-          props.push(BO.LevelManager.makeProp('pillar', px + dx, py + dy));
+          const idx = map.idx(px + dx, py + dy);
+          map.tiles[idx] = BO.TILE_TYPE.SOLID;
+          const p = BO.LevelManager.makeProp('pillar', px + dx, py + dy);
+          p.coverBlock = true;
+          map.props[idx] = p;
+          props.push(p);
         }
       }
     });
@@ -1098,7 +1186,7 @@
     }
 
     return {
-      def: { theme: themeName, seed },
+      def: { theme: themeName || 'blacksite', seed },
       theme,
       map,
       rooms: [arenaRoom],
@@ -1136,8 +1224,89 @@
     };
   }
 
+  function createLabArena(themeName, seed) {
+    const arenaKey = resolveArenaKey(prefs.arena, prefs.variant);
+    const seedVal = parseInt(seed !== undefined ? seed : prefs.seed, 10) || 31337;
+
+    if (BO.LabArenas && arenaKey !== 'classic' && BO.LabArenas.STYLES && BO.LabArenas.STYLES[arenaKey]) {
+      const lampCount = (prefs.lamps !== undefined) ? parseInt(prefs.lamps, 10) : 1;
+      const level = BO.LabArenas.build(arenaKey, {
+        seed: seedVal,
+        lamps: lampCount
+      });
+
+      // Darkness override from lab slider if explicitly set
+      const dVal = parseFloat(prefs.darkness);
+      if (!isNaN(dVal) && dVal >= 0 && level.theme) {
+        level.theme.darkness = dVal;
+      }
+
+      // Explicit theme override if user picked a specific theme other than 'auto'
+      if (themeName && themeName !== 'auto' && BO.THEMES && BO.THEMES[themeName]) {
+        Object.assign(level.theme, BO.THEMES[themeName]);
+        if (!isNaN(dVal) && dVal >= 0) level.theme.darkness = dVal;
+      }
+
+      return level;
+    }
+
+    return createClassicLabArena(themeName || prefs.theme, seedVal);
+  }
+
+  function updateArenaUI() {
+    const selArena = $('#sel-arena');
+    if (selArena && prefs.arena) selArena.value = prefs.arena;
+
+    const activeKey = resolveArenaKey(prefs.arena, prefs.variant);
+    const style = (BO.LabArenas && BO.LabArenas.STYLES) ? BO.LabArenas.STYLES[activeKey] : null;
+
+    const titleEl = $('#arena-info-title');
+    const badgeEl = $('#arena-info-badge');
+    const descEl = $('#arena-info-desc');
+    const sizeEl = $('#arena-info-size');
+    const themeEl = $('#arena-info-theme');
+    const bossTag = $('#boss-arena-tag');
+
+    let displayName = 'Classic Box';
+    let displayFa = 'جعبه کلاسیک';
+    let sizeText = '36×26';
+    let baseTheme = (prefs.theme && prefs.theme !== 'auto') ? prefs.theme : 'blacksite';
+    let isSig = false;
+
+    if (style) {
+      displayName = style.name || activeKey.toUpperCase();
+      displayFa = style.fa || '';
+      sizeText = style.size ? `${style.size[0]}×${style.size[1]}` : '36×28';
+      baseTheme = (prefs.theme && prefs.theme !== 'auto') ? prefs.theme : (style.base || 'blacksite');
+      isSig = true;
+    }
+
+    const isAuto = (!prefs.arena || prefs.arena === 'auto');
+
+    if (titleEl) {
+      titleEl.textContent = `${displayName} (${displayFa})` + (isAuto ? ' [AUTO]' : '');
+    }
+    if (badgeEl) {
+      badgeEl.textContent = isSig ? (isAuto ? 'AUTO SIGNATURE' : 'CUSTOM SIGNATURE') : 'CLASSIC';
+      badgeEl.style.color = isSig ? 'var(--c-accent-2)' : 'var(--c-fg-dim)';
+    }
+    if (descEl) {
+      const descObj = ARENA_DESCRIPTIONS[activeKey];
+      descEl.textContent = descObj ? `${descObj.fa} — ${descObj.en}` : (style ? style.name : '');
+    }
+    if (sizeEl) sizeEl.textContent = sizeText;
+    if (themeEl) themeEl.textContent = baseTheme;
+
+    if (bossTag) {
+      bossTag.textContent = isAuto ? `Auto (${displayName})` : displayName;
+    }
+  }
+
   /* --------------------------- Engine Hooks --------------------------- */
   function installHooks(game) {
+    if (BO.LabArenas) {
+      BO.LabArenas.install(game);
+    }
     // 1. MissionSystem.byId hook for custom lab mission objects
     const origById = BO.MissionSystem.byId;
     BO.MissionSystem.byId = function (id) {
@@ -1633,8 +1802,14 @@
       Telemetry.startFight();
     }
 
+    if (BO.LabArenas) {
+      BO.LabArenas.install(g);
+    }
+
     refreshVariantUI();
-    toast('Loaded variant: ' + prefs.variant.toUpperCase());
+    updateArenaUI();
+    const activeArena = resolveArenaKey(prefs.arena, prefs.variant);
+    toast('Loaded: ' + prefs.variant.toUpperCase() + ' · Arena: ' + activeArena.toUpperCase());
   }
 
   /* --------------------------- UI Sync --------------------------- */
@@ -1650,6 +1825,7 @@
     }
     renderPoolEditor();
     renderPresetList();
+    updateArenaUI();
   }
 
   function renderPoolEditor() {
@@ -1734,6 +1910,13 @@
         if (v.key === prefs.variant) opt.selected = true;
         selVariant.appendChild(opt);
       });
+      selVariant.addEventListener('change', () => {
+        const v = selVariant.value;
+        if (v) {
+          prefs.variant = v;
+          updateArenaUI();
+        }
+      });
     }
 
     // 4. Populate Weapons Selector
@@ -1750,7 +1933,19 @@
 
     // 5. Populate Theme Selector
     const selTheme = $('#sel-theme');
-    if (selTheme) selTheme.value = prefs.theme || 'blacksite';
+    if (selTheme) selTheme.value = prefs.theme || 'auto';
+
+    // 5.5 Populate & Wire Arena Selector
+    const selArena = $('#sel-arena');
+    if (selArena) {
+      selArena.value = prefs.arena || 'auto';
+      selArena.addEventListener('change', () => {
+        prefs.arena = selArena.value;
+        savePrefs();
+        updateArenaUI();
+      });
+    }
+    updateArenaUI();
 
     const inpSeed = $('#inp-seed');
     if (inpSeed) inpSeed.value = prefs.seed || 31337;
@@ -2040,9 +2235,13 @@
     if (btnArenaBuild) {
       btnArenaBuild.addEventListener('click', () => {
         prefs.seed = parseInt($('#inp-seed').value, 10) || 31337;
-        prefs.theme = $('#sel-theme').value || 'blacksite';
+        prefs.theme = $('#sel-theme').value || 'auto';
+        if ($('#sel-arena')) prefs.arena = $('#sel-arena').value;
         savePrefs();
         startLabMission(prefs.variant);
+        updateArenaUI();
+        const activeKey = resolveArenaKey(prefs.arena, prefs.variant);
+        toast('Arena rebuilt: ' + activeKey.toUpperCase());
       });
     }
 
@@ -2091,8 +2290,10 @@
       btnTeleport.addEventListener('click', () => {
         const p = lab.game ? lab.game.player : null;
         if (p) {
-          p.x = 17 * 64;
-          p.y = 13 * 64;
+          const cx = (lab.game && lab.game.level && lab.game.level.arenaCenter) ? lab.game.level.arenaCenter.x : (17 * 64);
+          const cy = (lab.game && lab.game.level && lab.game.level.arenaCenter) ? lab.game.level.arenaCenter.y : (13 * 64);
+          p.x = cx;
+          p.y = cy;
           if (lab.game.particles && lab.game.particles.burst) {
             lab.game.particles.burst(p.x, p.y, 20, '#00d4ff');
           }

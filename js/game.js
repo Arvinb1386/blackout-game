@@ -480,11 +480,36 @@
       if (prop.dead) return;
       prop.dead = true;
       prop.hp = 0;
-      this.map.props[this.map.idx(prop.tx, prop.ty)] = null;
-      const d = prop.def;
-      this.particles.debris(prop.x, prop.y, d.debris || '#555', 14, 360);
-      this.particles.smoke(prop.x, prop.y, 4, '#3a3d4c', 50);
-      this.audio.impact(prop.x, prop.y, 'metal');
+      const idx = this.map.idx(prop.tx, prop.ty);
+      this.map.props[idx] = null;
+      if (this.map.tiles[idx] === BO.TILE_TYPE.SOLID) {
+        this.map.tiles[idx] = BO.TILE_TYPE.FLOOR;
+        if (this.map.roomId) this.map.roomId[idx] = 0;
+      }
+      if (this.renderer && this.renderer.staticLayer) {
+        const g = this.renderer.staticLayer.getContext('2d');
+        if (g) {
+          const x = prop.tx * TILE, y = prop.ty * TILE;
+          const th = (this.level && this.level.theme) || {};
+          g.fillStyle = th.floor || '#15181e';
+          g.fillRect(x, y, TILE, TILE);
+          g.fillStyle = 'rgba(255,255,255,0.025)';
+          g.fillRect(x, y, TILE, 1); g.fillRect(x, y, 1, TILE);
+          const neighbors = [[prop.tx - 1, prop.ty], [prop.tx + 1, prop.ty], [prop.tx, prop.ty - 1], [prop.tx, prop.ty + 1]];
+          for (let n = 0; n < neighbors.length; n++) {
+            const [nx, ny] = neighbors[n];
+            if (this.map.inBounds(nx, ny) && this.map.tile(nx, ny) === BO.TILE_TYPE.SOLID && this.renderer._drawWall) {
+              this.renderer._drawWall(g, this.map, nx, ny, th);
+            }
+          }
+        }
+      }
+      const d = prop.def || {};
+      const isRock = (prop.kind === 'barrier' || prop.kind === 'pillar' || prop.kind === 'crate');
+      this.particles.debris(prop.x, prop.y, d.debris || (isRock ? '#5c616e' : '#555'), 18, 420);
+      this.particles.smoke(prop.x, prop.y, 6, '#3a3d4c', 60);
+      this.audio.impact(prop.x, prop.y, isRock ? 'concrete' : 'metal');
+      if (this.camera && this.camera.addTrauma) this.camera.addTrauma(0.18);
       if (prop.kind === 'computer') this.particles.sparks(prop.x, prop.y, -Math.PI / 2, 16, '#7fe3ff', 420);
       if (d.drop) this.pickups.rollDrop(prop.x, prop.y, d.drop, d.objective);
       if (d.explosive) this.pendingExplosions.push({ x: prop.x, y: prop.y, r: d.explosive, dmg: d.blastDamage, source, delay: source === 'chain' ? 0.12 : 0.02 });
@@ -598,6 +623,18 @@
       this.particles.debris(boss.x, boss.y, '#4a4c5a', 18, 500);
       this.particles.sparks(boss.x, boss.y, boss.angle + Math.PI, 20, '#ffcf6b', 600);
       this.audio.explosion(boss.x, boss.y, false);
+      const radius = 120;
+      const tr = Math.ceil(radius / TILE);
+      const cx = Math.floor(boss.x / TILE), cy = Math.floor(boss.y / TILE);
+      for (let ty = cy - tr; ty <= cy + tr; ty++) {
+        for (let tx = cx - tr; tx <= cx + tr; tx++) {
+          const pr = this.map.propAt(tx, ty);
+          if (!pr || pr.dead || !pr.destructible) continue;
+          if (U.dist(pr.x, pr.y, boss.x, boss.y) <= radius + TILE * 0.4) {
+            this.damageProp(pr, 300, 'boss_slam');
+          }
+        }
+      }
     }
 
     onBulletHitWorld(p, hit) {

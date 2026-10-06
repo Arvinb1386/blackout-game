@@ -284,7 +284,7 @@
             ctx.fillStyle = 'rgba(255,138,26,0.35)'; ctx.fillRect(x + 9, y + TILE - 14, 14, 4);
             break;
           case 'barrier':
-            ctx.fillStyle = flash ? '#888' : p.def.color;
+            ctx.fillStyle = flash ? '#9ca3af' : p.def.color;
             ctx.fillRect(x + 1, y + 8, TILE - 2, TILE - 16);
             ctx.fillStyle = '#5c616e'; ctx.fillRect(x + 1, y + 8, TILE - 2, 4);
             ctx.fillStyle = 'rgba(240,190,61,0.55)';
@@ -306,7 +306,7 @@
             break;
           case 'pillar':
           case 'locker':
-            ctx.fillStyle = p.def.color;
+            ctx.fillStyle = flash ? '#9ca3af' : p.def.color;
             ctx.fillRect(x, y, TILE, TILE);
             ctx.fillStyle = 'rgba(255,255,255,0.06)'; ctx.fillRect(x, y, TILE, 4);
             ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.fillRect(x + 6, y + 8, TILE - 12, TILE - 14);
@@ -332,9 +332,43 @@
             break;
           default: break;
         }
+        if (p.destructible && p.hp < p.maxHp && (p.kind === 'pillar' || p.kind === 'barrier' || p.kind === 'crate' || p.kind === 'locker')) {
+          const dmgRatio = 1 - (p.hp / p.maxHp);
+          if (dmgRatio > 0.15) {
+            ctx.save();
+            ctx.strokeStyle = 'rgba(10, 12, 16, 0.72)';
+            ctx.lineWidth = dmgRatio > 0.6 ? 2.5 : 1.5;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(x + 10, y + 14);
+            ctx.lineTo(x + 22, y + 26);
+            ctx.lineTo(x + 18, y + 38);
+            if (dmgRatio > 0.4) {
+              ctx.moveTo(x + 22, y + 26);
+              ctx.lineTo(x + 36, y + 22);
+              ctx.lineTo(x + 46, y + 34);
+            }
+            if (dmgRatio > 0.7) {
+              ctx.moveTo(x + 18, y + 38);
+              ctx.lineTo(x + 28, y + 50);
+              ctx.moveTo(x + 36, y + 22);
+              ctx.lineTo(x + 50, y + 16);
+            }
+            ctx.stroke();
+            ctx.restore();
+          }
+        }
         if (p.destructible && p.hp < p.maxHp && p.kind !== 'barrel') {
-          ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fillRect(x + 6, y - 6, TILE - 12, 3);
-          ctx.fillStyle = p.def.objective ? '#ff8a1a' : '#c9ccd8'; ctx.fillRect(x + 6, y - 6, (TILE - 12) * p.hp / p.maxHp, 3);
+          const barW = TILE - 12;
+          const barH = 4;
+          const hpRatio = U.clamp(p.hp / p.maxHp, 0, 1);
+          const barX = x + 6;
+          const barY = y - 7;
+          ctx.fillStyle = 'rgba(10, 12, 16, 0.85)';
+          ctx.fillRect(barX - 1, barY - 1, barW + 2, barH + 2);
+          const col = p.def.objective ? '#ff8a1a' : (hpRatio > 0.5 ? '#4cd964' : (hpRatio > 0.25 ? '#ffcc00' : '#ff3b30'));
+          ctx.fillStyle = col;
+          ctx.fillRect(barX, barY, Math.max(1, barW * hpRatio), barH);
         }
       }
     }
