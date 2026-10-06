@@ -15,16 +15,16 @@
   const MAX_LEVEL = 10;
   const LEVELS = [
     null, // 1-indexed (Level 1 to 10)
-    { level: 1,  duration: 2.50, cooldown: 18.0, worldSpeed: 0.50, playerSpeed: 0.80, costCredits: 0,    costPoints: 0 },
-    { level: 2,  duration: 2.75, cooldown: 17.0, worldSpeed: 0.50, playerSpeed: 0.80, costCredits: 400,  costPoints: 1 },
-    { level: 3,  duration: 3.00, cooldown: 16.0, worldSpeed: 0.50, playerSpeed: 0.80, costCredits: 650,  costPoints: 1 },
-    { level: 4,  duration: 3.25, cooldown: 15.0, worldSpeed: 0.50, playerSpeed: 0.81, costCredits: 950,  costPoints: 1 },
-    { level: 5,  duration: 3.50, cooldown: 14.0, worldSpeed: 0.50, playerSpeed: 0.81, costCredits: 1350, costPoints: 1 },
-    { level: 6,  duration: 3.75, cooldown: 13.0, worldSpeed: 0.50, playerSpeed: 0.82, costCredits: 1850, costPoints: 1 },
-    { level: 7,  duration: 4.00, cooldown: 12.0, worldSpeed: 0.50, playerSpeed: 0.82, costCredits: 2450, costPoints: 1 },
-    { level: 8,  duration: 4.25, cooldown: 11.0, worldSpeed: 0.50, playerSpeed: 0.83, costCredits: 3150, costPoints: 1 },
-    { level: 9,  duration: 4.50, cooldown: 10.0, worldSpeed: 0.50, playerSpeed: 0.83, costCredits: 4000, costPoints: 1 },
-    { level: 10, duration: 5.00, cooldown: 9.0,  worldSpeed: 0.50, playerSpeed: 0.84, costCredits: 5000, costPoints: 1 }
+    { level: 1,  duration: 2.50, cooldown: 18.0, worldSpeed: 0.50, playerSpeed: 0.80, costCredits: 0,     costPoints: 0 },
+    { level: 2,  duration: 2.75, cooldown: 17.0, worldSpeed: 0.50, playerSpeed: 0.80, costCredits: 1000,  costPoints: 1 },
+    { level: 3,  duration: 3.00, cooldown: 16.0, worldSpeed: 0.50, playerSpeed: 0.80, costCredits: 2000,  costPoints: 1 },
+    { level: 4,  duration: 3.25, cooldown: 15.0, worldSpeed: 0.50, playerSpeed: 0.81, costCredits: 3500,  costPoints: 1 },
+    { level: 5,  duration: 3.50, cooldown: 14.0, worldSpeed: 0.50, playerSpeed: 0.81, costCredits: 5500,  costPoints: 1 },
+    { level: 6,  duration: 3.75, cooldown: 13.0, worldSpeed: 0.50, playerSpeed: 0.82, costCredits: 8000,  costPoints: 1 },
+    { level: 7,  duration: 4.00, cooldown: 12.0, worldSpeed: 0.50, playerSpeed: 0.82, costCredits: 11500, costPoints: 1 },
+    { level: 8,  duration: 4.25, cooldown: 11.0, worldSpeed: 0.50, playerSpeed: 0.83, costCredits: 15500, costPoints: 1 },
+    { level: 9,  duration: 4.50, cooldown: 10.0, worldSpeed: 0.50, playerSpeed: 0.83, costCredits: 20000, costPoints: 1 },
+    { level: 10, duration: 5.00, cooldown: 9.0,  worldSpeed: 0.50, playerSpeed: 0.84, costCredits: 25000, costPoints: 1 }
   ];
 
   // Upgrades list extensions (kept for upgrades screen compatibility)
@@ -108,7 +108,7 @@
       if (cur >= MAX_LEVEL) return false;
       const next = LEVELS[cur + 1];
       if (!next) return false;
-      return this.points(s) > 0 || (s.credits || 0) >= next.costCredits;
+      return this.points(s) >= 1 && (s.credits || 0) >= next.costCredits;
     },
 
     upgrade(s = S.data) {
@@ -117,14 +117,8 @@
       const next = LEVELS[cur + 1];
       if (!s.skills) s.skills = { slowmo: 1, spentPoints: 0 };
 
-      if (this.points(s) > 0) {
-        s.skills.spentPoints = (s.skills.spentPoints || 0) + 1;
-      } else if (s.credits >= next.costCredits) {
-        s.credits -= next.costCredits;
-      } else {
-        return false;
-      }
-
+      s.skills.spentPoints = (s.skills.spentPoints || 0) + 1;
+      s.credits -= next.costCredits;
       s.skills.slowmo = cur + 1;
       S.save();
       return true;
@@ -829,10 +823,16 @@
     if (curLevel >= MAX_LEVEL) {
       btnText = BO.t('sk.maxed');
     } else {
-      const costDesc = points > 0
-        ? BO.t('sk.costPt')
-        : BO.t('sk.costCr', { c: I.num(nextStats.costCredits) });
-      btnText = `${BO.t('sk.upgradeBtn', { n: I.num(curLevel + 1) })} · ${costDesc}`;
+      const costDesc = BO.t('sk.costBoth', { c: I.num(nextStats.costCredits) });
+      let statusHint = '';
+      if (points < 1 && (s.credits || 0) < nextStats.costCredits) {
+        statusHint = ` (${BO.t('sk.notAfford')})`;
+      } else if (points < 1) {
+        statusHint = ` (${BO.t('sk.needPt')})`;
+      } else if ((s.credits || 0) < nextStats.costCredits) {
+        statusHint = ` (${BO.t('sk.needCr')})`;
+      }
+      btnText = `${BO.t('sk.upgradeBtn', { n: I.num(curLevel + 1) })} · ${costDesc}${statusHint}`;
     }
 
     container.innerHTML = `
@@ -949,6 +949,10 @@
     'sk.perkCur': 'CURRENT FOCUS',
     'sk.perkNext': 'NEXT LEVEL BONUS',
     'sk.upgradeBtn': 'UPGRADE TO LEVEL {n}',
+    'sk.costBoth': '1 POINT + {c} CREDITS',
+    'sk.needPt': 'NEED 1 SKILL POINT',
+    'sk.needCr': 'NEED CREDITS',
+    'sk.notAfford': 'INSUFFICIENT FUNDS & POINTS',
     'sk.costPt': '1 SKILL POINT',
     'sk.costCr': '{c} CREDITS',
     'sk.maxed': '★ MAX LEVEL REACHED (10/10) ★',
@@ -994,6 +998,10 @@
     'sk.perkCur': 'ویژگی تاکتیکی این سطح',
     'sk.perkNext': 'پاداش سطح بعدی',
     'sk.upgradeBtn': 'ارتقا به سطح {n}',
+    'sk.costBoth': '۱ امتیاز + {c} سکه',
+    'sk.needPt': 'نیاز به ۱ امتیاز مهارت',
+    'sk.needCr': 'نیاز به سکه',
+    'sk.notAfford': 'امتیاز و سکه ناکافی',
     'sk.costPt': '۱ امتیاز مهارت',
     'sk.costCr': '{c} سکه',
     'sk.maxed': '★ حداکثر سطح (تکمیل شده ۱۰/۱۰) ★',

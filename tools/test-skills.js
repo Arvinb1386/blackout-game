@@ -135,41 +135,51 @@ try {
     assert(st.duration >= 2.5 && st.duration <= 5.0);
     assert(st.cooldown >= 9.0 && st.cooldown <= 18.0);
   }
-  pass('skills: all 10 levels correctly configured and balanced');
+  // Level 10 must cost exactly 25,000 credits
+  assert.strictEqual(Skills.getStats(10).costCredits, 25000, 'Level 10 cost must be 25,000 credits');
+  pass('skills: all 10 levels correctly configured and balanced, level 10 cost = 25,000 credits');
 
-  // Test progression & upgrade logic
+  // Test progression & upgrade logic (requires BOTH point and credits)
   const save = global.BO.SaveSystem.data;
   save.level = 1;
   save.skills = { slowmo: 1, spentPoints: 0 };
-  save.credits = 300; // Cannot afford level 2 with credits (costs 400), and level 1 gives 0 skill points
+  save.credits = 1000; // Has credits for level 2, but level 1 gives 0 skill points
 
   assert.strictEqual(Skills.points(save), 0);
-  assert.strictEqual(Skills.canUpgrade(save), false);
+  assert.strictEqual(Skills.canUpgrade(save), false, 'Cannot upgrade without skill point');
 
-  // Give player level 2 (1 point)
+  // Player levels up to 2 (has 1 point), but lacks credits
   save.level = 2;
+  save.credits = 500; // Level 2 costs 1,000
   assert.strictEqual(Skills.points(save), 1);
-  assert.strictEqual(Skills.canUpgrade(save), true);
+  assert.strictEqual(Skills.canUpgrade(save), false, 'Cannot upgrade without sufficient credits');
 
-  // Upgrade to level 2 using point
+  // Now player has both 1 point and 1,000 credits
+  save.credits = 1000;
+  assert.strictEqual(Skills.canUpgrade(save), true, 'Can upgrade with both point and credits');
+
+  // Upgrade to level 2
   const upOk = Skills.upgrade(save);
   assert.strictEqual(upOk, true);
   assert.strictEqual(save.skills.slowmo, 2);
   assert.strictEqual(save.skills.spentPoints, 1);
-  assert.strictEqual(Skills.points(save), 0);
+  assert.strictEqual(save.credits, 0); // 1000 credits deducted
+  assert.strictEqual(Skills.points(save), 0); // Point consumed
 
-  // Upgrade to level 3 using credits (costs 650 credits)
-  save.credits = 1000;
+  // Player levels up to 3 and earns 2,000 credits for level 3
+  save.level = 3;
+  save.credits = 2000;
   assert.strictEqual(Skills.canUpgrade(save), true);
   Skills.upgrade(save);
   assert.strictEqual(save.skills.slowmo, 3);
-  assert.strictEqual(save.credits, 350);
+  assert.strictEqual(save.credits, 0);
 
   // Test Respec
   Skills.respec(save);
   assert.strictEqual(save.skills.slowmo, 1);
   assert.strictEqual(save.skills.spentPoints, 0);
-  pass('skills: point & credit economy with respec verified');
+  assert.strictEqual(Skills.points(save), 2); // 2 points refunded!
+  pass('skills: point & credit economy (both required, 25k max) with respec verified');
 
   // Test in-game Slow-Mo activation & time dilation
   const mockGame = {
