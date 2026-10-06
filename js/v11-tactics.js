@@ -200,29 +200,30 @@
   const DEFAULTS = { hp: 1, tempest: false, cooldown: [0, 1.9, 1.6, 1.35], chain: [0, 2, 3, 3], vent: 2.2, fields: 3, minions: ['grunt', 'rusher'] };
 
   // One variant per boss fight, in campaign order. Pools are per phase (index 1..3).
+  // HP multipliers aligned with Boss Laboratory tiers (T1..T10, Base HP = 6500).
   const VARIANTS = {
     m3:  { name: 'warden', hp: 1.35, fields: 2, vent: 1.5, cooldown: [0, 1.4, 1.1, 0.85], chain: [0, 3, 3, 4], minions: ['grunt', 'shield', 'rusher'], summon: { maxAlive: 2, total: 6, perCast: 2 },
            pools: [null, ['fan', 'searchlight', 'stream'], ['fan', 'searchlight', 'mortar', 'snipe', 'stream'], ['searchlight', 'spiral', 'mortar', 'charge', 'nova', 'summon']] },
-    m5:  { name: 'iron', hp: 1, fields: 0, vent: 2.4, cooldown: [0, 2, 1.7, 1.45], minions: ['rusher'],
+    m5:  { name: 'iron', hp: 0.93, fields: 0, vent: 2.4, cooldown: [0, 2, 1.7, 1.45], minions: ['rusher'],
            pools: [null, ['charge', 'fan'], ['charge', 'mortar', 'fan'], ['charge', 'nova', 'charge', 'summon']] },
-    m8:  { name: 'siege', hp: 1.05, fields: 3, minions: ['grenadier', 'grunt'],
+    m8:  { name: 'siege', hp: 1.06, fields: 3, minions: ['grenadier', 'grunt'],
            pools: [null, ['mortar', 'fan'], ['mortar', 'mines', 'stream'], ['mortar', 'mines', 'nova', 'summon']] },
-    m10: { name: 'vortex', hp: 1.15, fields: 0, minions: ['drone', 'grunt'],
+    m10: { name: 'vortex', hp: 1.19, fields: 0, minions: ['drone', 'grunt'],
            pools: [null, ['spiral', 'fan'], ['spiral', 'cross', 'stream'], ['spiral', 'cross', 'nova', 'summon']] },
-    m13: { name: 'hunter', hp: 1.2, fields: 0, minions: ['rusher', 'grunt'],
+    m13: { name: 'hunter', hp: 1.32, fields: 0, minions: ['rusher', 'grunt'],
            pools: [null, ['snipe', 'fan'], ['snipe', 'blink', 'stream'], ['blink', 'snipe', 'charge', 'summon']] },
-    m14: { name: 'prime', hp: 1.3, fields: 3, cooldown: [0, 1.8, 1.5, 1.3], minions: ['grunt', 'shield'],
+    m14: { name: 'prime', hp: 1.45, fields: 3, cooldown: [0, 1.8, 1.5, 1.3], minions: ['grunt', 'shield'],
            pools: [null, ['fan', 'stream', 'snipe'], ['mortar', 'cross', 'charge'], ['nova', 'blink', 'spiral', 'summon']] },
-    m18: { name: 'forge', hp: 1.3, fields: 2, cooldown: [0, 1.8, 1.5, 1.3], minions: ['breacher', 'grunt'],
+    m18: { name: 'forge', hp: 1.58, fields: 2, cooldown: [0, 1.8, 1.5, 1.3], minions: ['breacher', 'grunt'],
            pools: [null, ['mines', 'fan'], ['mines', 'charge', 'mortar'], ['charge', 'mines', 'nova', 'summon']] },
-    m23: { name: 'wraith', hp: 1.4, fields: 0, cooldown: [0, 1.7, 1.45, 1.25], minions: ['rusher'],
+    m23: { name: 'wraith', hp: 1.84, fields: 0, cooldown: [0, 1.7, 1.45, 1.25], minions: ['rusher'],
            pools: [null, ['blink', 'fan'], ['blink', 'spiral', 'snipe'], ['blink', 'spiral', 'cross', 'summon']] },
-    m24: { name: 'tempest', hp: 1.5, tempest: true, fields: 3, vent: 2, cooldown: [0, 1.7, 1.45, 1.25], chain: [0, 3, 3, 4],
+    m24: { name: 'tempest', hp: 1.97, tempest: true, fields: 3, vent: 2, cooldown: [0, 1.7, 1.45, 1.25], chain: [0, 3, 3, 4],
            minions: ['grunt', 'rusher', 'shield'], summon: { perCast: 2, total: 6 },
            pools: [null, ['fan', 'stream', 'snipe', 'spiral'], ['mortar', 'cross', 'charge', 'blink', 'mines'], ['nova', 'spiral', 'charge', 'blink', 'snipe', 'summon']] },
-    c3:  { name: 'twin', hp: 1.3, fields: 3, minions: ['grunt', 'rusher'],
+    c3:  { name: 'twin', hp: 1.71, fields: 3, minions: ['grunt', 'rusher'],
            pools: [null, ['fan', 'cross'], ['cross', 'mortar', 'stream'], ['cross', 'nova', 'charge', 'summon']] },
-    m19: { name: 'twin', hp: 1.35, fields: 3, minions: ['grunt', 'rusher', 'drone'],
+    m19: { name: 'twin', hp: 1.71, fields: 3, minions: ['grunt', 'rusher', 'drone'],
            pools: [null, ['fan', 'cross'], ['cross', 'mortar', 'stream'], ['cross', 'nova', 'charge', 'summon']] }
   };
 

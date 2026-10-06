@@ -33,16 +33,16 @@ The alarm used to alert every hostile within 1800 px and light up every room on 
 
 | Mission | Variant | HP | Signature |
 |---|---|---|---|
-| m3 | The Warden | 5200 | fan / stream, intro fight, 1 minion max |
-| m5 | Iron Warden | 6500 | charge-heavy brute |
-| m8 | Siege Warden | 6825 | mortar + mines artillery |
-| m10 | Vortex Warden | 7475 | spiral + cross bullet patterns |
-| m13 | Hunter Warden | 7800 | snipe + blink |
-| m14 | Warden Prime | 8450 | mixes everything learned so far |
-| m18 | Forge Titan | 8450 | mines + charge, arena fields from phase 2 |
-| m23 | Ossuary Wraith | 9100 | blink-heavy, spiral, cross |
-| m24 | Tempest Warden | 9750 | full kit + the v8 storm (finale only) |
-| c3 | Twin-Core Warden | 8450 | cross-focused co-op boss |
+| m3 | The Warden | 8775 | fan / stream, intro fight, 1 minion max |
+| m5 | Iron Warden | 6045 | charge-heavy brute |
+| m8 | Siege Warden | 6890 | mortar + mines artillery |
+| m10 | Vortex Warden | 7735 | spiral + cross bullet patterns |
+| m13 | Hunter Warden | 8580 | snipe + blink |
+| m14 | Warden Prime | 9425 | mixes everything learned so far |
+| m18 | Forge Titan | 10270 | mines + charge, arena fields from phase 2 |
+| m23 | Ossuary Wraith | 11960 | blink-heavy, spiral, cross |
+| m24 | Tempest Warden | 12805 | full kit + the v8 storm (finale only) |
+| c3 | Twin-Core Warden | 11115 | cross-focused co-op boss |
 
 New attacks: `spiral`, `cross`, `snipe` (telegraphed laser, 2-3 heavy shots), `mines` (delayed ring of blasts), `blink` (telegraphed teleport + short fan).
 
